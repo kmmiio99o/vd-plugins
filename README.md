@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This plugins are no longer actively maintained by me. You may still file issues and open pull requests.
+
 # amsyarasyiq's [Vendetta](https://github.com/vendetta-mod/Vendetta) Plugins
 
 Currently available plugins:
