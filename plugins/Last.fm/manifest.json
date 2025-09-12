@@ -1,7 +1,8 @@
 {
-    "name": "Last.fm",
-    "description": "Show off your last.fm status on your Discord profile.",
-    "vendetta": {
-        "icon": "ic_stage_music"
-    }
+  "name": "Last.fm",
+  "description": "Show off your last.fm status on your Discord profile.",
+  "main": "src/index.tsx",
+  "vendetta": {
+    "icon": "ic_stage_music"
+  }
 }
