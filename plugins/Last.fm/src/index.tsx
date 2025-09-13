@@ -2,12 +2,17 @@ import { plugin } from "@vendetta";
 import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
+import { React } from "@vendetta/metro/common";
+import { View } from "react-native";
+import { Forms } from "@vendetta/ui/components";
 
 import { lazy } from "react";
 import { LFMSettings } from "../../defs";
 import Constants from "./constants";
 import { initialize, stop } from "./manager";
 import { UserStore } from "./modules";
+
+const { FormText } = Forms;
 
 export const pluginState = {
   pluginStopped: false,
@@ -38,7 +43,22 @@ export const currentSettings = new Proxy(plugin.storage, {
   },
 });
 
-const LazySettings = lazy(() => import("./ui/pages/Settings"));
+// Wrap Settings component in error boundary
+const Settings = lazy(() =>
+  import("./ui/pages/Settings").catch((err) => {
+    console.error("[Last.fm] Failed to load settings:", err);
+    return {
+      default: () => (
+        <View style={{ padding: 16 }}>
+          <FormText style={{ color: "#ED4245" }}>
+            Failed to load Last.fm settings. Please check your connection and
+            reload Discord.
+          </FormText>
+        </View>
+      ),
+    };
+  }),
+);
 
 // Connection status tracking
 let connectionAttempts = 0;
@@ -63,7 +83,19 @@ async function tryInitialize() {
 }
 
 export default {
-  settings: LazySettings,
+  settings: () => (
+    <View style={{ flex: 1 }}>
+      <React.Suspense
+        fallback={
+          <View style={{ padding: 16 }}>
+            <FormText>Loading Last.fm settings...</FormText>
+          </View>
+        }
+      >
+        <Settings />
+      </React.Suspense>
+    </View>
+  ),
   onLoad() {
     pluginState.pluginStopped = false;
 

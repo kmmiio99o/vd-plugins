@@ -1,9 +1,13 @@
 {
-    "authors": [
-        {
-            "name": "pylix",
-            "id": "492949202121261067"
-        }
-    ],
-    "main": "src/index.ts"
+  "authors": [
+    {
+      "name": "pylix",
+      "id": "492949202121261067"
+    },
+    {
+      "name": "forked by kmmiio99o",
+      "id": "879393496627306587"
+    }
+  ],
+  "main": "src/index.ts"
 }

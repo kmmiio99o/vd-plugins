@@ -4,7 +4,7 @@ import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { ScrollView } from "react-native";
+import { View } from "react-native";
 
 import { currentSettings, pluginState } from "../..";
 import Constants from "../../constants";
@@ -37,8 +37,6 @@ export default function Settings() {
     try {
       await lastfmClient.fetchLatestScrobble();
       showToast("Connection successful!", getAssetIDByName("Check"));
-
-      // Reinitialize the plugin with new settings
       await initialize();
     } catch (error) {
       showToast(
@@ -51,7 +49,7 @@ export default function Settings() {
   };
 
   return (
-    <ScrollView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <FormSection title="Account Settings">
         <FormInput
           title="Last.fm Username"
@@ -67,7 +65,7 @@ export default function Settings() {
           onChange={(value: string) => saveSettings("apiKey", value)}
           secureTextEntry={true}
         />
-        <FormText style={{ padding: 8, opacity: 0.5 }}>
+        <FormText style={{ padding: 10, opacity: 0.5 }}>
           Get your API key at: https://www.last.fm/api/account/create
         </FormText>
         <FormRow
@@ -177,16 +175,20 @@ export default function Settings() {
       </FormSection>
 
       <FormSection title="Plugin Status">
-        <FormText style={{ padding: 8 }}>
-          Status: {pluginState.pluginStopped ? "Stopped" : "Running"}
-          {"\n"}
-          Last Update: {pluginState.lastTrackUrl ? "Success" : "No track data"}
-        </FormText>
+        <View style={{ padding: 10 }}>
+          <FormText>
+            Status: {pluginState.pluginStopped ? "Stopped" : "Running"}
+          </FormText>
+          <FormText>
+            Last Update:{" "}
+            {pluginState.lastTrackUrl ? "Success" : "No track data"}
+          </FormText>
+        </View>
       </FormSection>
 
       <FormText style={{ padding: 16, opacity: 0.5, textAlign: "center" }}>
         Version 2.0.0
       </FormText>
-    </ScrollView>
+    </View>
   );
 }
