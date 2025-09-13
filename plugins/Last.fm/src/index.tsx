@@ -3,7 +3,7 @@ import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { View } from "react-native";
+import { ScrollView } from "react-native";
 import { Forms } from "@vendetta/ui/components";
 
 import { lazy } from "react";
@@ -43,18 +43,18 @@ export const currentSettings = new Proxy(plugin.storage, {
   },
 });
 
-// Wrap Settings component in error boundary
+// Settings component with error handling
 const Settings = lazy(() =>
   import("./ui/pages/Settings").catch((err) => {
     console.error("[Last.fm] Failed to load settings:", err);
     return {
       default: () => (
-        <View style={{ padding: 16 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
           <FormText style={{ color: "#ED4245" }}>
             Failed to load Last.fm settings. Please check your connection and
             reload Discord.
           </FormText>
-        </View>
+        </ScrollView>
       ),
     };
   }),
@@ -84,17 +84,15 @@ async function tryInitialize() {
 
 export default {
   settings: () => (
-    <View style={{ flex: 1 }}>
-      <React.Suspense
-        fallback={
-          <View style={{ padding: 16 }}>
-            <FormText>Loading Last.fm settings...</FormText>
-          </View>
-        }
-      >
-        <Settings />
-      </React.Suspense>
-    </View>
+    <React.Suspense
+      fallback={
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+          <FormText>Loading Last.fm settings...</FormText>
+        </ScrollView>
+      }
+    >
+      <Settings />
+    </React.Suspense>
   ),
   onLoad() {
     pluginState.pluginStopped = false;

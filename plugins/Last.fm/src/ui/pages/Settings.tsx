@@ -4,7 +4,7 @@ import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 
 import { currentSettings, pluginState } from "../..";
 import Constants from "../../constants";
@@ -49,7 +49,12 @@ export default function Settings() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingBottom: 20 }}
+      bounces={false}
+      showsVerticalScrollIndicator={true}
+    >
       <FormSection title="Account Settings">
         <FormInput
           title="Last.fm Username"
@@ -176,7 +181,7 @@ export default function Settings() {
 
       <FormSection title="Plugin Status">
         <View style={{ padding: 10 }}>
-          <FormText>
+          <FormText style={{ marginBottom: 4 }}>
             Status: {pluginState.pluginStopped ? "Stopped" : "Running"}
           </FormText>
           <FormText>
@@ -186,9 +191,17 @@ export default function Settings() {
         </View>
       </FormSection>
 
-      <FormText style={{ padding: 16, opacity: 0.5, textAlign: "center" }}>
+      <FormText
+        style={{
+          padding: 16,
+          opacity: 0.5,
+          textAlign: "center",
+          marginTop: 8,
+          marginBottom: 8,
+        }}
+      >
         Version 2.0.0
       </FormText>
-    </View>
+    </ScrollView>
   );
 }
