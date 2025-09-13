@@ -5,6 +5,7 @@ import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
 import { ScrollView, View } from "react-native";
+import { changelog, currentVersion } from "../../changelog";
 
 import { currentSettings, pluginState } from "../..";
 import Constants from "../../constants";
@@ -191,6 +192,40 @@ export default function Settings() {
         </View>
       </FormSection>
 
+      <FormSection title="CHANGELOG">
+        {changelog.map((entry, index) => (
+          <View
+            key={index}
+            style={{
+              padding: 10,
+              borderBottomWidth: index === changelog.length - 1 ? 0 : 0.5,
+              borderBottomColor: "#292929",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <FormText style={{ fontWeight: "bold" }}>
+                Version {entry.version}
+              </FormText>
+              <FormText style={{ opacity: 0.5 }}>{entry.date}</FormText>
+            </View>
+            {entry.changes.map((change, changeIndex) => (
+              <FormText
+                key={changeIndex}
+                style={{ marginLeft: 16, marginTop: 4, opacity: 0.8 }}
+              >
+                • {change}
+              </FormText>
+            ))}
+          </View>
+        ))}
+      </FormSection>
+
       <FormText
         style={{
           padding: 16,
@@ -200,7 +235,7 @@ export default function Settings() {
           marginBottom: 8,
         }}
       >
-        Version 2.0.0
+        Version {currentVersion}
       </FormText>
     </ScrollView>
   );
