@@ -26,7 +26,10 @@ const Constants = {
     listeningTo: true,
     ignoreSpotify: true,
     verboseLogging: false,
-  },
+  } /** GitHub repository URL */,
+  GITHUB_URL: "https://github.com/kmmiio99o/letup",
+  /** GitHub commits URL */
+  GITHUB_COMMITS_URL: "https://github.com/kmmiio99o/letup/commits/main/",
 } as const;
 
 export default Constants;

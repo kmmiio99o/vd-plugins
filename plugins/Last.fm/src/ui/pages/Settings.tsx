@@ -4,7 +4,7 @@ import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { ScrollView, View } from "react-native";
+import { ScrollView, View, Linking } from "react-native";
 import { changelog, currentVersion } from "../../changelog";
 
 import { currentSettings, pluginState } from "../..";
@@ -193,6 +193,15 @@ export default function Settings() {
       </FormSection>
 
       <FormSection title="CHANGELOG">
+        <FormRow
+          label="View GitHub Commits"
+          leading={<FormRow.Icon source={getAssetIDByName("ic_history")} />}
+          trailing={<FormRow.Arrow />}
+          onPress={() => {
+            Linking.openURL(Constants.GITHUB_COMMITS_URL);
+          }}
+        />
+        <FormDivider />
         {changelog.map((entry, index) => (
           <View
             key={index}
