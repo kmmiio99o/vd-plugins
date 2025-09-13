@@ -7,157 +7,217 @@ import Constants from "./constants";
 import { SelfPresenceStore } from "./modules";
 import { clearActivity, fetchAsset, sendRequest } from "./utils/activity";
 import { setDebugInfo } from "./utils/debug";
-import { fetchLatestScrobble } from "./utils/lastfm";
+import { lastfmClient } from "./utils/lastfm";
 
 enum ActivityType {
-    PLAYING = 0,
-    STREAMING = 1,
-    LISTENING = 2,
-    COMPETING = 5
+  PLAYING = 0,
+  STREAMING = 1,
+  LISTENING = 2,
+  COMPETING = 5,
 }
 
-const verboseLog = (...message: any) => currentSettings.verboseLogging && console.log(...message);
+const verboseLog = (...message: any[]) =>
+  currentSettings.verboseLogging && console.log("[Last.fm]", ...message);
 
-/**
- * Fetches the current scrobble and sets the activity. 
- * This function is actively called by the updateInterval.
- */
-async function update() {
+class PluginManager {
+  private static instance: PluginManager;
+  private updateTimer?: NodeJS.Timer;
+  private reconnectTimer?: NodeJS.Timer;
+  private consecutiveFailures: number = 0;
+  private isReconnecting: boolean = false;
+
+  private constructor() {}
+
+  public static getInstance(): PluginManager {
+    if (!PluginManager.instance) {
+      PluginManager.instance = new PluginManager();
+    }
+    return PluginManager.instance;
+  }
+
+  /**
+   * Updates the Discord activity with the current Last.fm track
+   */
+  private async updateActivity() {
     if (pluginState.pluginStopped) {
-        verboseLog("--> Plugin is unloaded, aborting update()...");
-        flush();
-        return;
+      verboseLog("Plugin is stopped, skipping update");
+      this.stopUpdates();
+      return;
     }
 
-    verboseLog("--> Fetching last track...");
-
-    if (!currentSettings.username) {
-        showToast("Last.fm username is not set!", getAssetIDByName("Small"));
-        flush(); // Flush as we always need reinitialization
-        throw new Error("Username is not set");
-    }
-
-    if (currentSettings.ignoreSpotify) {
-        const spotifyActivity = SelfPresenceStore.findActivity(act => act.sync_id);
-        if (spotifyActivity) {
-            verboseLog("--> Spotify is currently playing, aborting...");
-            setDebugInfo("isSpotifyIgnored", true);
-
-            clearActivity();
-            return;
-        } else setDebugInfo("isSpotifyIgnored", false);
-    } else {
-        setDebugInfo("isSpotifyIgnored", undefined);
-    }
-
-    const lastTrack = await fetchLatestScrobble().catch(async (err) => {
-        verboseLog("--> An error occurred while fetching the last track, aborting...");
-        clearActivity();
-        throw err;
-    });
-
-    setDebugInfo("lastTrack", lastTrack);
-
-    if (!lastTrack.nowPlaying) {
-        verboseLog("--> Last track is not currently playing, aborting...");
-        clearActivity();
-        return;
-    }
-
-    verboseLog("--> Track fetched!");
-
-    if (pluginState.lastTrackUrl === lastTrack.url) {
-        verboseLog("--> Last track is the same as the previous one, aborting...");
-        return;
-    }
-
-    const activity = {
-        name: currentSettings.appName || Constants.DEFAULT_APP_NAME,
-        flags: 0,
-        type: currentSettings.listeningTo ? ActivityType.LISTENING : ActivityType.PLAYING,
-        details: lastTrack.name,
-        state: `${lastTrack.artist}`,
-        status_display_type: 1,
-        application_id: Constants.APPLICATION_ID,
-    } as Activity;
-
-    pluginState.lastTrackUrl = lastTrack.url;
-
-    if (activity.name.includes("{{")) {
-        for (const key in lastTrack) {
-            activity.name = activity.name.replace(`{{${key}}}`, lastTrack[key]);
-        }
-    }
-
-    // Set timestamps
-    if (currentSettings.showTimestamp) {
-        activity.timestamps = {
-            start: Date.now()| 0
-        };
-    }
-
-    if (lastTrack.album) {
-        const asset = await fetchAsset([lastTrack.albumArt]);
-
-        activity.assets = {
-            large_image: asset[0],
-            large_text: `${lastTrack.album}`
-        };
-    }
-
-    verboseLog("--> Setting activity...");
-    setDebugInfo("lastActivity", activity);
-    verboseLog(activity);
+    verboseLog("Fetching last track...");
 
     try {
-        sendRequest(activity);
-    } catch (err) {
-        verboseLog("--> An error occurred while setting the activity");
+      if (!currentSettings.username || !currentSettings.apiKey) {
+        throw new Error("Username or API key not set");
+      }
+
+      if (currentSettings.ignoreSpotify) {
+        const spotifyActivity = SelfPresenceStore.findActivity(
+          (act) => act.sync_id,
+        );
+        if (spotifyActivity) {
+          verboseLog("Spotify is currently playing, clearing activity");
+          setDebugInfo("isSpotifyIgnored", true);
+          clearActivity();
+          return;
+        }
+        setDebugInfo("isSpotifyIgnored", false);
+      }
+
+      const lastTrack = await lastfmClient.fetchLatestScrobble();
+      setDebugInfo("lastTrack", lastTrack);
+
+      if (!lastTrack.nowPlaying) {
+        verboseLog("Last track is not currently playing");
         clearActivity();
-        throw err;
+        return;
+      }
+
+      if (pluginState.lastTrackUrl === lastTrack.url) {
+        verboseLog("Track hasn't changed");
+        return;
+      }
+
+      const activity: Activity = {
+        name: currentSettings.appName || Constants.DEFAULT_APP_NAME,
+        flags: 0,
+        type: currentSettings.listeningTo
+          ? ActivityType.LISTENING
+          : ActivityType.PLAYING,
+        details: lastTrack.name,
+        state: lastTrack.artist,
+        status_display_type: 1,
+        application_id: Constants.APPLICATION_ID,
+      };
+
+      // Handle dynamic app name
+      if (activity.name.includes("{{")) {
+        for (const key in lastTrack) {
+          activity.name = activity.name.replace(
+            `{{${key}}}`,
+            lastTrack[key as keyof typeof lastTrack] || "",
+          );
+        }
+      }
+
+      // Set timestamps if enabled
+      if (currentSettings.showTimestamp) {
+        activity.timestamps = {
+          start: Date.now() | 0,
+        };
+      }
+
+      // Handle album art
+      if (lastTrack.album) {
+        const asset = await fetchAsset([lastTrack.albumArt]);
+        if (asset[0]) {
+          activity.assets = {
+            large_image: asset[0],
+            large_text: lastTrack.album,
+          };
+        }
+      }
+
+      verboseLog("Setting activity:", activity);
+      setDebugInfo("lastActivity", activity);
+
+      await sendRequest(activity);
+      pluginState.lastTrackUrl = lastTrack.url;
+      pluginState.lastActivity = activity;
+      this.consecutiveFailures = 0;
+
+      verboseLog("Activity set successfully!");
+    } catch (error) {
+      console.error("[Last.fm] Update error:", error);
+      this.handleError(error);
     }
+  }
 
-    verboseLog("--> Successfully set activity!");
-}
+  private handleError(error: Error) {
+    this.consecutiveFailures++;
+    setDebugInfo("lastError", error);
 
-/** Stops and reset everything, can be started again with `initialize()` */
-export function flush(isClearActivity = false) {
-    pluginState.lastActivity = null;
-    pluginState.lastTrackUrl = null;
+    if (this.consecutiveFailures >= Constants.MAX_RETRY_ATTEMPTS) {
+      verboseLog(
+        `Failed ${this.consecutiveFailures} times, initiating reconnection...`,
+      );
+      this.startReconnection();
+    }
+  }
 
-    pluginState.updateInterval && clearInterval(pluginState.updateInterval);
-    !isClearActivity && clearActivity();
-}
+  private startReconnection() {
+    if (this.isReconnecting) return;
 
-/** Initializes the plugin */
-export async function initialize() {
+    this.isReconnecting = true;
+    this.stopUpdates();
+
+    verboseLog("Starting reconnection process");
+    this.reconnectTimer = setInterval(() => {
+      verboseLog("Attempting to reconnect...");
+      this.initialize()
+        .then(() => {
+          verboseLog("Reconnection successful");
+          this.stopReconnection();
+        })
+        .catch((error) => {
+          verboseLog("Reconnection failed:", error);
+        });
+    }, Constants.RETRY_DELAY);
+  }
+
+  private stopReconnection() {
+    if (this.reconnectTimer) {
+      clearInterval(this.reconnectTimer);
+      this.reconnectTimer = undefined;
+    }
+    this.isReconnecting = false;
+    this.consecutiveFailures = 0;
+  }
+
+  /**
+   * Stops all update and reconnection timers
+   */
+  private stopUpdates() {
+    if (this.updateTimer) {
+      clearInterval(this.updateTimer);
+      this.updateTimer = undefined;
+    }
+  }
+
+  /**
+   * Initializes the plugin and starts the update loop
+   */
+  public async initialize() {
     if (pluginState.pluginStopped) {
-        throw new Error("Plugin is already stopped!");
+      throw new Error("Plugin is stopped");
     }
 
-    flush();
+    this.stopUpdates();
+    await this.updateActivity();
 
-    let tries = 0;
-
-    await update().catch((err) => {
-        console.error(err);
-        tries++;
-    });
-
-    // Periodically fetches the current scrobble and sets the activity
-    pluginState.updateInterval = setInterval(
-        () => update()
-            .then(() => {
-                tries = 0;
-            })
-            .catch(err => {
-                console.error(err);
-
-                if (++tries > 3) {
-                    console.error("Failed to fetch/set activity 3 times, aborting...");
-                    flush();
-                }
-            }),
-        (Number(currentSettings.timeInterval) || Constants.DEFAULT_TIME_INTERVAL) * 1000
+    const interval = Math.max(
+      (Number(currentSettings.timeInterval) ||
+        Constants.DEFAULT_SETTINGS.timeInterval) * 1000,
+      Constants.MIN_UPDATE_INTERVAL * 1000,
     );
+
+    this.updateTimer = setInterval(() => this.updateActivity(), interval);
+    verboseLog(`Update timer started with interval: ${interval}ms`);
+  }
+
+  /**
+   * Stops the plugin and cleans up
+   */
+  public stop() {
+    pluginState.pluginStopped = true;
+    this.stopUpdates();
+    this.stopReconnection();
+    clearActivity();
+  }
 }
+
+// Export singleton instance methods
+const manager = PluginManager.getInstance();
+export const initialize = () => manager.initialize();
+export const stop = () => manager.stop();

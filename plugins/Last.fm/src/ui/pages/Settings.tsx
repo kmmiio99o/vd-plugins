@@ -1,162 +1,192 @@
-import { NavigationNative, React } from "@vendetta/metro/common";
-import { storage } from "@vendetta/plugin";
+import { plugin } from "@vendetta";
+import { Forms } from "@vendetta/ui/components";
 import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
-import { Forms } from "@vendetta/ui/components";
 import { showToast } from "@vendetta/ui/toasts";
+import { React } from "@vendetta/metro/common";
+import { ScrollView } from "react-native";
 
-import { lazy, useEffect } from "react";
-import { ScrollView, Text, TouchableOpacity } from "react-native";
-import { currentSettings } from "../..";
-import { LFMSettings } from "../../../../defs";
+import { currentSettings, pluginState } from "../..";
 import Constants from "../../constants";
 import { initialize } from "../../manager";
-import {
-  logComponentMount,
-  logComponentError,
-  logNavigationError,
-  incrementSettingsLoad,
-} from "../../utils/debug";
+import { lastfmClient } from "../../utils/lastfm";
 
-const { FormRow, FormInput, FormDivider, FormSwitchRow, FormText, FormIcon } =
+const { FormInput, FormRow, FormSwitch, FormSection, FormDivider, FormText } =
   Forms;
 
-function UpdateButton() {
-  async function onPressCallback() {
-    try {
-      incrementSettingsLoad();
-      for (const key in storage) {
-        if (storage[key] != null) {
-          currentSettings[key] = storage[key];
-        }
-      }
+export default function Settings() {
+  useProxy(currentSettings);
 
+  const [loading, setLoading] = React.useState(false);
+
+  const saveSettings = (key: string, value: any) => {
+    currentSettings[key] = value;
+    plugin.storage[key] = value;
+  };
+
+  const testConnection = async () => {
+    if (!currentSettings.username || !currentSettings.apiKey) {
+      showToast(
+        "Please enter both username and API key",
+        getAssetIDByName("Small"),
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await lastfmClient.fetchLatestScrobble();
+      showToast("Connection successful!", getAssetIDByName("Check"));
+
+      // Reinitialize the plugin with new settings
       await initialize();
-      showToast("Settings updated!", getAssetIDByName("Check"));
     } catch (error) {
-      logComponentError("UpdateButton", error);
-      showToast("Failed to update settings", getAssetIDByName("Small"));
+      showToast(
+        `Connection failed: ${error.message}`,
+        getAssetIDByName("Small"),
+      );
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <TouchableOpacity onPress={onPressCallback}>
-      <FormText style={{ marginRight: 12 }}>UPDATE</FormText>
-    </TouchableOpacity>
-  );
-}
+    <ScrollView style={{ flex: 1 }}>
+      <FormSection title="Account Settings">
+        <FormInput
+          title="Last.fm Username"
+          placeholder="Enter your Last.fm username"
+          value={currentSettings.username}
+          onChange={(value: string) => saveSettings("username", value)}
+        />
+        <FormDivider />
+        <FormInput
+          title="API Key"
+          placeholder="Enter your Last.fm API key"
+          value={currentSettings.apiKey}
+          onChange={(value: string) => saveSettings("apiKey", value)}
+          secureTextEntry={true}
+        />
+        <FormText style={{ padding: 8, opacity: 0.5 }}>
+          Get your API key at: https://www.last.fm/api/account/create
+        </FormText>
+        <FormRow
+          label="Test Connection"
+          leading={<FormRow.Icon source={getAssetIDByName("ic_connection")} />}
+          trailing={loading ? <FormRow.Arrow loading /> : <FormRow.Arrow />}
+          onPress={testConnection}
+          disabled={loading}
+        />
+      </FormSection>
 
-export default React.memo(function Settings() {
-  const settings = useProxy(storage) as LFMSettings;
-  const navigation = NavigationNative.useNavigation();
+      <FormSection title="Display Settings">
+        <FormInput
+          title="App Name"
+          placeholder={Constants.DEFAULT_SETTINGS.appName}
+          value={currentSettings.appName}
+          onChange={(value: string) => saveSettings("appName", value)}
+        />
+        <FormDivider />
+        <FormInput
+          title="Update Interval (seconds)"
+          placeholder={String(Constants.DEFAULT_SETTINGS.timeInterval)}
+          value={String(currentSettings.timeInterval)}
+          onChange={(value: string) => {
+            const interval = Number(value);
+            if (interval >= Constants.MIN_UPDATE_INTERVAL) {
+              saveSettings("timeInterval", interval);
+            } else {
+              showToast(
+                `Minimum interval is ${Constants.MIN_UPDATE_INTERVAL} seconds`,
+                getAssetIDByName("Small"),
+              );
+            }
+          }}
+          keyboardType="numeric"
+        />
+      </FormSection>
 
-  // Log component mount
-  useEffect(() => {
-    logComponentMount("Settings");
-  }, []);
-
-  // Safety check to ensure settings is properly initialized
-  if (!settings) {
-    logComponentError("Settings", "Settings proxy is null or undefined");
-    return (
-      <ScrollView>
-        <FormText>Loading...</FormText>
-      </ScrollView>
-    );
-  }
-
-  useEffect(() => {
-    try {
-      navigation.setOptions({
-        title: "Last.fm Configuration",
-        headerRight: () => <UpdateButton />,
-      });
-    } catch (error) {
-      logComponentError("Settings-Navigation", error);
-    }
-  }, []);
-
-  return (
-    <ScrollView>
-      <FormInput
-        value={settings.appName || undefined}
-        onChangeText={(value: string) => (settings.appName = value.trim())}
-        title="Discord Application Name"
-        placeholder={Constants.DEFAULT_APP_NAME}
-        returnKeyType="done"
-      />
-      <FormDivider />
-      <FormInput
-        required
-        value={settings.username || undefined}
-        onChangeText={(value: string) => (settings.username = value.trim())}
-        title="Last.fm username"
-        helpText={
-          !settings.username && (
-            <Text style={{ color: "#FF0000" }}>
-              {"This field is required!"}
-            </Text>
-          )
-        }
-        placeholder="wumpus123"
-        returnKeyType="done"
-      />
-      <FormDivider />
-      <FormInput
-        value={settings.timeInterval}
-        onChangeText={(value: string) => (settings.timeInterval = value)}
-        title="Update interval (in seconds)"
-        placeholder={Constants.DEFAULT_TIME_INTERVAL.toString()}
-        keyboardType="numeric"
-        returnKeyType="done"
-      />
-      <FormDivider />
-      <FormSwitchRow
-        label="Show time elapsed"
-        subLabel="Show the time elapsed since the song started playing"
-        leading={<FormIcon source={getAssetIDByName("clock")} />}
-        value={settings.showTimestamp}
-        onValueChange={(value: boolean) => (settings.showTimestamp = value)}
-      />
-      <FormDivider />
-      <FormSwitchRow
-        label="Set status as listening"
-        subLabel='Set your status as "Listening to" instead of "Playing"'
-        leading={<FormIcon source={getAssetIDByName("ic_headset_neutral")} />}
-        value={settings.listeningTo}
-        onValueChange={(value: boolean) => (settings.listeningTo = value)}
-      />
-      <FormDivider />
-      <FormSwitchRow
-        label="Hide when Spotify is running"
-        subLabel="Hide the status when a Spotify activity is detected"
-        leading={
-          <FormIcon
-            source={getAssetIDByName("img_account_sync_spotify_light_and_dark")}
-          />
-        }
-        value={settings.ignoreSpotify}
-        onValueChange={(value: boolean) => (settings.ignoreSpotify = value)}
-      />
-      <FormDivider />
-      <FormRow
-        label="Debug"
-        subLabel="View debug information"
-        leading={<FormIcon source={getAssetIDByName("debug")} />}
-        trailing={FormRow.Arrow}
-        onPress={() => {
-          try {
-            navigation.push("VendettaCustomPage", {
-              title: "Debug",
-              render: lazy(() => import("./Debug")),
-            });
-          } catch (error) {
-            logNavigationError(error);
-            console.error("Failed to navigate to Debug page:", error);
-            showToast("Failed to open debug page", getAssetIDByName("Small"));
+      <FormSection title="Options">
+        <FormRow
+          label="Show 'Listening to' instead of 'Playing'"
+          leading={<FormRow.Icon source={getAssetIDByName("ic_music")} />}
+          trailing={
+            <FormSwitch
+              value={
+                currentSettings.listeningTo ??
+                Constants.DEFAULT_SETTINGS.listeningTo
+              }
+              onValueChange={(value: boolean) =>
+                saveSettings("listeningTo", value)
+              }
+            />
           }
-        }}
-      />
+        />
+        <FormDivider />
+        <FormRow
+          label="Show Timestamp"
+          leading={<FormRow.Icon source={getAssetIDByName("ic_timeline")} />}
+          trailing={
+            <FormSwitch
+              value={
+                currentSettings.showTimestamp ??
+                Constants.DEFAULT_SETTINGS.showTimestamp
+              }
+              onValueChange={(value: boolean) =>
+                saveSettings("showTimestamp", value)
+              }
+            />
+          }
+        />
+        <FormDivider />
+        <FormRow
+          label="Ignore when Spotify is playing"
+          leading={
+            <FormRow.Icon source={getAssetIDByName("ic_spotify_white_24px")} />
+          }
+          trailing={
+            <FormSwitch
+              value={
+                currentSettings.ignoreSpotify ??
+                Constants.DEFAULT_SETTINGS.ignoreSpotify
+              }
+              onValueChange={(value: boolean) =>
+                saveSettings("ignoreSpotify", value)
+              }
+            />
+          }
+        />
+        <FormDivider />
+        <FormRow
+          label="Verbose Logging"
+          leading={
+            <FormRow.Icon source={getAssetIDByName("ic_message_copy")} />
+          }
+          trailing={
+            <FormSwitch
+              value={
+                currentSettings.verboseLogging ??
+                Constants.DEFAULT_SETTINGS.verboseLogging
+              }
+              onValueChange={(value: boolean) =>
+                saveSettings("verboseLogging", value)
+              }
+            />
+          }
+        />
+      </FormSection>
+
+      <FormSection title="Plugin Status">
+        <FormText style={{ padding: 8 }}>
+          Status: {pluginState.pluginStopped ? "Stopped" : "Running"}
+          {"\n"}
+          Last Update: {pluginState.lastTrackUrl ? "Success" : "No track data"}
+        </FormText>
+      </FormSection>
+
+      <FormText style={{ padding: 16, opacity: 0.5, textAlign: "center" }}>
+        Version 2.0.0
+      </FormText>
     </ScrollView>
   );
-});
+}

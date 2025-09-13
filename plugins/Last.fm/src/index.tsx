@@ -1,121 +1,106 @@
 import { plugin } from "@vendetta";
-import { FluxDispatcher, React } from "@vendetta/metro/common";
+import { FluxDispatcher } from "@vendetta/metro/common";
+import { getAssetIDByName } from "@vendetta/ui/assets";
+import { showToast } from "@vendetta/ui/toasts";
 
-import { lazy, Suspense } from "react";
-import { Activity, LFMSettings } from "../../defs";
-import { flush, initialize } from "./manager";
+import { lazy } from "react";
+import { LFMSettings } from "../../defs";
+import Constants from "./constants";
+import { initialize, stop } from "./manager";
 import { UserStore } from "./modules";
-import { Forms } from "@vendetta/ui/components";
-import { ScrollView } from "react-native";
 
-const { FormText } = Forms;
-
-// Error boundary component for settings
-function SettingsErrorBoundary({ children }: { children: React.ReactNode }) {
-    const [hasError, setHasError] = React.useState(false);
-
-    React.useEffect(() => {
-        const errorHandler = (error: any) => {
-            console.error("Settings component error:", error);
-            setHasError(true);
-        };
-
-        return () => {
-            setHasError(false);
-        };
-    }, []);
-
-    if (hasError) {
-        return (
-            <ScrollView style={{ padding: 12 }}>
-                <FormText style={{ color: "#FF0000" }}>
-                    Failed to load Last.fm settings. Please try reloading the plugin.
-                </FormText>
-            </ScrollView>
-        );
-    }
-
-    return (
-        <Suspense fallback={
-            <ScrollView style={{ padding: 12 }}>
-                <FormText>Loading Last.fm settings...</FormText>
-            </ScrollView>
-        }>
-            {children}
-        </Suspense>
-    );
-}
-
-// Lazy-loaded Settings component with error handling
-const LazySettings = lazy(() => {
-    try {
-        return import("./ui/pages/Settings").catch((error) => {
-            console.error("Failed to load Settings component:", error);
-            // Return a fallback component
-            return {
-                default: () => (
-                    <ScrollView style={{ padding: 12 }}>
-                        <FormText style={{ color: "#FF0000" }}>
-                            Error: Could not load Last.fm settings component.
-                            {"\n"}Please check console for details.
-                        </FormText>
-                    </ScrollView>
-                )
-            };
-        });
-    } catch (error) {
-        console.error("Critical error in lazy loading:", error);
-        // Return fallback component for critical errors
-        return Promise.resolve({
-            default: () => (
-                <ScrollView style={{ padding: 12 }}>
-                    <FormText style={{ color: "#FF0000" }}>
-                        Critical error loading settings. Please restart the app.
-                    </FormText>
-                </ScrollView>
-            )
-        });
-    }
-});
-
-// Wrapped settings component
-function WrappedSettings() {
-    return (
-        <SettingsErrorBoundary>
-            <LazySettings />
-        </SettingsErrorBoundary>
-    );
-}
-
-export const pluginState = {} as {
-    pluginStopped?: boolean,
-    lastActivity?: Activity,
-    updateInterval?: NodeJS.Timer,
-    lastTrackUrl?: string,
+export const pluginState = {
+  pluginStopped: false,
+  lastActivity: undefined,
+  updateInterval: undefined,
+  lastTrackUrl: undefined,
+} as {
+  pluginStopped: boolean;
+  lastActivity?: any;
+  updateInterval?: NodeJS.Timer;
+  lastTrackUrl?: string;
 };
 
-plugin.storage.ignoreSpotify ??= true;
-export const currentSettings = { ...plugin.storage } as LFMSettings;
+// Initialize default settings
+const defaultSettings: LFMSettings = Constants.DEFAULT_SETTINGS;
+for (const key in defaultSettings) {
+  plugin.storage[key] =
+    plugin.storage[key] ?? defaultSettings[key as keyof typeof defaultSettings];
+}
+
+export const currentSettings = new Proxy(plugin.storage, {
+  get(target, prop) {
+    return target[prop];
+  },
+  set(target, prop, value) {
+    target[prop] = value;
+    return true;
+  },
+});
+
+const LazySettings = lazy(() => import("./ui/pages/Settings"));
+
+// Connection status tracking
+let connectionAttempts = 0;
+const MAX_CONNECTION_ATTEMPTS = 3;
+const RECONNECT_DELAY = 5000;
+
+async function tryInitialize() {
+  try {
+    await initialize();
+    connectionAttempts = 0;
+  } catch (error) {
+    console.error("[Last.fm] Initialization error:", error);
+    connectionAttempts++;
+
+    if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
+      showToast("Retrying connection...", getAssetIDByName("ic_clock"));
+      setTimeout(tryInitialize, RECONNECT_DELAY);
+    } else {
+      showToast("Failed to connect to Last.fm", getAssetIDByName("Small"));
+    }
+  }
+}
 
 export default {
-    settings: WrappedSettings,
-    onLoad() {
-        pluginState.pluginStopped = false;
+  settings: LazySettings,
+  onLoad() {
+    pluginState.pluginStopped = false;
 
-        if (UserStore.getCurrentUser()) {
-            initialize().catch(console.error);
-        } else {
-            const callback = () => {
-                initialize().catch(console.error);
-                FluxDispatcher.unsubscribe(callback);
-            };
-
-            FluxDispatcher.subscribe("CONNECTION_OPEN", callback);
-        }
-
-    },
-    onUnload() {
-        pluginState.pluginStopped = true;
-        flush();
+    if (!currentSettings.username || !currentSettings.apiKey) {
+      showToast(
+        "Please configure Last.fm username and API key in settings",
+        getAssetIDByName("ic_warning"),
+      );
+      return;
     }
+
+    if (UserStore.getCurrentUser()) {
+      tryInitialize();
+    } else {
+      const waitForUser = () => {
+        if (UserStore.getCurrentUser()) {
+          tryInitialize();
+          FluxDispatcher.unsubscribe("CONNECTION_OPEN", waitForUser);
+        }
+      };
+
+      FluxDispatcher.subscribe("CONNECTION_OPEN", waitForUser);
+    }
+  },
+  onUnload() {
+    pluginState.pluginStopped = true;
+    stop();
+  },
+  // Handle settings updates
+  onSettingsUpdate(newSettings: any) {
+    Object.assign(currentSettings, newSettings);
+    tryInitialize();
+  },
+  // Handle Discord reconnection
+  onDiscordReconnect() {
+    if (!pluginState.pluginStopped) {
+      tryInitialize();
+    }
+  },
 };
