@@ -1,13 +1,12 @@
 import { plugin } from "@vendetta";
-import { Forms } from "@vendetta/ui/components";
-import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { ScrollView, View, Linking } from "react-native";
+import { Linking } from "react-native";
 import { changelog, currentVersion } from "../../changelog";
 import { findByProps } from "@vendetta/metro";
 
+const { ScrollView } = findByProps("ScrollView");
 const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
   "TableSwitchRow",
   "TableRowGroup",
@@ -21,18 +20,20 @@ import Constants from "../../constants";
 import { initialize } from "../../manager";
 import { lastfmClient } from "../../utils/lastfm";
 
+const get = (k: string, fallback: any = "") => plugin.storage[k] ?? fallback;
+const set = (k: string, v: any) => (plugin.storage[k] = v);
+
 export default function Settings() {
-  useProxy(currentSettings);
+  const [_, forceUpdate] = React.useReducer((x) => ~x, 0);
+  const update = () => forceUpdate();
 
   const [loading, setLoading] = React.useState(false);
 
-  const saveSettings = (key: string, value: any) => {
-    currentSettings[key] = value;
-    plugin.storage[key] = value;
-  };
-
   const testConnection = async () => {
-    if (!currentSettings.username || !currentSettings.apiKey) {
+    const username = get("username");
+    const apiKey = get("apiKey");
+
+    if (!username || !apiKey) {
       showToast(
         "Please enter both username and API key",
         getAssetIDByName("Small"),
@@ -62,21 +63,29 @@ export default function Settings() {
           <Stack spacing={4}>
             <TextInput
               placeholder="Last.fm Username"
-              value={currentSettings.username}
-              onChange={(v: string) => saveSettings("username", v)}
+              value={get("username")}
+              onChange={(v: string) => {
+                set("username", v);
+                update();
+              }}
               isClearable
             />
             <TextInput
               placeholder="API Key"
-              value={currentSettings.apiKey}
-              onChange={(v: string) => saveSettings("apiKey", v)}
+              value={get("apiKey")}
+              onChange={(v: string) => {
+                set("apiKey", v);
+                update();
+              }}
               secureTextEntry={true}
               isClearable
             />
             <TableRow
               label="Get API Key"
-              subLabel="https://www.last.fm/api/"
-              onPress={() => Linking.openURL("https://www.last.fm/api/")}
+              subLabel="https://www.last.fm/api/account/create"
+              onPress={() =>
+                Linking.openURL("https://www.last.fm/api/account/create")
+              }
             />
           </Stack>
           <TableRow
@@ -91,17 +100,23 @@ export default function Settings() {
           <Stack spacing={4}>
             <TextInput
               placeholder={`App Name (Default: ${Constants.DEFAULT_SETTINGS.appName})`}
-              value={currentSettings.appName}
-              onChange={(v: string) => saveSettings("appName", v)}
+              value={get("appName", Constants.DEFAULT_SETTINGS.appName)}
+              onChange={(v: string) => {
+                set("appName", v);
+                update();
+              }}
               isClearable
             />
             <TextInput
               placeholder={`Update Interval (Default: ${Constants.DEFAULT_SETTINGS.timeInterval}s)`}
-              value={String(currentSettings.timeInterval)}
+              value={String(
+                get("timeInterval", Constants.DEFAULT_SETTINGS.timeInterval),
+              )}
               onChange={(v: string) => {
                 const interval = Number(v);
                 if (interval >= Constants.MIN_UPDATE_INTERVAL) {
-                  saveSettings("timeInterval", interval);
+                  set("timeInterval", interval);
+                  update();
                 } else {
                   showToast(
                     `Minimum interval is ${Constants.MIN_UPDATE_INTERVAL} seconds`,
@@ -118,43 +133,44 @@ export default function Settings() {
         <TableRowGroup title="Options">
           <TableSwitchRow
             label="Show 'Listening to' instead of 'Playing'"
-            value={
-              currentSettings.listeningTo ??
-              Constants.DEFAULT_SETTINGS.listeningTo
-            }
-            onValueChange={(value: boolean) =>
-              saveSettings("listeningTo", value)
-            }
+            value={get("listeningTo", Constants.DEFAULT_SETTINGS.listeningTo)}
+            onValueChange={(value: boolean) => {
+              set("listeningTo", value);
+              update();
+            }}
           />
           <TableSwitchRow
             label="Show Timestamp"
-            value={
-              currentSettings.showTimestamp ??
-              Constants.DEFAULT_SETTINGS.showTimestamp
-            }
-            onValueChange={(value: boolean) =>
-              saveSettings("showTimestamp", value)
-            }
+            value={get(
+              "showTimestamp",
+              Constants.DEFAULT_SETTINGS.showTimestamp,
+            )}
+            onValueChange={(value: boolean) => {
+              set("showTimestamp", value);
+              update();
+            }}
           />
           <TableSwitchRow
             label="Ignore when Spotify is playing"
-            value={
-              currentSettings.ignoreSpotify ??
-              Constants.DEFAULT_SETTINGS.ignoreSpotify
-            }
-            onValueChange={(value: boolean) =>
-              saveSettings("ignoreSpotify", value)
-            }
+            value={get(
+              "ignoreSpotify",
+              Constants.DEFAULT_SETTINGS.ignoreSpotify,
+            )}
+            onValueChange={(value: boolean) => {
+              set("ignoreSpotify", value);
+              update();
+            }}
           />
           <TableSwitchRow
             label="Verbose Logging"
-            value={
-              currentSettings.verboseLogging ??
-              Constants.DEFAULT_SETTINGS.verboseLogging
-            }
-            onValueChange={(value: boolean) =>
-              saveSettings("verboseLogging", value)
-            }
+            value={get(
+              "verboseLogging",
+              Constants.DEFAULT_SETTINGS.verboseLogging,
+            )}
+            onValueChange={(value: boolean) => {
+              set("verboseLogging", value);
+              update();
+            }}
           />
         </TableRowGroup>
 
