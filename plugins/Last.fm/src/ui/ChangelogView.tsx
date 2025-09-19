@@ -1,49 +1,80 @@
 import { clipboard } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
-import { ErrorBoundary, Forms, General } from "@vendetta/ui/components";
+import { Forms, General } from "@vendetta/ui/components";
 import { showToast } from "@vendetta/ui/toasts";
 import { changelog, currentVersion } from "../changelog";
 import { React } from "@vendetta/metro/common";
+import { findByProps } from "@vendetta/metro";
 
-const { FormRow, FormSection } = Forms;
-const { View, ScrollView, Text, TouchableOpacity } = General;
+const { TableRowGroup, TableRow, Stack } = findByProps(
+  "TableSwitchRow",
+  "TableRowGroup",
+  "Stack",
+  "TableRow",
+);
+const { ScrollView } = General;
 
 export default function ChangelogView() {
-    return (
-        <ErrorBoundary>
-            <ScrollView style={{ flex: 1 }}>
-                <FormSection title="CURRENT VERSION">
-                    <FormRow
-                        label={currentVersion}
-                        trailing={
-                            <TouchableOpacity
-                                onPress={() => {
-                                    clipboard.setString(currentVersion);
-                                    showToast("Version copied to clipboard", getAssetIDByName("toast_copy_link"));
-                                }}
-                            >
-                                <Text style={{ color: "#72767d", fontSize: 16 }}>Copy</Text>
-                            </TouchableOpacity>
-                        }
-                    />
-                </FormSection>
+  return (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
+      <Stack spacing={8}>
+        <TableRowGroup title="CURRENT VERSION">
+          <TableRow
+            label={currentVersion}
+            trailing={
+              <General.TouchableOpacity
+                onPress={() => {
+                  clipboard.setString(currentVersion);
+                  showToast(
+                    "Version copied to clipboard",
+                    getAssetIDByName("toast_copy_link"),
+                  );
+                }}
+              >
+                <General.Text style={{ color: "#72767d", fontSize: 16 }}>
+                  Copy
+                </General.Text>
+              </General.TouchableOpacity>
+            }
+          />
+        </TableRowGroup>
 
-                <FormSection title="CHANGELOG">
-                    {changelog.map((entry, index) => (
-                        <View key={index} style={{ padding: 16, borderBottomWidth: index === changelog.length - 1 ? 0 : 0.5, borderBottomColor: "#292929" }}>
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-                                <Text style={{ color: "#fff", fontWeight: "bold" }}>Version {entry.version}</Text>
-                                <Text style={{ color: "#72767d" }}>{entry.date}</Text>
-                            </View>
-                            {entry.changes.map((change, changeIndex) => (
-                                <Text key={changeIndex} style={{ color: "#dcddde", marginLeft: 16, marginTop: 4 }}>
-                                    • {change}
-                                </Text>
-                            ))}
-                        </View>
-                    ))}
-                </FormSection>
-            </ScrollView>
-        </ErrorBoundary>
-    );
+        <TableRowGroup title="CHANGELOG">
+          {changelog.map((entry, index) => (
+            <Stack
+              key={index}
+              spacing={4}
+              style={{
+                padding: 12,
+                borderBottomWidth: index === changelog.length - 1 ? 0 : 0.5,
+                borderBottomColor: "#292929",
+              }}
+            >
+              <General.View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <General.Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Version {entry.version}
+                </General.Text>
+                <General.Text style={{ color: "#72767d" }}>
+                  {entry.date}
+                </General.Text>
+              </General.View>
+              {entry.changes.map((change, changeIndex) => (
+                <General.Text
+                  key={changeIndex}
+                  style={{ color: "#dcddde", marginLeft: 8, marginTop: 2 }}
+                >
+                  • {change}
+                </General.Text>
+              ))}
+            </Stack>
+          ))}
+        </TableRowGroup>
+      </Stack>
+    </ScrollView>
+  );
 }
