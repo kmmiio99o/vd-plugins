@@ -3,14 +3,16 @@ import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import { Forms } from "@vendetta/ui/components";
 
-import { lazy } from "react";
 import { LFMSettings } from "../../defs";
 import Constants from "./constants";
 import { initialize, stop } from "./manager";
 import { UserStore } from "./modules";
+
+// Import Settings component directly
+import Settings from "./ui/pages/Settings";
 
 const { FormText } = Forms;
 
@@ -43,29 +45,6 @@ export const currentSettings = new Proxy(plugin.storage, {
   },
 });
 
-// Simple Settings component for fallback
-function FallbackSettings() {
-  return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-      <FormText style={{ color: "#ED4245" }}>
-        Failed to load Last.fm settings. Please check your connection and reload
-        Discord.
-      </FormText>
-    </ScrollView>
-  );
-}
-
-// Settings component with error handling
-const Settings = lazy(async () => {
-  try {
-    const module = await import("./ui/pages/Settings");
-    return { default: module.default || FallbackSettings };
-  } catch (err) {
-    console.error("[Last.fm] Failed to load settings:", err);
-    return { default: FallbackSettings };
-  }
-});
-
 // Connection status tracking
 let connectionAttempts = 0;
 const MAX_CONNECTION_ATTEMPTS = 3;
@@ -88,8 +67,7 @@ async function tryInitialize() {
   }
 }
 
-// Create the plugin object
-const pluginObj = {
+export default {
   onLoad() {
     pluginState.pluginStopped = false;
 
@@ -129,25 +107,6 @@ const pluginObj = {
       tryInitialize();
     }
   },
+  // Settings component
+  settings: Settings,
 };
-
-// Add settings property to the plugin object
-Object.defineProperty(pluginObj, "settings", {
-  get: () => (
-    <React.Suspense
-      fallback={
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <FormText>Loading Last.fm settings...</FormText>
-        </View>
-      }
-    >
-      <Settings />
-    </React.Suspense>
-  ),
-  enumerable: true,
-  configurable: true,
-});
-
-export default pluginObj;
