@@ -63,20 +63,20 @@ export default function Settings() {
             <TextInput
               placeholder="Last.fm Username"
               value={currentSettings.username}
-              onChangeText={(value: string) => saveSettings("username", value)}
+              onChange={(v: string) => saveSettings("username", v)}
+              isClearable
             />
             <TextInput
               placeholder="API Key"
               value={currentSettings.apiKey}
-              onChangeText={(value: string) => saveSettings("apiKey", value)}
+              onChange={(v: string) => saveSettings("apiKey", v)}
               secureTextEntry={true}
+              isClearable
             />
             <TableRow
               label="Get API Key"
-              subLabel="https://www.last.fm/api/account/create"
-              onPress={() =>
-                Linking.openURL("https://www.last.fm/api/account/create")
-              }
+              subLabel="https://www.last.fm/api/"
+              onPress={() => Linking.openURL("https://www.last.fm/api/")}
             />
           </Stack>
           <TableRow
@@ -92,13 +92,14 @@ export default function Settings() {
             <TextInput
               placeholder={`App Name (Default: ${Constants.DEFAULT_SETTINGS.appName})`}
               value={currentSettings.appName}
-              onChangeText={(value: string) => saveSettings("appName", value)}
+              onChange={(v: string) => saveSettings("appName", v)}
+              isClearable
             />
             <TextInput
               placeholder={`Update Interval (Default: ${Constants.DEFAULT_SETTINGS.timeInterval}s)`}
               value={String(currentSettings.timeInterval)}
-              onChangeText={(value: string) => {
-                const interval = Number(value);
+              onChange={(v: string) => {
+                const interval = Number(v);
                 if (interval >= Constants.MIN_UPDATE_INTERVAL) {
                   saveSettings("timeInterval", interval);
                 } else {
@@ -109,6 +110,7 @@ export default function Settings() {
                 }
               }}
               keyboardType="numeric"
+              isClearable
             />
           </Stack>
         </TableRowGroup>
@@ -173,8 +175,6 @@ export default function Settings() {
             label="View Changelog"
             trailing={<TableRow.Arrow />}
             onPress={() => {
-              // You might want to implement a navigation to your ChangelogView here
-              // For now, we'll open the GitHub URL
               Linking.openURL(Constants.GITHUB_COMMITS_URL);
             }}
           />
