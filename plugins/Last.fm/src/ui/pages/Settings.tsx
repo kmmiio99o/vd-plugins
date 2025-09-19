@@ -2,7 +2,7 @@ import { plugin } from "@vendetta";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { Linking } from "react-native";
+import { View, Linking } from "react-native";
 import { changelog, currentVersion } from "../../changelog";
 import { findByProps } from "@vendetta/metro";
 
@@ -14,6 +14,7 @@ const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
   "TableRow",
 );
 const { TextInput } = findByProps("TextInput");
+const { FormText } = findByProps("FormText");
 
 import { currentSettings, pluginState } from "../..";
 import Constants from "../../constants";
@@ -23,7 +24,7 @@ import { lastfmClient } from "../../utils/lastfm";
 const get = (k: string, fallback: any = "") => plugin.storage[k] ?? fallback;
 const set = (k: string, v: any) => (plugin.storage[k] = v);
 
-export default function Settings() {
+function Settings() {
   const [_, forceUpdate] = React.useReducer((x) => ~x, 0);
   const update = () => forceUpdate();
 
@@ -195,7 +196,45 @@ export default function Settings() {
             }}
           />
         </TableRowGroup>
+
+        {/* Changelog Section */}
+        <TableRowGroup title="Changelog">
+          {changelog.map((entry, index) => (
+            <TableRow
+              key={index}
+              label={`v${entry.version} (${entry.date})`}
+              subLabel={entry.changes.join(", ")}
+            />
+          ))}
+        </TableRowGroup>
       </Stack>
     </ScrollView>
   );
 }
+
+export default {
+  settings: () => (
+    <React.Suspense
+      fallback={
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <FormText>Loading Last.fm settings...</FormText>
+        </View>
+      }
+    >
+      <Settings />
+    </React.Suspense>
+  ),
+  onLoad() {
+    pluginState.pluginStopped = false;
+
+    if (!currentSettings.username || !currentSettings.apiKey) {
+      showToast(
+        "Please configure Last.fm username and API key in settings",
+        getAssetIDByName("ic_warning"),
+      );
+      return;
+    }
+  },
+};
