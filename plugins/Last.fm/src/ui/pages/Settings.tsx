@@ -25,7 +25,7 @@ const get = (k: string, fallback: any = "") => plugin.storage[k] ?? fallback;
 const set = (k: string, v: any) => (plugin.storage[k] = v);
 
 // Define the Settings component
-function SettingsComponent() {
+export default function Settings() {
   const [_, forceUpdate] = React.useReducer((x) => ~x, 0);
   const update = () => forceUpdate();
 
@@ -212,16 +212,3 @@ function SettingsComponent() {
     </ScrollView>
   );
 }
-
-// Export the settings component wrapped in Suspense
-export const settings = () => (
-  <React.Suspense
-    fallback={
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <FormText>Loading Last.fm settings...</FormText>
-      </View>
-    }
-  >
-    <SettingsComponent />
-  </React.Suspense>
-);

@@ -43,29 +43,28 @@ export const currentSettings = new Proxy(plugin.storage, {
   },
 });
 
+// Simple Settings component for fallback
+function FallbackSettings() {
+  return (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+      <FormText style={{ color: "#ED4245" }}>
+        Failed to load Last.fm settings. Please check your connection and reload
+        Discord.
+      </FormText>
+    </ScrollView>
+  );
+}
+
 // Settings component with error handling
-const SettingsComponent = lazy(() =>
-  import("./ui/pages/Settings")
-    .then((module) => ({
-      default: module.SettingsComponent,
-    }))
-    .catch((err) => {
-      console.error("[Last.fm] Failed to load settings:", err);
-      return {
-        default: () => (
-          <ScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{ padding: 16 }}
-          >
-            <FormText style={{ color: "#ED4245" }}>
-              Failed to load Last.fm settings. Please check your connection and
-              reload Discord.
-            </FormText>
-          </ScrollView>
-        ),
-      };
-    }),
-);
+const Settings = lazy(async () => {
+  try {
+    const module = await import("./ui/pages/Settings");
+    return { default: module.default || FallbackSettings };
+  } catch (err) {
+    console.error("[Last.fm] Failed to load settings:", err);
+    return { default: FallbackSettings };
+  }
+});
 
 // Connection status tracking
 let connectionAttempts = 0;
@@ -89,20 +88,8 @@ async function tryInitialize() {
   }
 }
 
-export default {
-  settings: () => (
-    <React.Suspense
-      fallback={
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <FormText>Loading Last.fm settings...</FormText>
-        </View>
-      }
-    >
-      <SettingsComponent />
-    </React.Suspense>
-  ),
+// Create the plugin object
+const pluginObj = {
   onLoad() {
     pluginState.pluginStopped = false;
 
@@ -143,3 +130,24 @@ export default {
     }
   },
 };
+
+// Add settings property to the plugin object
+Object.defineProperty(pluginObj, "settings", {
+  get: () => (
+    <React.Suspense
+      fallback={
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <FormText>Loading Last.fm settings...</FormText>
+        </View>
+      }
+    >
+      <Settings />
+    </React.Suspense>
+  ),
+  enumerable: true,
+  configurable: true,
+});
+
+export default pluginObj;
