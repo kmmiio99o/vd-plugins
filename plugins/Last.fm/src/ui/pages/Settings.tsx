@@ -84,10 +84,8 @@ export default function Settings() {
             />
             <TableRow
               label="Get API Key"
-              subLabel="https://www.last.fm/api/account/create"
-              onPress={() =>
-                Linking.openURL("https://www.last.fm/api/account/create")
-              }
+              subLabel="https://www.last.fm/api/"
+              onPress={() => Linking.openURL("https://www.last.fm/api/")}
             />
           </Stack>
           <TableRow
