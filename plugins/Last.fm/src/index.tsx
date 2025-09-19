@@ -3,7 +3,7 @@ import { FluxDispatcher } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { ScrollView } from "react-native";
+import { ScrollView, View } from "react-native";
 import { Forms } from "@vendetta/ui/components";
 
 import { lazy } from "react";
@@ -44,20 +44,27 @@ export const currentSettings = new Proxy(plugin.storage, {
 });
 
 // Settings component with error handling
-const Settings = lazy(() =>
-  import("./ui/pages/Settings").catch((err) => {
-    console.error("[Last.fm] Failed to load settings:", err);
-    return {
-      default: () => (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
-          <FormText style={{ color: "#ED4245" }}>
-            Failed to load Last.fm settings. Please check your connection and
-            reload Discord.
-          </FormText>
-        </ScrollView>
-      ),
-    };
-  }),
+const SettingsComponent = lazy(() =>
+  import("./ui/pages/Settings")
+    .then((module) => ({
+      default: module.SettingsComponent,
+    }))
+    .catch((err) => {
+      console.error("[Last.fm] Failed to load settings:", err);
+      return {
+        default: () => (
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16 }}
+          >
+            <FormText style={{ color: "#ED4245" }}>
+              Failed to load Last.fm settings. Please check your connection and
+              reload Discord.
+            </FormText>
+          </ScrollView>
+        ),
+      };
+    }),
 );
 
 // Connection status tracking
@@ -86,12 +93,14 @@ export default {
   settings: () => (
     <React.Suspense
       fallback={
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
           <FormText>Loading Last.fm settings...</FormText>
-        </ScrollView>
+        </View>
       }
     >
-      <Settings />
+      <SettingsComponent />
     </React.Suspense>
   ),
   onLoad() {

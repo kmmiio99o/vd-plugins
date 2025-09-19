@@ -24,7 +24,8 @@ import { lastfmClient } from "../../utils/lastfm";
 const get = (k: string, fallback: any = "") => plugin.storage[k] ?? fallback;
 const set = (k: string, v: any) => (plugin.storage[k] = v);
 
-function Settings() {
+// Define the Settings component
+function SettingsComponent() {
   const [_, forceUpdate] = React.useReducer((x) => ~x, 0);
   const update = () => forceUpdate();
 
@@ -212,29 +213,15 @@ function Settings() {
   );
 }
 
-export default {
-  settings: () => (
-    <React.Suspense
-      fallback={
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <FormText>Loading Last.fm settings...</FormText>
-        </View>
-      }
-    >
-      <Settings />
-    </React.Suspense>
-  ),
-  onLoad() {
-    pluginState.pluginStopped = false;
-
-    if (!currentSettings.username || !currentSettings.apiKey) {
-      showToast(
-        "Please configure Last.fm username and API key in settings",
-        getAssetIDByName("ic_warning"),
-      );
-      return;
+// Export the settings component wrapped in Suspense
+export const settings = () => (
+  <React.Suspense
+    fallback={
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <FormText>Loading Last.fm settings...</FormText>
+      </View>
     }
-  },
-};
+  >
+    <SettingsComponent />
+  </React.Suspense>
+);
