@@ -47,6 +47,14 @@ export const konoSelfCommand = {
     const options = new Map(args.map((option: any) => [option.name, option]));
     const isNSFW = options.get("nsfw")?.value || false;
 
+    // Check if channel is NSFW for NSFW content
+    if (isNSFW && !ctx.channel.nsfw) {
+      return sendMessage(
+        ctx.channel.id,
+        "❌ NSFW content can only be sent in NSFW channels!",
+      );
+    }
+
     const imageUrl = await fetchImage(isNSFW);
 
     if (!imageUrl) {
@@ -64,17 +72,18 @@ export const konoSendCommand = {
   name: "konosend",
   displayName: "konosend",
   description: "Fetch a random image from KonoChan and send it to the channel.",
-  displayDescription: "Fetch a random image from KonoChan and send it to the channel.",
+  displayDescription:
+    "Fetch a random image from KonoChan and send it to the channel.",
   options: [nsfwOption],
   execute: async (args: any, ctx: any) => {
     const options = new Map(args.map((option: any) => [option.name, option]));
     const isNSFW = options.get("nsfw")?.value || false;
 
-    // Check if NSFW images are allowed in the channel
+    // Check if channel is NSFW for NSFW content
     if (isNSFW && !ctx.channel.nsfw) {
       return sendMessage(
         ctx.channel.id,
-        "This channel is not marked as NSFW. Use an NSFW channel instead."
+        "❌ NSFW content can only be sent in NSFW channels!",
       );
     }
 
