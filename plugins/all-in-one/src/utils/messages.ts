@@ -1,13 +1,17 @@
 import { findByProps } from "@vendetta/metro";
+import { showToast } from "@vendetta/ui/toasts";
 
 const MessageActions = findByProps("sendMessage");
 
-export const sendMessage = (
+export const sendMessage = async (
   channelId: string,
   content: string,
   replyToId?: string,
-  storage?: any
+  storage?: any,
 ) => {
+  // Only return acknowledgment for slash command
+  if (!content) return { type: 4 };
+
   const message = {
     content,
     ...(replyToId && storage?.factSettings?.sendAsReply
@@ -15,8 +19,15 @@ export const sendMessage = (
       : {}),
   };
 
-  MessageActions.sendMessage(channelId, message, void 0, {
-    nonce: BigInt(Date.now()) << 22n,
+  // Use a promise to ensure message is sent before returning
+  await MessageActions.sendMessage(channelId, message, void 0, {
+    nonce: (Date.now() * 4194304).toString(),
   });
-  return { type: 4 }; // Acknowledge the command
+
+  // Return acknowledgment without content to prevent double sending
+  return { type: 4 };
+};
+
+export const showAlert = (message: string) => {
+  showToast(message, findByProps("Alerts").Alerts.ERROR);
 };

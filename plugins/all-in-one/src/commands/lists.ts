@@ -3,9 +3,10 @@ import { themes } from "@vendetta/themes";
 import { plugins } from "@vendetta/plugins";
 import { storage } from "@vendetta/plugin";
 import { alerts } from "@vendetta/ui";
-import { sendMessage } from "../utils/messages";
+import { showAlert } from "../utils/messages";
 
-const SPLIT_LARGE_MESSAGES_PLUGIN = "https://vd-plugins.github.io/proxy/actuallythesun.github.io/vendetta-plugins/SplitLargeMessages/";
+const SPLIT_LARGE_MESSAGES_PLUGIN =
+  "https://vd-plugins.github.io/proxy/actuallythesun.github.io/vendetta-plugins/SplitLargeMessages/";
 
 const STATUS = {
   ENABLED: "🟢",
@@ -31,7 +32,8 @@ const isSLMPluginEnabled = () =>
 
 // Command handlers
 async function handlePluginList(detailed: boolean, ctx: any) {
-  const alwaysDetailed = storage.listSettings?.pluginListAlwaysDetailed ?? false;
+  const alwaysDetailed =
+    storage.listSettings?.pluginListAlwaysDetailed ?? false;
   const pluginList = [
     `**My Plugin List | ${Object.keys(plugins).length} Plugins**`,
     "",
@@ -59,20 +61,16 @@ async function handlePluginList(detailed: boolean, ctx: any) {
 
   if (getListLength(pluginList) > 2000) {
     if (!isSLMPluginInstalled()) {
-      return sendMessage(
-        ctx.channel.id,
-        `Your list is too long to send it! Please install the [Split Large Messages](${SPLIT_LARGE_MESSAGES_PLUGIN}) plugin.`,
-      );
+      showAlert("List too long! Install Split Large Messages plugin");
+      return { type: 4 };
     }
     if (!isSLMPluginEnabled()) {
-      return sendMessage(
-        ctx.channel.id,
-        "Your list is too long to send it! You have the Split Large Messages plugin installed, but it's not enabled!\n> Please enable it in order to send the list.",
-      );
+      showAlert("Enable Split Large Messages plugin to send long lists!");
+      return { type: 4 };
     }
 
     return alerts.showConfirmationAlert({
-      content: "Your list is over than 2000 characters. Are you sure?",
+      content: "Your list is over 2000 characters. Send anyway?",
       confirmText: "Yes",
       cancelText: "No",
       onConfirm: () => sendMessage(ctx.channel.id, formatList(pluginList)),
@@ -116,20 +114,16 @@ async function handleThemeList(detailed: boolean, ctx: any) {
 
   if (getListLength(themeList) > 2000) {
     if (!isSLMPluginInstalled()) {
-      return sendMessage(
-        ctx.channel.id,
-        `Your list is too long to send it! Please install the [Split Large Messages](${SPLIT_LARGE_MESSAGES_PLUGIN}) plugin.`,
-      );
+      showAlert("List too long! Install Split Large Messages plugin");
+      return { type: 4 };
     }
     if (!isSLMPluginEnabled()) {
-      return sendMessage(
-        ctx.channel.id,
-        "Your list is too long to send it! You have the Split Large Messages plugin installed, but it's not enabled!\n> Please enable it in order to send the list.",
-      );
+      showAlert("Enable Split Large Messages plugin to send long lists!");
+      return { type: 4 };
     }
 
     return alerts.showConfirmationAlert({
-      content: "Your list is over than 2000 characters. Are you sure?",
+      content: "Your list is over 2000 characters. Send anyway?",
       confirmText: "Yes",
       cancelText: "No",
       onConfirm: () => sendMessage(ctx.channel.id, formatList(themeList)),
@@ -155,7 +149,8 @@ export const pluginListCommand = {
     },
   ],
   execute: async (args: any, ctx: any) => {
-    const detailed = args.find((arg: any) => arg.name === "detailed")?.value ?? false;
+    const detailed =
+      args.find((arg: any) => arg.name === "detailed")?.value ?? false;
     return handlePluginList(detailed, ctx);
   },
   applicationId: "-1",
@@ -179,7 +174,8 @@ export const themeListCommand = {
     },
   ],
   execute: async (args: any, ctx: any) => {
-    const detailed = args.find((arg: any) => arg.name === "detailed")?.value ?? false;
+    const detailed =
+      args.find((arg: any) => arg.name === "detailed")?.value ?? false;
     return handleThemeList(detailed, ctx);
   },
   applicationId: "-1",

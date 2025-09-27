@@ -7,6 +7,7 @@ import {
 } from "./src/commands/facts";
 import { pluginListCommand, themeListCommand } from "./src/commands/lists";
 import { petPetCommand } from "./src/commands/petpet";
+import { konoSelfCommand, konoSendCommand } from "./src/commands/konochan";
 import settings from "./settings";
 
 // Initialize storage with default values
@@ -39,6 +40,8 @@ export default {
       registerCommand(petPetCommand),
       registerCommand(pluginListCommand),
       registerCommand(themeListCommand),
+      registerCommand(konoSelfCommand),
+      registerCommand(konoSendCommand),
     ];
 
     console.log("[All-In-One Commands] Plugin loaded successfully!");
