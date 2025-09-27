@@ -1,89 +1,153 @@
-import { ReactNative } from "@vendetta/metro/common";
-import { storage } from "@vendetta/plugin";
-import { useProxy } from "@vendetta/storage";
+import { plugin } from "@vendetta";
 import { getAssetIDByName } from "@vendetta/ui/assets";
-import { ErrorBoundary, Forms } from "@vendetta/ui/components";
+import { React } from "@vendetta/metro/common";
+import { findByProps } from "@vendetta/metro";
 
-const { FormSwitchRow, FormIcon, FormSection, FormDivider } = Forms;
+const { ScrollView } = findByProps("ScrollView");
+const { TableRowGroup, TableSwitchRow, Stack } = findByProps(
+  "TableSwitchRow",
+  "TableRowGroup",
+  "Stack",
+);
 
-const Icons = {
-  List: getAssetIDByName("ic_list"),
-  Message: getAssetIDByName("ic_message"),
-  Copy: getAssetIDByName("ic_copy_message_link"),
-  Info: getAssetIDByName("ic_info"),
-  Theme: getAssetIDByName("ic_theme"),
-  Plugin: getAssetIDByName("ic_plugins"),
-};
+const get = (k: string, fallback: any = "") => plugin.storage[k] ?? fallback;
+const set = (k: string, v: any) => (plugin.storage[k] = v);
 
-export default () => {
-  useProxy(storage);
-
-  if (!storage.factSettings) {
-    storage.factSettings = {
-      sendAsReply: true,
-      includeCitation: false,
-    };
-  }
-
-  if (!storage.listSettings) {
-    storage.listSettings = {
-      pluginListAlwaysDetailed: false,
-      themeListAlwaysDetailed: false,
-    };
-  }
+export default function Settings() {
+  const [_, forceUpdate] = React.useReducer((x) => ~x, 0);
+  const update = () => forceUpdate();
 
   return (
-    <ErrorBoundary>
-      <ReactNative.ScrollView style={{ flex: 1 }}>
-        {/* Fact Commands Settings */}
-        <FormSection title="Fact Commands" titleStyleType="no_border">
-          <FormSwitchRow
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
+      <Stack spacing={8}>
+        {/* Facts Commands Settings */}
+        <TableRowGroup title="Facts Settings">
+          <TableSwitchRow
             label="Send as Reply"
             subLabel="Send facts as a reply to the command message"
-            leading={<FormIcon source={Icons.Message} />}
+            icon={getAssetIDByName("ic_reply_24px")}
+            value={get("factSettings.sendAsReply", true)}
             onValueChange={(value: boolean) => {
-              storage.factSettings.sendAsReply = value;
+              set("factSettings", {
+                ...get("factSettings", {}),
+                sendAsReply: value,
+              });
+              update();
             }}
-            value={storage.factSettings.sendAsReply}
           />
-          <FormDivider />
-          <FormSwitchRow
+          <TableSwitchRow
             label="Include Source Citation"
             subLabel="Include the source of facts when available"
-            leading={<FormIcon source={Icons.Info} />}
+            icon={getAssetIDByName("ic_info")}
+            value={get("factSettings.includeCitation", false)}
             onValueChange={(value: boolean) => {
-              storage.factSettings.includeCitation = value;
+              set("factSettings", {
+                ...get("factSettings", {}),
+                includeCitation: value,
+              });
+              update();
             }}
-            value={storage.factSettings.includeCitation}
           />
-        </FormSection>
+        </TableRowGroup>
 
         {/* Plugin List Settings */}
-        <FormSection title="Plugin List" titleStyleType="no_border">
-          <FormSwitchRow
+        <TableRowGroup title="Plugin List Settings">
+          <TableSwitchRow
             label="Always Send Detailed List"
             subLabel="Always use detailed mode when listing plugins"
-            leading={<FormIcon source={Icons.Plugin} />}
+            icon={getAssetIDByName("ic_message_copy")}
+            value={get("listSettings.pluginListAlwaysDetailed", false)}
             onValueChange={(value: boolean) => {
-              storage.listSettings.pluginListAlwaysDetailed = value;
+              set("listSettings", {
+                ...get("listSettings", {}),
+                pluginListAlwaysDetailed: value,
+              });
+              update();
             }}
-            value={storage.listSettings.pluginListAlwaysDetailed}
           />
-        </FormSection>
+        </TableRowGroup>
 
         {/* Theme List Settings */}
-        <FormSection title="Theme List" titleStyleType="no_border">
-          <FormSwitchRow
+        <TableRowGroup title="Theme List Settings">
+          <TableSwitchRow
             label="Always Send Detailed List"
             subLabel="Always use detailed mode when listing themes"
-            leading={<FormIcon source={Icons.Theme} />}
+            icon={getAssetIDByName("ic_theme")}
+            value={get("listSettings.themeListAlwaysDetailed", false)}
             onValueChange={(value: boolean) => {
-              storage.listSettings.themeListAlwaysDetailed = value;
+              set("listSettings", {
+                ...get("listSettings", {}),
+                themeListAlwaysDetailed: value,
+              });
+              update();
             }}
-            value={storage.listSettings.themeListAlwaysDetailed}
           />
-        </FormSection>
-      </ReactNative.ScrollView>
-    </ErrorBoundary>
+        </TableRowGroup>
+
+        {/* Commands Overview */}
+        <TableRowGroup title="Available Commands">
+          <TableSwitchRow
+            label="/catfact"
+            subLabel="Get random cat facts"
+            icon={getAssetIDByName("ic_info")}
+            value={true}
+            disabled={true}
+          />
+          <TableSwitchRow
+            label="/dogfact"
+            subLabel="Get random dog facts"
+            icon={getAssetIDByName("ic_info")}
+            value={true}
+            disabled={true}
+          />
+          <TableSwitchRow
+            label="/useless"
+            subLabel="Get random useless facts"
+            icon={getAssetIDByName("ic_info")}
+            value={true}
+            disabled={true}
+          />
+          <TableSwitchRow
+            label="/petpet"
+            subLabel="Create pet-pet GIF of a user"
+            icon={getAssetIDByName("ic_image")}
+            value={true}
+            disabled={true}
+          />
+          <TableSwitchRow
+            label="/plugin-list"
+            subLabel="List all installed plugins"
+            icon={getAssetIDByName("ic_plugins")}
+            value={true}
+            disabled={true}
+          />
+          <TableSwitchRow
+            label="/theme-list"
+            subLabel="List all installed themes"
+            icon={getAssetIDByName("ic_theme")}
+            value={true}
+            disabled={true}
+          />
+          <TableSwitchRow
+            label="/konoself, /konosend"
+            subLabel="Get random images from KonoChan"
+            icon={getAssetIDByName("ic_image")}
+            value={true}
+            disabled={true}
+          />
+        </TableRowGroup>
+
+        {/* About Section */}
+        <TableRowGroup title="About">
+          <TableSwitchRow
+            label="All-In-One Commands"
+            subLabel="A collection of useful commands"
+            icon={getAssetIDByName("ic_badge_staff")}
+            value={true}
+            disabled={true}
+          />
+        </TableRowGroup>
+      </Stack>
+    </ScrollView>
   );
-};
+}

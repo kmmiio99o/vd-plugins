@@ -3,7 +3,8 @@ import { themes } from "@vendetta/themes";
 import { plugins } from "@vendetta/plugins";
 import { storage } from "@vendetta/plugin";
 import { alerts } from "@vendetta/ui";
-import { showAlert } from "../utils/messages";
+import { sendMessage } from "../utils/messages";
+import { openURL } from "@vendetta/metro/common";
 
 const SPLIT_LARGE_MESSAGES_PLUGIN =
   "https://vd-plugins.github.io/proxy/actuallythesun.github.io/vendetta-plugins/SplitLargeMessages/";
@@ -29,6 +30,40 @@ const isSLMPluginInstalled = () =>
 const isSLMPluginEnabled = () =>
   Object.values(plugins).find((p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN)
     ?.enabled ?? false;
+
+const showSplitPluginDialog = () => {
+  return alerts.showConfirmationAlert({
+    title: "Large Message Warning",
+    content:
+      "This list is too long to send! Would you like to install the Split Large Messages plugin?",
+    confirmText: "Install Plugin",
+    cancelText: "Cancel",
+    confirmColor: "brand",
+    onConfirm: () => {
+      openURL(SPLIT_LARGE_MESSAGES_PLUGIN);
+    },
+  });
+};
+
+const showEnablePluginDialog = () => {
+  return alerts.showConfirmationAlert({
+    title: "Plugin Disabled",
+    content:
+      "The Split Large Messages plugin is installed but disabled. Would you like to enable it now?",
+    confirmText: "Enable Plugin",
+    cancelText: "Cancel",
+    confirmColor: "brand",
+    onConfirm: () => {
+      // Enable the plugin
+      const slmPlugin = Object.values(plugins).find(
+        (p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN,
+      );
+      if (slmPlugin) {
+        slmPlugin.enabled = true;
+      }
+    },
+  });
+};
 
 // Command handlers
 async function handlePluginList(detailed: boolean, ctx: any) {
@@ -61,18 +96,17 @@ async function handlePluginList(detailed: boolean, ctx: any) {
 
   if (getListLength(pluginList) > 2000) {
     if (!isSLMPluginInstalled()) {
-      showAlert("List too long! Install Split Large Messages plugin");
-      return { type: 4 };
+      return showSplitPluginDialog();
     }
     if (!isSLMPluginEnabled()) {
-      showAlert("Enable Split Large Messages plugin to send long lists!");
-      return { type: 4 };
+      return showEnablePluginDialog();
     }
 
     return alerts.showConfirmationAlert({
-      content: "Your list is over 2000 characters. Send anyway?",
-      confirmText: "Yes",
-      cancelText: "No",
+      title: "Large Message",
+      content: "This list is over 2000 characters. Send anyway?",
+      confirmText: "Send",
+      cancelText: "Cancel",
       onConfirm: () => sendMessage(ctx.channel.id, formatList(pluginList)),
     });
   }
@@ -114,18 +148,17 @@ async function handleThemeList(detailed: boolean, ctx: any) {
 
   if (getListLength(themeList) > 2000) {
     if (!isSLMPluginInstalled()) {
-      showAlert("List too long! Install Split Large Messages plugin");
-      return { type: 4 };
+      return showSplitPluginDialog();
     }
     if (!isSLMPluginEnabled()) {
-      showAlert("Enable Split Large Messages plugin to send long lists!");
-      return { type: 4 };
+      return showEnablePluginDialog();
     }
 
     return alerts.showConfirmationAlert({
-      content: "Your list is over 2000 characters. Send anyway?",
-      confirmText: "Yes",
-      cancelText: "No",
+      title: "Large Message",
+      content: "This list is over 2000 characters. Send anyway?",
+      confirmText: "Send",
+      cancelText: "Cancel",
       onConfirm: () => sendMessage(ctx.channel.id, formatList(themeList)),
     });
   }
