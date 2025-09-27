@@ -112,10 +112,21 @@ export const konoSendCommand = {
     const imageUrl = await fetchImage(isNSFW);
 
     if (!imageUrl) {
-      return { type: 4, data: { content: "No image found. Try again later." } };
+      const fixNonce = Date.now().toString();
+      MessageActions.sendMessage(
+        ctx.channel.id,
+        { content: "No image found. Try again later." },
+        void 0,
+        { nonce: fixNonce },
+      );
+      return { type: 4 };
     }
 
-    return { type: 4, data: { content: imageUrl } };
+    const fixNonce = Date.now().toString();
+    MessageActions.sendMessage(ctx.channel.id, { content: imageUrl }, void 0, {
+      nonce: fixNonce,
+    });
+    return { type: 4 };
   },
   applicationId: "-1",
   inputType: 1,
