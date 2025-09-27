@@ -1,6 +1,12 @@
 import { findByProps } from "@vendetta/metro";
-import { sendMessage } from "../utils/messages";
 import { alerts } from "@vendetta/ui";
+
+const MessageActions = findByProps("sendMessage");
+const messageUtil = findByProps(
+  "sendBotMessage",
+  "sendMessage",
+  "receiveMessage",
+);
 
 /**
  * Fetches a random image from KonoChan.
@@ -68,22 +74,18 @@ export const konoSelfCommand = {
     const imageUrl = await fetchImage(isNSFW);
 
     if (!imageUrl) {
-      return sendMessage(
+      messageUtil.sendBotMessage(
         ctx.channel.id,
         "No image found. Try again later.",
-        undefined,
-        undefined,
-        true,
       );
+      return { type: 4 };
     }
 
-    return sendMessage(
+    messageUtil.sendBotMessage(
       ctx.channel.id,
       `Here's your random image: ${imageUrl}`,
-      undefined,
-      undefined,
-      true,
     );
+    return { type: 4 };
   },
   applicationId: "-1",
   inputType: 1,
@@ -110,10 +112,10 @@ export const konoSendCommand = {
     const imageUrl = await fetchImage(isNSFW);
 
     if (!imageUrl) {
-      return sendMessage(ctx.channel.id, "No image found. Try again later.");
+      return { type: 4, data: { content: "No image found. Try again later." } };
     }
 
-    return sendMessage(ctx.channel.id, imageUrl);
+    return { type: 4, data: { content: imageUrl } };
   },
   applicationId: "-1",
   inputType: 1,
