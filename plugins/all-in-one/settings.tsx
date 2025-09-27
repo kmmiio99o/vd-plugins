@@ -8,10 +8,11 @@ import { View } from "react-native";
 import { alerts } from "@vendetta/ui";
 
 const { ScrollView } = findByProps("ScrollView");
-const { TableRowGroup, TableSwitchRow, Stack } = findByProps(
+const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
   "TableSwitchRow",
   "TableRowGroup",
   "Stack",
+  "TableRow",
 );
 
 // Initialize default settings if not exist
@@ -42,29 +43,43 @@ if (!storage.enabledCommands) {
   };
 }
 
-const askForRestart = (commandName: string, enabled: boolean) => {
-  return alerts.showConfirmationAlert({
-    title: "Restart Required",
-    content: `${enabled ? "Enabling" : "Disabling"} the ${commandName} command requires a Discord restart to take effect. Would you like to restart now?`,
-    confirmText: "Restart",
-    cancelText: "Later",
-    confirmColor: "brand",
-    onConfirm: () => {
-      storage.enabledCommands[commandName] = enabled;
-      window.enmity.plugins.reload("vendetta");
-    },
-    onCancel: () => {
-      storage.enabledCommands[commandName] = !enabled; // Revert change if user doesn't want to restart
-    },
-  });
+if (!storage.pendingRestart) {
+  storage.pendingRestart = false;
+}
+
+const Credits = {
+  PETPET: "wolfieeee",
+  FACTS: "jdev082",
+  LISTS: "Kitomanari",
+  KONOCHAN: ["btmc727", "Rico040"],
 };
 
 export default function Settings() {
   useProxy(storage);
   const [rerender, forceRerender] = React.useReducer((x) => x + 1, 0);
 
+  // Check for changes when component unmounts
+  React.useEffect(() => {
+    return () => {
+      if (storage.pendingRestart) {
+        alerts.showConfirmationAlert({
+          title: "Restart Required",
+          content:
+            "Command changes require Discord to restart. Would you like to restart now?",
+          confirmText: "Restart",
+          cancelText: "Later",
+          confirmColor: "brand",
+          onConfirm: () => {
+            window.enmity.plugins.reload("vendetta");
+          },
+        });
+      }
+    };
+  }, []);
+
   const handleCommandToggle = (commandName: string, value: boolean) => {
-    askForRestart(commandName, value);
+    storage.enabledCommands[commandName] = value;
+    storage.pendingRestart = true;
     forceRerender();
   };
 
@@ -94,6 +109,11 @@ export default function Settings() {
                 forceRerender();
               }}
             />
+            <TableRow
+              label="Credits"
+              subLabel={`Facts commands by ${Credits.FACTS}`}
+              icon={getAssetIDByName("ic_info")}
+            />
             <TableSwitchRow
               label="/catfact"
               subLabel="Get random cat facts"
@@ -117,7 +137,7 @@ export default function Settings() {
             />
           </TableRowGroup>
 
-          {/* List Commands Settings */}
+          {/* List Commands */}
           <TableRowGroup title="List Commands">
             <TableSwitchRow
               label="Always Send Detailed Plugin List"
@@ -139,6 +159,11 @@ export default function Settings() {
                 forceRerender();
               }}
             />
+            <TableRow
+              label="Credits"
+              subLabel={`List commands by ${Credits.LISTS}`}
+              icon={getAssetIDByName("ic_info")}
+            />
             <TableSwitchRow
               label="/plugin-list"
               subLabel="List all installed plugins"
@@ -157,6 +182,11 @@ export default function Settings() {
 
           {/* Image Commands */}
           <TableRowGroup title="Image Commands">
+            <TableRow
+              label="Credits"
+              subLabel={`PetPet command by ${Credits.PETPET}`}
+              icon={getAssetIDByName("ic_info")}
+            />
             <TableSwitchRow
               label="/petpet"
               subLabel="Create pet-pet GIF of a user"
@@ -168,6 +198,11 @@ export default function Settings() {
 
           {/* KonoChan Commands */}
           <TableRowGroup title="KonoChan Commands">
+            <TableRow
+              label="Credits"
+              subLabel={`KonoChan commands by ${Credits.KONOCHAN.join(" & ")}`}
+              icon={getAssetIDByName("ic_info")}
+            />
             <TableSwitchRow
               label="/konoself"
               subLabel="Get random image from KonoChan (private)"
@@ -186,12 +221,10 @@ export default function Settings() {
 
           {/* About Section */}
           <TableRowGroup title="About">
-            <TableSwitchRow
+            <TableRow
               label="All-In-One Commands"
               subLabel="A collection of useful commands"
               icon={getAssetIDByName("ic_badge_staff")}
-              value={true}
-              disabled={true}
             />
           </TableRowGroup>
         </Stack>
