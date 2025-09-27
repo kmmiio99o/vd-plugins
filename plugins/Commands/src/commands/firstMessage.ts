@@ -1,17 +1,15 @@
 import { findByProps } from "@vendetta/metro";
 import { url } from "@vendetta/metro/common";
 
-const messageUtil = findByProps(
-  "sendBotMessage",
-  "sendMessage",
-  "receiveMessage",
-);
 const APIUtils = findByProps("getAPIBaseURL", "get");
+const MessageActions = findByProps("sendMessage");
+const messageUtil = findByProps("sendBotMessage", "sendMessage", "receiveMessage");
 
+// Helper functions for fetching messages
 const getFirstGuildMessage = async (
-  guildId: number,
-  userId?: number,
-  channelId?: number,
+  guildId: string,
+  userId?: string,
+  channelId?: string,
 ) => {
   const userParam = userId ? `&author_id=${userId}` : "";
   const channelParam = channelId ? `&channel_id=${channelId}` : "";
@@ -24,7 +22,7 @@ const getFirstGuildMessage = async (
   ).body.messages[0][0];
 };
 
-const getFirstDMMessage = async (dmId: number, userId?: number) => {
+const getFirstDMMessage = async (dmId: string, userId?: string) => {
   const userParam = userId ? `&author_id=${userId}` : "";
   const minIdParam = userId ? "" : `&min_id=0`;
   return (
@@ -38,16 +36,15 @@ const getFirstDMMessage = async (dmId: number, userId?: number) => {
 export const firstMessageCommand = {
   name: "firstmessage",
   displayName: "firstmessage",
-  description: "Get the first message in the channel",
-  displayDescription: "Get the first message in the channel",
+  description: "Tired of scrolling to first message?",
+  displayDescription: "Tired of scrolling to first message?",
   options: [
     {
       name: "user",
       displayName: "user",
       description: "Target user to get their first message in this server/dm",
-      displayDescription:
-        "Target user to get their first message in this server/dm",
-      type: 6,
+      displayDescription: "Target user to get their first message in this server/dm",
+      type: 6, // USER type
       required: false,
     },
     {
@@ -55,7 +52,7 @@ export const firstMessageCommand = {
       displayName: "channel",
       description: "Target channel to get first message of",
       displayDescription: "Target channel to get first message of",
-      type: 7,
+      type: 7, // CHANNEL type
       required: false,
     },
     {
@@ -63,71 +60,77 @@ export const firstMessageCommand = {
       displayName: "send",
       description: "Whether to send the resulting url",
       displayDescription: "Whether to send the resulting url",
-      type: 5,
+      type: 5, // BOOLEAN type
       required: false,
     },
   ],
-  applicationId: "-1",
-  inputType: 1,
-  type: 1,
-  async execute(args, ctx) {
-    const options = new Map(args.map((option) => [option.name, option]));
-    const user = options.get("user")?.value;
-    const channel = options.get("channel")?.value;
-    const send = options.get("send")?.value;
-
-    const guildId = ctx.guild?.id;
-    const channelId = ctx.channel.id;
-    const isDM = ctx.channel.type === 1;
-
+  execute: async (args: any, ctx: any) => {
     try {
-      // Handle DM error cases first
-      if (isDM && (channel || (user && channel))) {
-        messageUtil.sendBotMessage(
-          channelId,
-          "This combination cannot be used in DMs!",
-        );
-        return { type: 4 };
-      }
+      const options = new Map(args.map((option: any) => [option.name, option]));
+      const user = options.get("user")?.value;
+      const channel = options.get("channel")?.value;
+      const send = options.get("send")?.value;
+
+      const guildId = ctx.guild?.id;
+      const channelId = ctx.channel.id;
+      const isDM = ctx.channel.type === 1;
 
       let result = "https://discord.com/channels/";
 
+      let message;
       if (!user && !channel) {
         if (isDM) {
-          const message = await getFirstDMMessage(channelId);
+          message = await getFirstDMMessage(channelId);
           result += `@me/${channelId}/${message.id}`;
         } else {
-          const message = await getFirstGuildMessage(guildId);
+          message = await getFirstGuildMessage(guildId);
           result += `${guildId}/${message.channel_id}/${message.id}`;
         }
       } else if (user) {
         if (isDM) {
-          const message = await getFirstDMMessage(channelId, user);
+          message = await getFirstDMMessage(channelId, user);
           result += `@me/${channelId}/${message.id}`;
         } else {
-          const message = await getFirstGuildMessage(guildId, user);
+          message = await getFirstGuildMessage(guildId, user);
           result += `${guildId}/${message.channel_id}/${message.id}`;
         }
       } else if (channel) {
-        const message = await getFirstGuildMessage(guildId, null, channel);
+        if (isDM) {
+          messageUtil.sendBotMessage(channelId, "This combination cannot be used in DMs!");
+          return { type: 4 };
+        }
+        message = await getFirstGuildMessage(guildId, null, channel);
         result += `${guildId}/${channel}/${message.id}`;
       } else {
-        const message = await getFirstGuildMessage(guildId, user, channel);
+        // both user and channel specified
+        if (isDM) {
+          messageUtil.sendBotMessage(channelId, "This combination cannot be used in DMs!");
+          return { type: 4 };
+        }
+        message = await getFirstGuildMessage(guildId, user, channel);
         result += `${guildId}/${channel}/${message.id}`;
       }
 
       if (send) {
-        messageUtil.sendBotMessage(channelId, result);
+        const fixNonce = Date.now().toString();
+        MessageActions.sendMessage(
+          ctx.channel.id,
+          { content: result },
+          void 0,
+          { nonce: fixNonce }
+        );
+        return { type: 4 };
+      } else {
+        url.openDeeplink(result);
         return { type: 4 };
       }
-
-      return url.openDeeplink(result);
     } catch (error) {
-      messageUtil.sendBotMessage(
-        channelId,
-        "Failed to fetch the first message. Please try again.",
-      );
+      console.error("[FirstMessage] Error:", error);
+      messageUtil.sendBotMessage(ctx.channel.id, "Failed to fetch the first message. Please try again.");
       return { type: 4 };
     }
   },
+  applicationId: "-1",
+  inputType: 1,
+  type: 1,
 };

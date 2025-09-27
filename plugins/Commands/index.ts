@@ -8,7 +8,7 @@ import {
 import { pluginListCommand, themeListCommand } from "./src/commands/lists";
 import { petPetCommand } from "./src/commands/petpet";
 import { konoSelfCommand, konoSendCommand } from "./src/commands/konochan";
-import { firstMessageCommand } from "./src/commands/firstmessage";
+import { firstMessageCommand } from "./src/commands/firstMessage";
 import settings from "./settings";
 
 // Initialize storage with default values
