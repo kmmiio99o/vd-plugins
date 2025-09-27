@@ -25,6 +25,31 @@ if (!storage.listSettings) {
   };
 }
 
+if (!storage.enabledCommands) {
+  storage.enabledCommands = {
+    catfact: true,
+    dogfact: true,
+    useless: true,
+    petpet: true,
+    pluginList: true,
+    themeList: true,
+    konoself: true,
+    konosend: true,
+  };
+}
+
+// Map commands to their storage keys
+const commandMap = {
+  catfact: catFactCommand,
+  dogfact: dogFactCommand,
+  useless: uselessFactCommand,
+  petpet: petPetCommand,
+  pluginList: pluginListCommand,
+  themeList: themeListCommand,
+  konoself: konoSelfCommand,
+  konosend: konoSendCommand,
+};
+
 // Store registered commands for cleanup
 let commands: Array<() => void> = [];
 
@@ -32,17 +57,12 @@ export default {
   onLoad: () => {
     console.log("[All-In-One Commands] Loading plugin...");
 
-    // Register all commands
-    commands = [
-      registerCommand(catFactCommand),
-      registerCommand(dogFactCommand),
-      registerCommand(uselessFactCommand),
-      registerCommand(petPetCommand),
-      registerCommand(pluginListCommand),
-      registerCommand(themeListCommand),
-      registerCommand(konoSelfCommand),
-      registerCommand(konoSendCommand),
-    ];
+    // Register only enabled commands
+    for (const [key, command] of Object.entries(commandMap)) {
+      if (storage.enabledCommands[key]) {
+        commands.push(registerCommand(command));
+      }
+    }
 
     console.log("[All-In-One Commands] Plugin loaded successfully!");
   },

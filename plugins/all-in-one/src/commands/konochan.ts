@@ -68,10 +68,19 @@ export const konoSelfCommand = {
     const imageUrl = await fetchImage(isNSFW);
 
     if (!imageUrl) {
-      return sendMessage(ctx.channel.id, "No image found. Try again later.");
+      return {
+        type: 4,
+        data: { content: "No image found. Try again later.", flags: 64 },
+      };
     }
 
-    return sendMessage(ctx.channel.id, `Here's your random image: ${imageUrl}`);
+    return {
+      type: 4,
+      data: {
+        content: `Here's your random image: ${imageUrl}`,
+        flags: 64, // This makes the message ephemeral (only visible to you)
+      },
+    };
   },
   applicationId: "-1",
   inputType: 1,
