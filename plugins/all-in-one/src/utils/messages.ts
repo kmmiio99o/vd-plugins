@@ -1,17 +1,29 @@
 import { findByProps } from "@vendetta/metro";
-import { showToast } from "@vendetta/ui/toasts";
 
 const MessageActions = findByProps("sendMessage");
 
-export const sendMessage = async (
+export const sendMessage = (
   channelId: string,
   content: string,
   replyToId?: string,
   storage?: any,
+  ephemeral?: boolean,
 ) => {
-  // Only return acknowledgment for slash command
+  // If no content, just acknowledge the command
   if (!content) return { type: 4 };
 
+  // For ephemeral messages, return special format
+  if (ephemeral) {
+    return {
+      type: 4,
+      data: {
+        content,
+        flags: 64,
+      },
+    };
+  }
+
+  // For normal messages, send through MessageActions
   const message = {
     content,
     ...(replyToId && storage?.factSettings?.sendAsReply
@@ -19,15 +31,9 @@ export const sendMessage = async (
       : {}),
   };
 
-  // Use a promise to ensure message is sent before returning
-  await MessageActions.sendMessage(channelId, message, void 0, {
+  MessageActions.sendMessage(channelId, message, void 0, {
     nonce: (Date.now() * 4194304).toString(),
   });
 
-  // Return acknowledgment without content to prevent double sending
-  return { type: 4 };
-};
-
-export const showAlert = (message: string) => {
-  showToast(message, findByProps("Alerts").Alerts.ERROR);
+  return { type: 4 }; // Acknowledge the command
 };

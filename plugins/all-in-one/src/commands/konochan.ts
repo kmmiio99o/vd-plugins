@@ -1,6 +1,6 @@
 import { findByProps } from "@vendetta/metro";
-import { alerts } from "@vendetta/ui";
 import { sendMessage } from "../utils/messages";
+import { alerts } from "@vendetta/ui";
 
 /**
  * Fetches a random image from KonoChan.
@@ -28,16 +28,6 @@ const fetchImage = async (isNSFW: boolean): Promise<string | null> => {
   }
 };
 
-// Common options for both commands
-const nsfwOption = {
-  name: "nsfw",
-  description: "Include NSFW content?",
-  type: 5,
-  required: false,
-  displayName: "nsfw",
-  displayDescription: "Include NSFW content?",
-};
-
 const showNSFWWarning = () => {
   return alerts.showConfirmationAlert({
     title: "NSFW Content Warning",
@@ -47,6 +37,16 @@ const showNSFWWarning = () => {
     confirmColor: "brand",
     isDismissable: true,
   });
+};
+
+// Common options for both commands
+const nsfwOption = {
+  name: "nsfw",
+  description: "Include NSFW content?",
+  type: 5,
+  required: false,
+  displayName: "nsfw",
+  displayDescription: "Include NSFW content?",
 };
 
 export const konoSelfCommand = {
@@ -68,19 +68,22 @@ export const konoSelfCommand = {
     const imageUrl = await fetchImage(isNSFW);
 
     if (!imageUrl) {
-      return {
-        type: 4,
-        data: { content: "No image found. Try again later.", flags: 64 },
-      };
+      return sendMessage(
+        ctx.channel.id,
+        "No image found. Try again later.",
+        undefined,
+        undefined,
+        true,
+      );
     }
 
-    return {
-      type: 4,
-      data: {
-        content: `Here's your random image: ${imageUrl}`,
-        flags: 64, // This makes the message ephemeral (only visible to you)
-      },
-    };
+    return sendMessage(
+      ctx.channel.id,
+      `Here's your random image: ${imageUrl}`,
+      undefined,
+      undefined,
+      true,
+    );
   },
   applicationId: "-1",
   inputType: 1,

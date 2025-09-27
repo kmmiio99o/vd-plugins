@@ -1,11 +1,10 @@
 import { plugin } from "@vendetta";
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
-import { getAssetIDByName } from "@vendetta/ui/assets";
 import { React } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
 import { View } from "react-native";
-import { BundleUpdaterManager } from "@vendetta/metro/common";
+import { alerts } from "@vendetta/ui";
 
 const { ScrollView } = findByProps("ScrollView");
 const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
@@ -56,7 +55,13 @@ export default function Settings() {
     return () => {
       if (storage.pendingRestart) {
         storage.pendingRestart = false;
-        BundleUpdaterManager.reload();
+        alerts.showConfirmationAlert({
+          title: "Restart Required",
+          content:
+            "You have made changes to commands. Please restart Discord to apply these changes.",
+          confirmText: "Okay",
+          cancelText: null,
+        });
       }
     };
   }, []);
@@ -79,7 +84,6 @@ export default function Settings() {
             <TableSwitchRow
               label="Send as Reply"
               subLabel="Send facts as a reply to the command message"
-              icon={getAssetIDByName("ic_reply_24px")}
               value={storage.factSettings?.sendAsReply ?? true}
               onValueChange={(v: boolean) => {
                 storage.factSettings.sendAsReply = v;
@@ -89,7 +93,6 @@ export default function Settings() {
             <TableSwitchRow
               label="Include Source Citation"
               subLabel="Include the source of facts when available"
-              icon={getAssetIDByName("ic_info")}
               value={storage.factSettings?.includeCitation ?? false}
               onValueChange={(v: boolean) => {
                 storage.factSettings.includeCitation = v;
@@ -99,21 +102,18 @@ export default function Settings() {
             <TableSwitchRow
               label="/catfact"
               subLabel="Get random cat facts"
-              icon={getAssetIDByName("ic_info")}
               value={storage.enabledCommands?.catfact ?? true}
               onValueChange={(v) => handleCommandToggle("catfact", v)}
             />
             <TableSwitchRow
               label="/dogfact"
               subLabel="Get random dog facts"
-              icon={getAssetIDByName("ic_info")}
               value={storage.enabledCommands?.dogfact ?? true}
               onValueChange={(v) => handleCommandToggle("dogfact", v)}
             />
             <TableSwitchRow
               label="/useless"
               subLabel="Get random useless facts"
-              icon={getAssetIDByName("ic_info")}
               value={storage.enabledCommands?.useless ?? true}
               onValueChange={(v) => handleCommandToggle("useless", v)}
             />
@@ -124,7 +124,6 @@ export default function Settings() {
             <TableSwitchRow
               label="Always Send Detailed Plugin List"
               subLabel="Always use detailed mode when listing plugins"
-              icon={getAssetIDByName("ic_message_copy")}
               value={storage.listSettings?.pluginListAlwaysDetailed ?? false}
               onValueChange={(v: boolean) => {
                 storage.listSettings.pluginListAlwaysDetailed = v;
@@ -134,7 +133,6 @@ export default function Settings() {
             <TableSwitchRow
               label="Always Send Detailed Theme List"
               subLabel="Always use detailed mode when listing themes"
-              icon={getAssetIDByName("ic_theme")}
               value={storage.listSettings?.themeListAlwaysDetailed ?? false}
               onValueChange={(v: boolean) => {
                 storage.listSettings.themeListAlwaysDetailed = v;
@@ -144,14 +142,12 @@ export default function Settings() {
             <TableSwitchRow
               label="/plugin-list"
               subLabel="List all installed plugins"
-              icon={getAssetIDByName("ic_plugins")}
               value={storage.enabledCommands?.pluginList ?? true}
               onValueChange={(v) => handleCommandToggle("pluginList", v)}
             />
             <TableSwitchRow
               label="/theme-list"
               subLabel="List all installed themes"
-              icon={getAssetIDByName("ic_theme")}
               value={storage.enabledCommands?.themeList ?? true}
               onValueChange={(v) => handleCommandToggle("themeList", v)}
             />
@@ -162,7 +158,6 @@ export default function Settings() {
             <TableSwitchRow
               label="/petpet"
               subLabel="Create pet-pet GIF of a user"
-              icon={getAssetIDByName("ic_image")}
               value={storage.enabledCommands?.petpet ?? true}
               onValueChange={(v) => handleCommandToggle("petpet", v)}
             />
@@ -173,14 +168,12 @@ export default function Settings() {
             <TableSwitchRow
               label="/konoself"
               subLabel="Get random image from KonoChan (private)"
-              icon={getAssetIDByName("ic_image")}
               value={storage.enabledCommands?.konoself ?? true}
               onValueChange={(v) => handleCommandToggle("konoself", v)}
             />
             <TableSwitchRow
               label="/konosend"
               subLabel="Send random image from KonoChan to channel"
-              icon={getAssetIDByName("ic_image")}
               value={storage.enabledCommands?.konosend ?? true}
               onValueChange={(v) => handleCommandToggle("konosend", v)}
             />
@@ -188,35 +181,12 @@ export default function Settings() {
 
           {/* Credits */}
           <TableRowGroup title="Credits">
-            <TableRow
-              label="Facts Commands"
-              subLabel="by jdev082"
-              icon={getAssetIDByName("ic_info")}
-            />
-            <TableRow
-              label="List Commands"
-              subLabel="by Kitomanari"
-              icon={getAssetIDByName("ic_list")}
-            />
-            <TableRow
-              label="PetPet Command"
-              subLabel="by wolfieeee"
-              icon={getAssetIDByName("ic_image")}
-            />
+            <TableRow label="Facts Commands" subLabel="by jdev082" />
+            <TableRow label="List Commands" subLabel="by Kitomanari" />
+            <TableRow label="PetPet Command" subLabel="by wolfieeee" />
             <TableRow
               label="KonoChan Commands"
               subLabel="by btmc727 & Rico040"
-              icon={getAssetIDByName("ic_image")}
-            />
-          </TableRowGroup>
-
-          {/* Actions */}
-          <TableRowGroup title="Actions">
-            <TableRow
-              label="Reload Discord"
-              subLabel="Apply command changes"
-              icon={getAssetIDByName("ic_message_retry")}
-              onPress={() => BundleUpdaterManager.reload()}
             />
           </TableRowGroup>
 
@@ -225,7 +195,6 @@ export default function Settings() {
             <TableRow
               label="All-In-One Commands"
               subLabel="A collection of useful commands"
-              icon={getAssetIDByName("ic_badge_staff")}
             />
           </TableRowGroup>
         </Stack>
