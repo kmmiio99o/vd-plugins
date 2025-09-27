@@ -14,6 +14,9 @@ interface LastFMResponse {
   recenttracks?: {
     track: LastFMTrack[];
   };
+  track?: {
+    duration: string;
+  };
   error?: number;
   message?: string;
 }
@@ -102,7 +105,9 @@ class LastFMClient {
     return data;
   }
 
-  public async fetchLatestScrobble(): Promise<Track> {
+  public async fetchLatestScrobble(): Promise<
+    Track & { from: number; to: number | null }
+  > {
     try {
       this.validateSettings();
 
@@ -123,6 +128,28 @@ class LastFMClient {
       // Reset retry count on successful request
       this.retryCount = 0;
 
+      const isNowPlaying = Boolean(lastTrack["@attr"]?.nowplaying);
+      const from = isNowPlaying
+        ? Math.floor(Date.now() / 1000)
+        : parseInt(lastTrack?.date?.uts);
+
+      let to: number | null = null;
+      try {
+        const trackInfo = await this.makeRequest({
+          method: "track.getInfo",
+          track: lastTrack.name,
+          artist: lastTrack.artist.name,
+          username: currentSettings.username,
+        });
+
+        const duration = parseInt(trackInfo?.track?.duration);
+        if (duration > 0) {
+          to = from + Math.floor(duration / 1000);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch track duration", err);
+      }
+
       return {
         name: lastTrack.name,
         artist: lastTrack.artist.name,
@@ -132,9 +159,11 @@ class LastFMClient {
         ),
         url: lastTrack.url,
         date: lastTrack.date?.["#text"] ?? "now",
-        nowPlaying: Boolean(lastTrack["@attr"]?.nowplaying),
+        nowPlaying: isNowPlaying,
         loved: lastTrack.loved === "1",
-      } as Track;
+        from,
+        to,
+      };
     } catch (error) {
       // Increment retry count and throw if we've exceeded max retries
       this.retryCount++;

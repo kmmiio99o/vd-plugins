@@ -7,6 +7,12 @@ import Constants from "./constants";
 import { SelfPresenceStore } from "./modules";
 import { clearActivity, fetchAsset, sendRequest } from "./utils/activity";
 import { setDebugInfo } from "./utils/debug";
+
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+}
 import { lastfmClient } from "./utils/lastfm";
 
 enum ActivityType {
@@ -116,7 +122,11 @@ class PluginManager {
         if (asset[0]) {
           activity.assets = {
             large_image: asset[0],
-            large_text: `on ${lastTrack.album}`,
+            large_text: `on ${lastTrack.album}${
+              currentSettings.showTimestamp && lastTrack.to
+                ? ` • ${formatTime((lastTrack.to - lastTrack.from) / 1000)}`
+                : ""
+            }`,
           };
         }
       }

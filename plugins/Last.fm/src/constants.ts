@@ -10,7 +10,7 @@ const Constants = {
   /** Retry delay in milliseconds */
   RETRY_DELAY: 5000,
   /** Base URL for Last.fm API */
-  LFM_API_BASE_URL: "https://ws.audioscrobbler.com/2.0",
+  LFM_API_BASE_URL: "http://ws.audioscrobbler.com/2.0",
   /** These are the default album covers that are used by Last.fm */
   LFM_DEFAULT_COVER_HASHES: [
     "2a96cbd8b46e442fc41c2b86b821562f",
