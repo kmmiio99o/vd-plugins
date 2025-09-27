@@ -1,7 +1,0 @@
-{
-    "name": "HideGiftButton",
-    "description": "Hides the gift button in the chat input.",
-    "vendetta": {
-        "icon": "ic_gift_24px"
-    }
-}
