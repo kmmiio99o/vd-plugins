@@ -1,11 +1,9 @@
 import { plugin } from "@vendetta";
-import { storage } from "@vendetta/plugin";
-import { useProxy } from "@vendetta/storage";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { React } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
 import { View } from "react-native";
-import { alerts } from "@vendetta/ui";
+import { BundleUpdaterManager } from "@vendetta/metro/common";
 
 const { ScrollView } = findByProps("ScrollView");
 const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
@@ -47,13 +45,6 @@ if (!storage.pendingRestart) {
   storage.pendingRestart = false;
 }
 
-const Credits = {
-  PETPET: "wolfieeee",
-  FACTS: "jdev082",
-  LISTS: "Kitomanari",
-  KONOCHAN: ["btmc727", "Rico040"],
-};
-
 export default function Settings() {
   useProxy(storage);
   const [rerender, forceRerender] = React.useReducer((x) => x + 1, 0);
@@ -62,17 +53,8 @@ export default function Settings() {
   React.useEffect(() => {
     return () => {
       if (storage.pendingRestart) {
-        alerts.showConfirmationAlert({
-          title: "Restart Required",
-          content:
-            "Command changes require Discord to restart. Would you like to restart now?",
-          confirmText: "Restart",
-          cancelText: "Later",
-          confirmColor: "brand",
-          onConfirm: () => {
-            window.enmity.plugins.reload("vendetta");
-          },
-        });
+        storage.pendingRestart = false;
+        BundleUpdaterManager.reload();
       }
     };
   }, []);
@@ -85,7 +67,7 @@ export default function Settings() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, paddingBottom: 38 }}>
         <Stack spacing={8}>
           {/* Facts Commands */}
           <TableRowGroup title="Facts Commands">
@@ -108,11 +90,6 @@ export default function Settings() {
                 storage.factSettings.includeCitation = v;
                 forceRerender();
               }}
-            />
-            <TableRow
-              label="Credits"
-              subLabel={`Facts commands by ${Credits.FACTS}`}
-              icon={getAssetIDByName("ic_info")}
             />
             <TableSwitchRow
               label="/catfact"
@@ -159,11 +136,6 @@ export default function Settings() {
                 forceRerender();
               }}
             />
-            <TableRow
-              label="Credits"
-              subLabel={`List commands by ${Credits.LISTS}`}
-              icon={getAssetIDByName("ic_info")}
-            />
             <TableSwitchRow
               label="/plugin-list"
               subLabel="List all installed plugins"
@@ -182,11 +154,6 @@ export default function Settings() {
 
           {/* Image Commands */}
           <TableRowGroup title="Image Commands">
-            <TableRow
-              label="Credits"
-              subLabel={`PetPet command by ${Credits.PETPET}`}
-              icon={getAssetIDByName("ic_info")}
-            />
             <TableSwitchRow
               label="/petpet"
               subLabel="Create pet-pet GIF of a user"
@@ -198,11 +165,6 @@ export default function Settings() {
 
           {/* KonoChan Commands */}
           <TableRowGroup title="KonoChan Commands">
-            <TableRow
-              label="Credits"
-              subLabel={`KonoChan commands by ${Credits.KONOCHAN.join(" & ")}`}
-              icon={getAssetIDByName("ic_info")}
-            />
             <TableSwitchRow
               label="/konoself"
               subLabel="Get random image from KonoChan (private)"
@@ -219,7 +181,40 @@ export default function Settings() {
             />
           </TableRowGroup>
 
-          {/* About Section */}
+          {/* Credits */}
+          <TableRowGroup title="Credits">
+            <TableRow
+              label="Facts Commands"
+              subLabel="by jdev082"
+              icon={getAssetIDByName("ic_info")}
+            />
+            <TableRow
+              label="List Commands"
+              subLabel="by Kitomanari"
+              icon={getAssetIDByName("ic_list")}
+            />
+            <TableRow
+              label="PetPet Command"
+              subLabel="by wolfieeee"
+              icon={getAssetIDByName("ic_image")}
+            />
+            <TableRow
+              label="KonoChan Commands"
+              subLabel="by btmc727 & Rico040"
+              icon={getAssetIDByName("ic_image")}
+            />
+          </TableRowGroup>
+
+          {/* Actions */}
+          <TableRowGroup title="Actions">
+            <TableRow
+              label="Reload Discord"
+              icon={getAssetIDByName("ic_message_retry")}
+              onPress={() => BundleUpdaterManager.reload()}
+            />
+          </TableRowGroup>
+
+          {/* About */}
           <TableRowGroup title="About">
             <TableRow
               label="All-In-One Commands"
