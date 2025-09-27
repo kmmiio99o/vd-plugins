@@ -1,1 +1,0 @@
-(function(t,e,n){"use strict";const o=e.patcher.before("dispatch",n.FluxDispatcher,function([{type:c}]){if(c==="IDLE")return[{type:"IDLE",idle:!1}]});return t.onUnload=o,t})({},vendetta,vendetta.metro.common);
