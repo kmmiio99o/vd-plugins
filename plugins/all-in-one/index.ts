@@ -86,7 +86,7 @@ const sendMessage = (
   };
 
   MessageActions.sendMessage(channelId, message, void 0, {
-    nonce: (Date.now() * 4194304).toString(),
+    nonce: BigInt(Date.now()) << 22n,
   });
   return { type: 4 }; // Acknowledge the command
 };
@@ -99,9 +99,7 @@ const formatList = (list: string[]) => list.join("\n").trimEnd();
 const getListLength = (list: string[]) => formatList(list).length;
 
 const sendList = async (channelID: string, list: string[]) => {
-  MessageActions.sendMessage(channelID, { content: formatList(list) }, void 0, {
-    nonce: (Date.now() * 4194304).toString(),
-  });
+  return sendMessage(channelID, formatList(list));
 };
 
 const isSLMPluginInstalled = () =>
@@ -153,16 +151,12 @@ async function handleThemeList(detailed: boolean, ctx: any) {
     Clyde.sendBotMessage(
       ctx.channel.id,
       `Your list is too long to send it! Please install the [Split Large Messages](${SPLIT_LARGE_MESSAGES_PLUGIN}) plugin.`,
-      void 0,
-      { nonce: (Date.now() * 4194304).toString() },
     );
     return { type: 4 };
   } else if (isListTooLong && !isSLMPluginEnabled()) {
     Clyde.sendBotMessage(
       ctx.channel.id,
       "Your list is too long to send it! You have the Split Large Messages plugin installed, but it's not enabled!\n> Please enable it in order to send the list.",
-      void 0,
-      { nonce: (Date.now() * 4194304).toString() },
     );
     return { type: 4 };
   }
@@ -172,12 +166,11 @@ async function handleThemeList(detailed: boolean, ctx: any) {
       content: "Your list is over than 2000 characters. Are you sure?",
       confirmText: "Yes",
       cancelText: "No",
-      onConfirm: async () => await sendList(ctx.channel.id, themeList),
+      onConfirm: async () => sendList(ctx.channel.id, themeList),
     });
   }
 
-  await sendList(ctx.channel.id, themeList);
-  return { type: 4 };
+  return sendList(ctx.channel.id, themeList);
 }
 
 async function handlePluginList(detailed: boolean, ctx: any) {
@@ -210,21 +203,15 @@ async function handlePluginList(detailed: boolean, ctx: any) {
   const isListTooLong = getListLength(pluginList) > maxMessageLength;
 
   if (isListTooLong && !isSLMPluginInstalled()) {
-    Clyde.sendBotMessage(
+    return sendMessage(
       ctx.channel.id,
       `Your list is too long to send it! Please install the [Split Large Messages](${SPLIT_LARGE_MESSAGES_PLUGIN}) plugin.`,
-      void 0,
-      { nonce: (Date.now() * 4194304).toString() },
     );
-    return { type: 4 };
   } else if (isListTooLong && !isSLMPluginEnabled()) {
-    Clyde.sendBotMessage(
+    return sendMessage(
       ctx.channel.id,
       "Your list is too long to send it! You have the Split Large Messages plugin installed, but it's not enabled!\n> Please enable it in order to send the list.",
-      void 0,
-      { nonce: (Date.now() * 4194304).toString() },
     );
-    return { type: 4 };
   }
 
   if (getListLength(pluginList) > 2000) {
@@ -232,12 +219,12 @@ async function handlePluginList(detailed: boolean, ctx: any) {
       content: "Your list is over than 2000 characters. Are you sure?",
       confirmText: "Yes",
       cancelText: "No",
-      onConfirm: async () => await sendList(ctx.channel.id, pluginList),
+      onConfirm: async () =>
+        sendMessage(ctx.channel.id, formatList(pluginList)),
     });
   }
 
-  await sendList(ctx.channel.id, pluginList);
-  return { type: 4 };
+  return sendMessage(ctx.channel.id, formatList(pluginList));
 }
 
 // Register Commands
