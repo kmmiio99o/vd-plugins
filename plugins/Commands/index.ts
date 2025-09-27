@@ -8,6 +8,7 @@ import {
 import { pluginListCommand, themeListCommand } from "./src/commands/lists";
 import { petPetCommand } from "./src/commands/petpet";
 import { konoSelfCommand, konoSendCommand } from "./src/commands/konochan";
+import { firstMessageCommand } from "./src/commands/firstmessage";
 import settings from "./settings";
 
 // Initialize storage with default values
@@ -35,6 +36,7 @@ if (!storage.enabledCommands) {
     themeList: true,
     konoself: true,
     konosend: true,
+    firstmessage: true,
   };
 }
 
@@ -48,6 +50,7 @@ const commandMap = {
   themeList: themeListCommand,
   konoself: konoSelfCommand,
   konosend: konoSendCommand,
+  firstmessage: firstMessageCommand,
 };
 
 // Store registered commands for cleanup
