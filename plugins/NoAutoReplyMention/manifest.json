@@ -1,7 +1,0 @@
-{
-    "name": "NoAutoReplyMention",
-    "description": "Turns off auto mention when replying to someone.",
-    "vendetta": {
-        "icon": "ic_notif_off"
-    }
-}

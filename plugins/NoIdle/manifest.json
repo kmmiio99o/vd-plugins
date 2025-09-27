@@ -1,7 +1,0 @@
-{
-    "name": "NoIdle",
-    "description": "Prevent status from idling when Discord is in the background.",
-    "vendetta": {
-        "icon": "StatusIdle"
-    }
-}

@@ -1,6 +1,0 @@
-{
-    "name": "BetterSpotifyIntegration",
-    "description": "Shrimply better integration with Spotify",
-    "vendetta": { },
-    "main": "src/index.tsx"
-}

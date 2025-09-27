@@ -177,7 +177,9 @@ class LastFMClient {
 export const lastfmClient = LastFMClient.getInstance();
 
 /** Fetches the latest user's scrobble */
-export async function fetchLatestScrobble(): Promise<Track> {
+export async function fetchLatestScrobble(): Promise<
+  Track & { from: number; to: number | null }
+> {
   return lastfmClient.fetchLatestScrobble();
 }
 

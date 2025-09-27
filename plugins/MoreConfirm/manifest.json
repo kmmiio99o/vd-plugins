@@ -1,7 +1,0 @@
-{
-    "name": "MoreConfirm",
-    "description": "Prompts confirmations before making irreversible actions.",
-    "vendetta": {
-        "icon": "check"
-    }
-}

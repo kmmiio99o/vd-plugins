@@ -81,12 +81,12 @@ class PluginManager {
 
       const activity: Activity = {
         name: currentSettings.appName || Constants.DEFAULT_APP_NAME,
-        flags: 0,
+        flags: 2,
         type: currentSettings.listeningTo
           ? ActivityType.LISTENING
           : ActivityType.PLAYING,
         details: lastTrack.name,
-        state: lastTrack.artist,
+        state: `by ${lastTrack.artist}`,
         status_display_type: 1,
         application_id: Constants.APPLICATION_ID,
       };
@@ -102,9 +102,11 @@ class PluginManager {
       }
 
       // Set timestamps if enabled
-      if (currentSettings.showTimestamp) {
+      // Use `from` and `to` from track.getInfo
+      if (currentSettings.showTimestamp && typeof lastTrack.from === "number") {
         activity.timestamps = {
-          start: Date.now() | 0,
+          start: lastTrack.from * 1000,
+          ...(typeof lastTrack.to === "number" && { end: lastTrack.to * 1000 }),
         };
       }
 
@@ -114,7 +116,7 @@ class PluginManager {
         if (asset[0]) {
           activity.assets = {
             large_image: asset[0],
-            large_text: lastTrack.album,
+            large_text: `on ${lastTrack.album}`,
           };
         }
       }
