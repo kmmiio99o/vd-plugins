@@ -78,7 +78,6 @@ const sendMessage = (
   content: string,
   replyToId?: string,
 ) => {
-  const fixNonce = Date.now().toString();
   const message = {
     content,
     ...(replyToId && storage.factSettings?.sendAsReply
@@ -86,7 +85,9 @@ const sendMessage = (
       : {}),
   };
 
-  MessageActions.sendMessage(channelId, message, void 0, { nonce: fixNonce });
+  MessageActions.sendMessage(channelId, message, void 0, {
+    nonce: (Date.now() * 4194304).toString(),
+  });
   return { type: 4 }; // Acknowledge the command
 };
 
@@ -98,13 +99,9 @@ const formatList = (list: string[]) => list.join("\n").trimEnd();
 const getListLength = (list: string[]) => formatList(list).length;
 
 const sendList = async (channelID: string, list: string[]) => {
-  const fixNonce = Date.now().toString();
-  await MessageActions.sendMessage(
-    channelID,
-    { content: formatList(list) },
-    void 0,
-    { nonce: fixNonce },
-  );
+  MessageActions.sendMessage(channelID, { content: formatList(list) }, void 0, {
+    nonce: (Date.now() * 4194304).toString(),
+  });
 };
 
 const isSLMPluginInstalled = () =>
@@ -153,21 +150,19 @@ async function handleThemeList(detailed: boolean, ctx: any) {
   const isListTooLong = getListLength(themeList) > maxMessageLength;
 
   if (isListTooLong && !isSLMPluginInstalled()) {
-    const fixNonce = Date.now().toString();
     Clyde.sendBotMessage(
       ctx.channel.id,
       `Your list is too long to send it! Please install the [Split Large Messages](${SPLIT_LARGE_MESSAGES_PLUGIN}) plugin.`,
       void 0,
-      { nonce: fixNonce },
+      { nonce: (Date.now() * 4194304).toString() },
     );
     return { type: 4 };
   } else if (isListTooLong && !isSLMPluginEnabled()) {
-    const fixNonce = Date.now().toString();
     Clyde.sendBotMessage(
       ctx.channel.id,
       "Your list is too long to send it! You have the Split Large Messages plugin installed, but it's not enabled!\n> Please enable it in order to send the list.",
       void 0,
-      { nonce: fixNonce },
+      { nonce: (Date.now() * 4194304).toString() },
     );
     return { type: 4 };
   }
@@ -215,21 +210,19 @@ async function handlePluginList(detailed: boolean, ctx: any) {
   const isListTooLong = getListLength(pluginList) > maxMessageLength;
 
   if (isListTooLong && !isSLMPluginInstalled()) {
-    const fixNonce = Date.now().toString();
     Clyde.sendBotMessage(
       ctx.channel.id,
       `Your list is too long to send it! Please install the [Split Large Messages](${SPLIT_LARGE_MESSAGES_PLUGIN}) plugin.`,
       void 0,
-      { nonce: fixNonce },
+      { nonce: (Date.now() * 4194304).toString() },
     );
     return { type: 4 };
   } else if (isListTooLong && !isSLMPluginEnabled()) {
-    const fixNonce = Date.now().toString();
     Clyde.sendBotMessage(
       ctx.channel.id,
       "Your list is too long to send it! You have the Split Large Messages plugin installed, but it's not enabled!\n> Please enable it in order to send the list.",
       void 0,
-      { nonce: fixNonce },
+      { nonce: (Date.now() * 4194304).toString() },
     );
     return { type: 4 };
   }
@@ -317,8 +310,8 @@ const registerCommands = () => {
     registerCommand({
       name: "petpet",
       displayName: "petpet",
-      displayDescription: "PetPet someone",
       description: "PetPet someone",
+      displayDescription: "PetPet someone",
       options: [
         {
           name: "user",
@@ -329,7 +322,7 @@ const registerCommands = () => {
           displayDescription: "The user(or their id) to be patted",
         },
       ],
-      execute: async (args: any, ctx: any) => {
+      execute: async (args, ctx) => {
         const user = await UserStore.getUser(args[0].value);
         const image = user.getAvatarURL(512);
         const data = await getPetPetData(image);
