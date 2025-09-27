@@ -38,8 +38,8 @@ const getFirstDMMessage = async (dmId: number, userId?: number) => {
 export const firstMessageCommand = {
   name: "firstmessage",
   displayName: "firstmessage",
-  description: "Tired of scrolling to first message?",
-  displayDescription: "Tired of scrolling to first message?",
+  description: "Get the first message in the channel",
+  displayDescription: "Get the first message in the channel",
   options: [
     {
       name: "user",
@@ -70,8 +70,8 @@ export const firstMessageCommand = {
   applicationId: "-1",
   inputType: 1,
   type: 1,
-  execute: async (args: any, ctx: any) => {
-    const options = new Map(args.map((option: any) => [option.name, option]));
+  async execute(args, ctx) {
+    const options = new Map(args.map((option) => [option.name, option]));
     const user = options.get("user")?.value;
     const channel = options.get("channel")?.value;
     const send = options.get("send")?.value;
@@ -119,9 +119,9 @@ export const firstMessageCommand = {
       if (send) {
         messageUtil.sendBotMessage(channelId, result);
         return { type: 4 };
-      } else {
-        return url.openDeeplink(result);
       }
+
+      return url.openDeeplink(result);
     } catch (error) {
       messageUtil.sendBotMessage(
         channelId,
