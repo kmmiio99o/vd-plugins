@@ -5,80 +5,85 @@ import { getAssetIDByName } from "@vendetta/ui/assets";
 import { ErrorBoundary, Forms } from "@vendetta/ui/components";
 
 const { FormSwitchRow, FormIcon, FormSection, FormDivider } = Forms;
+
 const Icons = {
-    List: getAssetIDByName('ic_list'),
-    Copy: getAssetIDByName('ic_copy_message_link'),
-    Settings: getAssetIDByName('ic_settings'),
-    Fact: getAssetIDByName('ic_info')
+  List: getAssetIDByName("ic_list"),
+  Message: getAssetIDByName("ic_message"),
+  Copy: getAssetIDByName("ic_copy_message_link"),
+  Info: getAssetIDByName("ic_info"),
+  Theme: getAssetIDByName("ic_theme"),
+  Plugin: getAssetIDByName("ic_plugins"),
 };
 
-// Initialize storage with default values if not set
-if (!storage.factSettings) {
-    storage.factSettings = {
-        sendAsReply: true,
-        includeCitation: false
-    };
-}
-
-if (!storage.listSettings) {
-    storage.listSettings = {
-        pluginListAlwaysDetailed: false,
-        themeListAlwaysDetailed: false
-    };
-}
-
 export default () => {
-    useProxy(storage);
+  useProxy(storage);
 
-    return (
-        <ErrorBoundary>
-            <ReactNative.ScrollView style={{ flex: 1 }}>
-                {/* Plugin List Settings */}
-                <FormSection title="Plugin List Settings" titleStyleType="no_border">
-                    <FormSwitchRow
-                        label="Always send detailed plugin list"
-                        subLabel='Always use detailed mode when listing plugins'
-                        leading={<FormIcon source={Icons.List} />}
-                        onValueChange={(value: boolean) => {
-                            storage.listSettings.pluginListAlwaysDetailed = value;
-                        }}
-                        value={storage.listSettings.pluginListAlwaysDetailed}
-                    />
-                    <FormDivider />
-                    <FormSwitchRow
-                        label="Always send detailed theme list"
-                        subLabel='Always use detailed mode when listing themes'
-                        leading={<FormIcon source={Icons.List} />}
-                        onValueChange={(value: boolean) => {
-                            storage.listSettings.themeListAlwaysDetailed = value;
-                        }}
-                        value={storage.listSettings.themeListAlwaysDetailed}
-                    />
-                </FormSection>
+  if (!storage.factSettings) {
+    storage.factSettings = {
+      sendAsReply: true,
+      includeCitation: false,
+    };
+  }
 
-                {/* Fact Command Settings */}
-                <FormSection title="Fact Commands Settings" titleStyleType="no_border">
-                    <FormSwitchRow
-                        label="Send as Reply"
-                        subLabel='Send facts as a reply to the command message'
-                        leading={<FormIcon source={Icons.Copy} />}
-                        onValueChange={(value: boolean) => {
-                            storage.factSettings.sendAsReply = value;
-                        }}
-                        value={storage.factSettings.sendAsReply}
-                    />
-                    <FormDivider />
-                    <FormSwitchRow
-                        label="Include Source Citation"
-                        subLabel='Include the source of the fact when available'
-                        leading={<FormIcon source={Icons.Fact} />}
-                        onValueChange={(value: boolean) => {
-                            storage.factSettings.includeCitation = value;
-                        }}
-                        value={storage.factSettings.includeCitation}
-                    />
-                </FormSection>
-            </ReactNative.ScrollView>
-        </ErrorBoundary>
-    );
+  if (!storage.listSettings) {
+    storage.listSettings = {
+      pluginListAlwaysDetailed: false,
+      themeListAlwaysDetailed: false,
+    };
+  }
+
+  return (
+    <ErrorBoundary>
+      <ReactNative.ScrollView style={{ flex: 1 }}>
+        {/* Fact Commands Settings */}
+        <FormSection title="Fact Commands" titleStyleType="no_border">
+          <FormSwitchRow
+            label="Send as Reply"
+            subLabel="Send facts as a reply to the command message"
+            leading={<FormIcon source={Icons.Message} />}
+            onValueChange={(value: boolean) => {
+              storage.factSettings.sendAsReply = value;
+            }}
+            value={storage.factSettings.sendAsReply}
+          />
+          <FormDivider />
+          <FormSwitchRow
+            label="Include Source Citation"
+            subLabel="Include the source of facts when available"
+            leading={<FormIcon source={Icons.Info} />}
+            onValueChange={(value: boolean) => {
+              storage.factSettings.includeCitation = value;
+            }}
+            value={storage.factSettings.includeCitation}
+          />
+        </FormSection>
+
+        {/* Plugin List Settings */}
+        <FormSection title="Plugin List" titleStyleType="no_border">
+          <FormSwitchRow
+            label="Always Send Detailed List"
+            subLabel="Always use detailed mode when listing plugins"
+            leading={<FormIcon source={Icons.Plugin} />}
+            onValueChange={(value: boolean) => {
+              storage.listSettings.pluginListAlwaysDetailed = value;
+            }}
+            value={storage.listSettings.pluginListAlwaysDetailed}
+          />
+        </FormSection>
+
+        {/* Theme List Settings */}
+        <FormSection title="Theme List" titleStyleType="no_border">
+          <FormSwitchRow
+            label="Always Send Detailed List"
+            subLabel="Always use detailed mode when listing themes"
+            leading={<FormIcon source={Icons.Theme} />}
+            onValueChange={(value: boolean) => {
+              storage.listSettings.themeListAlwaysDetailed = value;
+            }}
+            value={storage.listSettings.themeListAlwaysDetailed}
+          />
+        </FormSection>
+      </ReactNative.ScrollView>
+    </ErrorBoundary>
+  );
 };
