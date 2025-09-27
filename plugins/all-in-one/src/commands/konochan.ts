@@ -1,4 +1,5 @@
 import { findByProps } from "@vendetta/metro";
+import { alerts } from "@vendetta/ui";
 import { sendMessage } from "../utils/messages";
 
 /**
@@ -37,6 +38,17 @@ const nsfwOption = {
   displayDescription: "Include NSFW content?",
 };
 
+const showNSFWWarning = () => {
+  return alerts.showConfirmationAlert({
+    title: "NSFW Content Warning",
+    content: "NSFW content can only be sent in NSFW channels!",
+    confirmText: "Okay",
+    cancelText: null,
+    confirmColor: "brand",
+    isDismissable: true,
+  });
+};
+
 export const konoSelfCommand = {
   name: "konoself",
   displayName: "konoself",
@@ -49,10 +61,8 @@ export const konoSelfCommand = {
 
     // Check if channel is NSFW for NSFW content
     if (isNSFW && !ctx.channel.nsfw) {
-      return sendMessage(
-        ctx.channel.id,
-        "❌ NSFW content can only be sent in NSFW channels!",
-      );
+      showNSFWWarning();
+      return { type: 4 };
     }
 
     const imageUrl = await fetchImage(isNSFW);
@@ -81,10 +91,8 @@ export const konoSendCommand = {
 
     // Check if channel is NSFW for NSFW content
     if (isNSFW && !ctx.channel.nsfw) {
-      return sendMessage(
-        ctx.channel.id,
-        "❌ NSFW content can only be sent in NSFW channels!",
-      );
+      showNSFWWarning();
+      return { type: 4 };
     }
 
     const imageUrl = await fetchImage(isNSFW);

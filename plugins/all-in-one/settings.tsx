@@ -37,7 +37,7 @@ export default function Settings() {
       <ScrollView style={{ flex: 1 }}>
         <Stack spacing={8}>
           {/* Facts Commands Settings */}
-          <TableRowGroup title="Facts Settings">
+          <TableRowGroup title="Facts Commands">
             <TableSwitchRow
               label="Send as Reply"
               subLabel="Send facts as a reply to the command message"
@@ -58,38 +58,6 @@ export default function Settings() {
                 forceRerender();
               }}
             />
-          </TableRowGroup>
-
-          {/* Plugin List Settings */}
-          <TableRowGroup title="Plugin List Settings">
-            <TableSwitchRow
-              label="Always Send Detailed List"
-              subLabel="Always use detailed mode when listing plugins"
-              icon={getAssetIDByName("ic_message_copy")}
-              value={storage.listSettings.pluginListAlwaysDetailed}
-              onValueChange={(v: boolean) => {
-                storage.listSettings.pluginListAlwaysDetailed = v;
-                forceRerender();
-              }}
-            />
-          </TableRowGroup>
-
-          {/* Theme List Settings */}
-          <TableRowGroup title="Theme List Settings">
-            <TableSwitchRow
-              label="Always Send Detailed List"
-              subLabel="Always use detailed mode when listing themes"
-              icon={getAssetIDByName("ic_theme")}
-              value={storage.listSettings.themeListAlwaysDetailed}
-              onValueChange={(v: boolean) => {
-                storage.listSettings.themeListAlwaysDetailed = v;
-                forceRerender();
-              }}
-            />
-          </TableRowGroup>
-
-          {/* Commands Overview */}
-          <TableRowGroup title="Available Commands">
             <TableSwitchRow
               label="/catfact"
               subLabel="Get random cat facts"
@@ -111,12 +79,29 @@ export default function Settings() {
               value={true}
               disabled={true}
             />
+          </TableRowGroup>
+
+          {/* List Commands Settings */}
+          <TableRowGroup title="List Commands">
             <TableSwitchRow
-              label="/petpet"
-              subLabel="Create pet-pet GIF of a user"
-              icon={getAssetIDByName("ic_image")}
-              value={true}
-              disabled={true}
+              label="Always Send Detailed Plugin List"
+              subLabel="Always use detailed mode when listing plugins"
+              icon={getAssetIDByName("ic_message_copy")}
+              value={storage.listSettings.pluginListAlwaysDetailed}
+              onValueChange={(v: boolean) => {
+                storage.listSettings.pluginListAlwaysDetailed = v;
+                forceRerender();
+              }}
+            />
+            <TableSwitchRow
+              label="Always Send Detailed Theme List"
+              subLabel="Always use detailed mode when listing themes"
+              icon={getAssetIDByName("ic_theme")}
+              value={storage.listSettings.themeListAlwaysDetailed}
+              onValueChange={(v: boolean) => {
+                storage.listSettings.themeListAlwaysDetailed = v;
+                forceRerender();
+              }}
             />
             <TableSwitchRow
               label="/plugin-list"
@@ -132,9 +117,31 @@ export default function Settings() {
               value={true}
               disabled={true}
             />
+          </TableRowGroup>
+
+          {/* Image Commands */}
+          <TableRowGroup title="Image Commands">
             <TableSwitchRow
-              label="/konoself, /konosend"
-              subLabel="Get random images from KonoChan"
+              label="/petpet"
+              subLabel="Create pet-pet GIF of a user"
+              icon={getAssetIDByName("ic_image")}
+              value={true}
+              disabled={true}
+            />
+          </TableRowGroup>
+
+          {/* KonoChan Commands */}
+          <TableRowGroup title="KonoChan Commands">
+            <TableSwitchRow
+              label="/konoself"
+              subLabel="Get random image from KonoChan (private)"
+              icon={getAssetIDByName("ic_image")}
+              value={true}
+              disabled={true}
+            />
+            <TableSwitchRow
+              label="/konosend"
+              subLabel="Send random image from KonoChan to channel"
               icon={getAssetIDByName("ic_image")}
               value={true}
               disabled={true}
