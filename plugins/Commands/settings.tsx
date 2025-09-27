@@ -199,6 +199,7 @@ export default function Settings() {
               label="KonoChan Commands"
               subLabel="by btmc727 & Rico040"
             />
+            <TableRow label="FirstMessage Command" subLabel="by sapphire" />
           </TableRowGroup>
 
           {/* About */}
