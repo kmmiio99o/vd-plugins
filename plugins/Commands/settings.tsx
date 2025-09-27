@@ -39,6 +39,7 @@ if (!storage.enabledCommands) {
     themeList: true,
     konoself: true,
     konosend: true,
+    firstmessage: true,
   };
 }
 
@@ -176,6 +177,16 @@ export default function Settings() {
               subLabel="Send random image from KonoChan to channel"
               value={storage.enabledCommands?.konosend ?? true}
               onValueChange={(v) => handleCommandToggle("konosend", v)}
+            />
+          </TableRowGroup>
+
+          {/* Message Commands */}
+          <TableRowGroup title="Message Commands">
+            <TableSwitchRow
+              label="/firstmessage"
+              subLabel="Get the first message in a channel"
+              value={storage.enabledCommands?.firstmessage ?? true}
+              onValueChange={(v) => handleCommandToggle("firstmessage", v)}
             />
           </TableRowGroup>
 
