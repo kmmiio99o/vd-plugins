@@ -1,0 +1,7 @@
+{
+    "name": "RichPresence",
+    "description": "Sets Discord Rich Presence for your profile.",
+    "vendetta": {
+        "icon": "games"
+    }
+}
