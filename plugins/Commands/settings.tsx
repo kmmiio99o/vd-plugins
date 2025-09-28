@@ -40,6 +40,7 @@ if (!storage.enabledCommands) {
     konoself: true,
     konosend: true,
     firstmessage: true,
+    sysinfo: true,
   };
 }
 
@@ -190,6 +191,16 @@ export default function Settings() {
             />
           </TableRowGroup>
 
+          {/* System Commands */}
+          <TableRowGroup title="System Commands">
+            <TableSwitchRow
+              label="/sysinfo"
+              subLabel="Display system information"
+              value={storage.enabledCommands?.sysinfo ?? true}
+              onValueChange={(v) => handleCommandToggle("sysinfo", v)}
+            />
+          </TableRowGroup>
+
           {/* Credits */}
           <TableRowGroup title="Credits">
             <TableRow label="Facts Commands" subLabel="by jdev082" />
@@ -200,6 +211,7 @@ export default function Settings() {
               subLabel="by btmc727 & Rico040"
             />
             <TableRow label="FirstMessage Command" subLabel="by sapphire" />
+            <TableRow label="Sysinfo Command" subLabel="by kmmiio99o" />
           </TableRowGroup>
 
           {/* About */}
