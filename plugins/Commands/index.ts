@@ -9,6 +9,7 @@ import { pluginListCommand, themeListCommand } from "./src/commands/lists";
 import { petPetCommand } from "./src/commands/petpet";
 import { konoSelfCommand, konoSendCommand } from "./src/commands/konochan";
 import { firstMessageCommand } from "./src/commands/firstmessage";
+import { sysinfoCommand } from "./src/commands/sysinfo"; 
 import settings from "./settings";
 
 // Initialize storage with default values
@@ -37,6 +38,7 @@ if (!storage.enabledCommands) {
     konoself: true,
     konosend: true,
     firstmessage: true,
+    sysinfo: true, // Add sysinfo to enabled commands
   };
 }
 
@@ -51,6 +53,7 @@ const commandMap = {
   konoself: konoSelfCommand,
   konosend: konoSendCommand,
   firstmessage: firstMessageCommand,
+  sysinfo: sysinfoCommand, // Add sysinfo to command map
 };
 
 // Store registered commands for cleanup

@@ -217,7 +217,7 @@ export default function Settings() {
           {/* About */}
           <TableRowGroup title="About">
             <TableRow
-              label="All-In-One Commands"
+              label="Commands"
               subLabel="A collection of useful commands"
             />
           </TableRowGroup>

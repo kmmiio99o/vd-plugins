@@ -1,2 +1,6 @@
 packages:
   - plugins/*
+
+ignoredBuiltDependencies:
+  - '@swc/core'
+  - esbuild
