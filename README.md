@@ -1,15 +1,10 @@
-> [!IMPORTANT]
-> This plugins are no longer actively maintained by me. You may still file issues and open pull requests.
-
-# amsyarasyiq's [Vendetta](https://github.com/vendetta-mod/Vendetta) Plugins
+# kmmiio99o's [Revenge](https://github.com/revenge-mod/Revenge-bundle)/[Kettu](https://codeberg.org/cocobo1/Kettu) Plugins
 
 Currently available plugins:
-- HideGiftButton
-- NoIdle
-- MoreConfirm
+- Commands
 - Last.fm
 
 # How to install?
 Paste a plugin URL into the Plugins page of Vendetta, following a basic format of:
 
-`https://amsyarasyiq.github.io/letup/PLUGIN_NAME`
+`https://kmmiio99o.github.io/vd-plugins/PLUGIN_NAME`
