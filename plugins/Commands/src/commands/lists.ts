@@ -12,10 +12,17 @@ const STATUS = {
   NOT_SELECTED: "❌",
 };
 
-// Helper functions
-const addonAuthors = (authors: any[]) => {
-  if (!authors || authors.length === 0) return "Unknown";
-  return authors.map((author) => author.name).join(", ");
+// Helper functions - Fixed to handle malformed authors
+const addonAuthors = (authors: any) => {
+  // Handle cases where authors might be undefined, null, not an array, or contain invalid objects
+  if (!authors) return "Unknown";
+  if (!Array.isArray(authors)) return "Unknown";
+  if (authors.length === 0) return "Unknown";
+  
+  return authors
+    .filter(author => author && (typeof author === 'string' || (typeof author === 'object' && author.name)))
+    .map(author => typeof author === 'string' ? author : (author.name || "Unknown"))
+    .join(", ") || "Unknown";
 };
 
 const formatList = (list: string[]) => list.join("\n");
@@ -68,7 +75,11 @@ async function handlePluginList(detailed: boolean, ctx: any) {
 
   for (const plugin of Object.values(plugins)) {
     const { enabled, manifest, id } = plugin;
-    const { name, description, authors } = manifest;
+    
+    // Safe destructuring with fallbacks
+    const name = manifest?.name || "Unknown Plugin";
+    const description = manifest?.description || "No description";
+    const authors = manifest?.authors;
 
     if (detailed || alwaysDetailed) {
       pluginList.push(
@@ -107,7 +118,7 @@ async function handlePluginList(detailed: boolean, ctx: any) {
 }
 
 async function handleThemeList(detailed: boolean, ctx: any) {
-  const alwaysDetailed = storage.themeListAlwaysDetailed ?? false;
+  const alwaysDetailed = storage.listSettings?.themeListAlwaysDetailed ?? false;
   const themeList = [
     `**My Theme List | ${Object.keys(themes).length} Themes**`,
     "",
@@ -117,7 +128,11 @@ async function handleThemeList(detailed: boolean, ctx: any) {
   if (themeValues.length) {
     for (const theme of themeValues) {
       const { selected, data, id } = theme;
-      const { name, description, authors } = data;
+      
+      // Safe destructuring with fallbacks
+      const name = data?.name || "Unknown Theme";
+      const description = data?.description || "No description";
+      const authors = data?.authors;
 
       if (detailed || alwaysDetailed) {
         themeList.push(
