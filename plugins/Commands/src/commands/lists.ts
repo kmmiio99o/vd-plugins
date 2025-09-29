@@ -1,181 +1,215 @@
-import { plugins, themes } from "@vendetta";
+import { findByProps, findByStoreName } from "@vendetta/metro";
+import { themes } from "@vendetta/themes";
+import { plugins } from "@vendetta/plugins";
 import { storage } from "@vendetta/plugin";
 import { alerts } from "@vendetta/ui";
-import { sendMessage, validateChannelForCommand } from "../utils/messages";
+import { validateChannelForCommand } from "../utils/messages";
 
-const SPLIT_LARGE_MESSAGES_PLUGIN = "github.com/fres621/vendetta-plugins";
+import {
+    ALERT,
+    ARGS,
+    EMPTY,
+    FAILED_TO_SEND_LIST,
+    JOINERS,
+    NOTHING_TO_SEE,
+    SPLIT_LARGE_MESSAGES_PLUGIN,
+    STATUS
+} from "../consts";
 
-const STATUS = {
-  ENABLED: "✅",
-  DISABLED: "❌",
-  SELECTED: "✅",
-  NOT_SELECTED: "❌",
-};
+const MessageActions = findByProps('sendMessage', 'receiveMessage');
+const Clyde = findByProps('sendBotMessage');
 
-// Helper functions - Fixed to handle malformed authors
+const maxMessageLength = findByStoreName('UserStore')
+    .getCurrentUser()
+    ?.premiumType === 2
+        ? 4000
+        : 2000;
+
+const isSLMPluginInstalled = (installedPlugins: typeof plugins) =>
+    Object.keys(installedPlugins)
+        .includes(SPLIT_LARGE_MESSAGES_PLUGIN);
+const isSLMPluginEnabled = (installedPlugins: typeof plugins) =>
+    Object.values(installedPlugins)
+        .find((plugin) => plugin.id == SPLIT_LARGE_MESSAGES_PLUGIN)
+        ?.enabled;
+
+const getArgumentValue = (args: any[]): any | false =>
+    args
+        .find((arg) => arg.name === ARGS.DETAILED)
+        ?.value ?? false;
+
+// Fixed addonAuthors function to handle malformed authors
 const addonAuthors = (authors: any) => {
-  // Handle cases where authors might be undefined, null, not an array, or contain invalid objects
-  if (!authors) return "Unknown";
-  if (!Array.isArray(authors)) return "Unknown";
-  if (authors.length === 0) return "Unknown";
-  
-  return authors
-    .filter(author => author && (typeof author === 'string' || (typeof author === 'object' && author.name)))
-    .map(author => typeof author === 'string' ? author : (author.name || "Unknown"))
-    .join(", ") || "Unknown";
+    // Handle cases where authors might be undefined, null, not an array, or contain invalid objects
+    if (!authors) return "Unknown";
+    if (!Array.isArray(authors)) return "Unknown";
+    if (authors.length === 0) return "Unknown";
+    
+    return authors
+        .filter(author => author && (typeof author === 'string' || (typeof author === 'object' && author.name)))
+        .map(author => typeof author === 'string' ? author : (author.name || "Unknown"))
+        .join(JOINERS.SEMICOL) || "Unknown";
 };
 
-const formatList = (list: string[]) => list.join("\n");
+const formatList = (list: string[]) =>
+    list
+        .join(JOINERS.NEW_LINE)
+        .trimEnd();
 
 const getListLength = (list: string[]) => formatList(list).length;
 
-const isSLMPluginInstalled = () => {
-  return Object.values(plugins).some((plugin) => plugin.id === SPLIT_LARGE_MESSAGES_PLUGIN);
-};
-
-const isSLMPluginEnabled = () => {
-  const slmPlugin = Object.values(plugins).find((p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN);
-  return slmPlugin?.enabled ?? false;
-};
-
-const showSplitPluginDialog = () => {
-  return alerts.showConfirmationAlert({
-    title: "Install Split Large Messages Plugin",
-    content: "This list is over 2000 characters. Install the Split Large Messages plugin to send it.",
-    confirmText: "Install",
-    cancelText: "Cancel",
-    onConfirm: () => {
-      // Implementation to install plugin would go here
-    },
-  });
-};
-
-const showEnablePluginDialog = () => {
-  return alerts.showConfirmationAlert({
-    title: "Enable Split Large Messages Plugin",
-    content: "This list is over 2000 characters. Enable the Split Large Messages plugin to send it.",
-    confirmText: "Enable",
-    cancelText: "Cancel",
-    onConfirm: () => {
-      const slmPlugin = Object.values(plugins).find((p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN);
-      if (slmPlugin) {
-        slmPlugin.enabled = true;
-      }
-    },
-  });
-};
-
-// Command handlers
-async function handlePluginList(detailed: boolean, ctx: any) {
-  const alwaysDetailed = storage.listSettings?.pluginListAlwaysDetailed ?? false;
-  const pluginList = [
-    `**My Plugin List | ${Object.keys(plugins).length} Plugins**`,
-    "",
-  ];
-
-  for (const plugin of Object.values(plugins)) {
-    const { enabled, manifest, id } = plugin;
+const sendList = async (channelID: string, list: string[]) => {
+    // Use consistent nonce generation
+    const nonce = (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
     
-    // Safe destructuring with fallbacks
-    const name = manifest?.name || "Unknown Plugin";
-    const description = manifest?.description || "No description";
-    const authors = manifest?.authors;
+    await MessageActions.sendMessage(channelID, {
+        content: formatList(list)
+    }, void 0, { nonce });
+};
 
-    if (detailed || alwaysDetailed) {
-      pluginList.push(
-        `> **Name**: ${name}`,
-        `> **Status**: ${enabled ? STATUS.ENABLED : STATUS.DISABLED}`,
-        `> **Description**: ${description}`,
-        `> **Authors**: ${addonAuthors(authors)}`,
-        `> **[Install!](${id})**`,
-        "",
-      );
-    } else {
-      pluginList.push(
-        `> ${enabled ? STATUS.ENABLED : STATUS.DISABLED} **${name}** by ${addonAuthors(authors)}`,
-      );
+const baseListHeader = (type: 'Plugin' | 'Theme', length: number) => [
+    `**My ${type} List | ${length} ${type}s**`,
+    EMPTY
+];
+
+export async function themeList(args: any[], ctx: CommandContext) {
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
+
+    try {
+        const detailed = getArgumentValue(args);
+        const alwaysDetailed = storage.themeListAlwaysDetailed ?? false;
+
+        // Ensure themes is valid
+        if (!themes || typeof themes !== 'object') {
+            const channelID: string = ctx.channel.id;
+            Clyde.sendBotMessage(channelID, "No themes found or themes not loaded yet.");
+            return { type: 4 };
+        }
+
+        const objectValues = Object.values(themes);
+        
+        const channelID: string = ctx.channel.id;
+
+        const themeList = baseListHeader('Theme', Object.keys(themes).length);
+
+        if (objectValues.length) {
+            for (const theme of objectValues) {
+                if (!theme || typeof theme !== 'object') continue;
+                
+                const { selected, data, id } = theme;
+                
+                // Safe destructuring with fallbacks
+                const name = data?.name || "Unknown Theme";
+                const description = data?.description || "No description";
+                const authors = data?.authors;
+        
+                if (detailed || alwaysDetailed)
+                    themeList.push(
+                        `> **Name**: ${name}`,
+                        `> **Selected**: ${selected ? STATUS.SELECTED : STATUS.NOT_SELECTED}`,
+                        `> **Description**: ${description}`,
+                        `> **Authors**: ${addonAuthors(authors)}`,
+                        `> **[Install!](${id || "unknown"})**`,
+                        EMPTY
+                    );
+                else
+                    themeList.push(`> ${selected ? STATUS.SELECTED : STATUS.NOT_SELECTED} **${name}** by ${addonAuthors(authors)}`);
+            }
+        } else
+            themeList.push(NOTHING_TO_SEE);
+
+        const isListTooLong = getListLength(themeList) > maxMessageLength;
+
+        if (isListTooLong && !isSLMPluginInstalled(plugins))
+            Clyde.sendBotMessage(channelID, FAILED_TO_SEND_LIST.SLM_NOT_INSTALLED);
+        else if (isListTooLong && !isSLMPluginEnabled(plugins))
+            Clyde.sendBotMessage(channelID, FAILED_TO_SEND_LIST.SLM_NOT_ENABLED);
+        else {
+            if (getListLength(themeList) > 2000)
+                return alerts.showConfirmationAlert({
+                    content: ALERT.CONTENT,
+                    confirmText: ALERT.CONFIRM,
+                    cancelText: ALERT.CANCEL,
+                    onConfirm: async () => await sendList(channelID, themeList)
+                });
+            
+            await sendList(channelID, themeList);
+        }
+    } catch (error) {
+        console.error('[ThemeList] Error:', error);
+        return { type: 4 };
     }
-  }
-
-  if (getListLength(pluginList) > 2000) {
-    if (!isSLMPluginInstalled()) {
-      return showSplitPluginDialog();
-    }
-    if (!isSLMPluginEnabled()) {
-      return showEnablePluginDialog();
-    }
-
-    return alerts.showConfirmationAlert({
-      title: "Large Message",
-      content: "This list is over 2000 characters. Send anyway?",
-      confirmText: "Send",
-      cancelText: "Cancel",
-      onConfirm: () => sendMessage(ctx.channel.id, formatList(pluginList)),
-    });
-  }
-
-  return sendMessage(ctx.channel.id, formatList(pluginList));
 }
 
-async function handleThemeList(detailed: boolean, ctx: any) {
-  const alwaysDetailed = storage.listSettings?.themeListAlwaysDetailed ?? false;
-  const themeList = [
-    `**My Theme List | ${Object.keys(themes).length} Themes**`,
-    "",
-  ];
+export async function pluginList(args: any[], ctx: CommandContext) {
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
 
-  const themeValues = Object.values(themes);
-  if (themeValues.length) {
-    for (const theme of themeValues) {
-      const { selected, data, id } = theme;
-      
-      // Safe destructuring with fallbacks
-      const name = data?.name || "Unknown Theme";
-      const description = data?.description || "No description";
-      const authors = data?.authors;
+    try {
+        const detailed = getArgumentValue(args);
+        const alwaysDetailed = storage.pluginListAlwaysDetailed ?? false;
 
-      if (detailed || alwaysDetailed) {
-        themeList.push(
-          `> **Name**: ${name}`,
-          `> **Selected**: ${selected ? STATUS.SELECTED : STATUS.NOT_SELECTED}`,
-          `> **Description**: ${description}`,
-          `> **Authors**: ${addonAuthors(authors)}`,
-          `> **[Install!](${id})**`,
-          "",
-        );
-      } else {
-        themeList.push(
-          `> ${selected ? STATUS.SELECTED : STATUS.NOT_SELECTED} **${name}** by ${addonAuthors(authors)}`,
-        );
-      }
+        const channelID: string = ctx.channel.id;
+
+        // Ensure plugins is valid
+        if (!plugins || typeof plugins !== 'object') {
+            Clyde.sendBotMessage(channelID, "No plugins found or plugins not loaded yet.");
+            return { type: 4 };
+        }
+
+        const pluginList = baseListHeader('Plugin', Object.keys(plugins).length);
+
+        for (const plugin of Object.values(plugins)) {
+            if (!plugin || typeof plugin !== 'object') continue;
+            
+            const { enabled, manifest, id } = plugin;
+            
+            // Safe destructuring with fallbacks
+            const name = manifest?.name || "Unknown Plugin";
+            const description = manifest?.description || "No description";
+            const authors = manifest?.authors;
+
+            if (detailed || alwaysDetailed)
+                pluginList.push(
+                    `> **Name**: ${name}`,
+                    `> **Status**: ${enabled ? STATUS.ENABLED : STATUS.DISABLED}`,
+                    `> **Description**: ${description}`,
+                    `> **Authors**: ${addonAuthors(authors)}`,
+                    `> **[Install!](${id || "unknown"})**`,
+                    EMPTY
+                );
+            else
+                pluginList.push(`> ${enabled ? STATUS.ENABLED : STATUS.DISABLED} **${name}** by ${addonAuthors(authors)}`);
+        }
+
+        const isListTooLong = getListLength(pluginList) > maxMessageLength;
+
+        if (isListTooLong && !isSLMPluginInstalled(plugins))
+            Clyde.sendBotMessage(channelID, FAILED_TO_SEND_LIST.SLM_NOT_INSTALLED);
+        else if (isListTooLong && !isSLMPluginEnabled(plugins))
+            Clyde.sendBotMessage(channelID, FAILED_TO_SEND_LIST.SLM_NOT_ENABLED);
+        else {
+            if (getListLength(pluginList) > 2000)
+                return alerts.showConfirmationAlert({
+                    content: ALERT.CONTENT,
+                    confirmText: ALERT.CONFIRM,
+                    cancelText: ALERT.CANCEL,
+                    onConfirm: async () => await sendList(channelID, pluginList)
+                });
+
+            await sendList(channelID, pluginList);
+        }
+    } catch (error) {
+        console.error('[PluginList] Error:', error);
+        return { type: 4 };
     }
-  } else {
-    themeList.push("Nothing to see here, huh...");
-  }
-
-  if (getListLength(themeList) > 2000) {
-    if (!isSLMPluginInstalled()) {
-      return showSplitPluginDialog();
-    }
-    if (!isSLMPluginEnabled()) {
-      return showEnablePluginDialog();
-    }
-
-    return alerts.showConfirmationAlert({
-      title: "Large Message",
-      content: "This list is over 2000 characters. Send anyway?",
-      confirmText: "Send",
-      cancelText: "Cancel",
-      onConfirm: () => sendMessage(ctx.channel.id, formatList(themeList)),
-    });
-  }
-
-  return sendMessage(ctx.channel.id, formatList(themeList));
 }
 
+// Export commands for your existing structure
 export const pluginListCommand = {
   name: "plugin-list",
-  displayName: "plugin list",
+  displayName: "plugin list", 
   description: "Send your plugin list to the current channel",
   displayDescription: "Send your plugin list to the current channel",
   options: [
@@ -188,19 +222,7 @@ export const pluginListCommand = {
       displayDescription: "Whether to send a list with detailed information.",
     },
   ],
-  execute: async (args: any, ctx: any) => {
-    const channelValidation = validateChannelForCommand(ctx);
-    if (channelValidation) return channelValidation;
-
-    try {
-      const detailed = args.find((arg: any) => arg.name === "detailed")?.value ?? false;
-      return handlePluginList(detailed, ctx);
-    } catch (error) {
-      console.error('[PluginList] Error:', error);
-      // Silent fail - no error message in chat
-      return { type: 4 };
-    }
-  },
+  execute: pluginList,
   applicationId: "-1",
   inputType: 1,
   type: 1,
@@ -209,7 +231,7 @@ export const pluginListCommand = {
 export const themeListCommand = {
   name: "theme-list",
   displayName: "theme list",
-  description: "Send your theme list to the current channel",
+  description: "Send your theme list to the current channel", 
   displayDescription: "Send your theme list to the current channel",
   options: [
     {
@@ -221,20 +243,8 @@ export const themeListCommand = {
       displayDescription: "Whether to send a list with detailed information.",
     },
   ],
-  execute: async (args: any, ctx: any) => {
-    const channelValidation = validateChannelForCommand(ctx);
-    if (channelValidation) return channelValidation;
-
-    try {
-      const detailed = args.find((arg: any) => arg.name === "detailed")?.value ?? false;
-      return handleThemeList(detailed, ctx);
-    } catch (error) {
-      console.error('[ThemeList] Error:', error);
-      // Silent fail - no error message in chat
-      return { type: 4 };
-    }
-  },
-  applicationId: "-1",
+  execute: themeList,
+  applicationId: "-1", 
   inputType: 1,
   type: 1,
 };
