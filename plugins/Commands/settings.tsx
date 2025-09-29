@@ -211,14 +211,14 @@ export default function Settings() {
               subLabel="by btmc727 & Rico040"
             />
             <TableRow label="FirstMessage Command" subLabel="by sapphire" />
-            <TableRow label="Sysinfo Command" subLabel="by kmmiio99o" />
+            <TableRow label="Sysinfo Command" subLabel="by mugman" />
           </TableRowGroup>
 
           {/* About */}
           <TableRowGroup title="About">
             <TableRow
-              label="All-In-One Commands"
-              subLabel="A collection of useful commands"
+              label="Commands"
+              subLabel="A collection of commands"
             />
           </TableRowGroup>
         </Stack>
