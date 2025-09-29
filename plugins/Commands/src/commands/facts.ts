@@ -1,5 +1,5 @@
 import { storage } from "@vendetta/plugin";
-import { sendMessage } from "../utils/messages";
+import { sendMessage, validateChannelForCommand } from "../utils/messages";
 import { catFact, dogFact, uselessFact } from "../utils/api";
 
 // Helper function to format fact response
@@ -20,8 +20,17 @@ export const catFactCommand = {
   inputType: 1,
   type: 1,
   execute: async (args: any, ctx: any) => {
-    const fact = await catFact();
-    return sendMessage(ctx.channel.id, formatFactResponse(fact), ctx.message?.id, storage);
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
+
+    try {
+      const fact = await catFact();
+      return sendMessage(ctx.channel.id, formatFactResponse(fact), ctx.message?.id, storage);
+    } catch (error) {
+      console.error('[CatFact] Error:', error);
+      // Silent fail - no error message in chat
+      return { type: 4 };
+    }
   },
 };
 
@@ -34,8 +43,17 @@ export const dogFactCommand = {
   inputType: 1,
   type: 1,
   execute: async (args: any, ctx: any) => {
-    const fact = await dogFact();
-    return sendMessage(ctx.channel.id, formatFactResponse(fact), ctx.message?.id, storage);
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
+
+    try {
+      const fact = await dogFact();
+      return sendMessage(ctx.channel.id, formatFactResponse(fact), ctx.message?.id, storage);
+    } catch (error) {
+      console.error('[DogFact] Error:', error);
+      // Silent fail - no error message in chat
+      return { type: 4 };
+    }
   },
 };
 
@@ -48,7 +66,16 @@ export const uselessFactCommand = {
   inputType: 1,
   type: 1,
   execute: async (args: any, ctx: any) => {
-    const fact = await uselessFact();
-    return sendMessage(ctx.channel.id, formatFactResponse(fact), ctx.message?.id, storage);
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
+
+    try {
+      const fact = await uselessFact();
+      return sendMessage(ctx.channel.id, formatFactResponse(fact), ctx.message?.id, storage);
+    } catch (error) {
+      console.error('[UselessFact] Error:', error);
+      // Silent fail - no error message in chat
+      return { type: 4 };
+    }
   },
 };

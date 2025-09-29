@@ -1,5 +1,6 @@
 import { findByProps } from "@vendetta/metro";
 import { alerts } from "@vendetta/ui";
+import { validateChannelForCommand } from "../utils/messages";
 
 const MessageActions = findByProps("sendMessage");
 const messageUtil = findByProps(
@@ -27,6 +28,7 @@ const fetchImage = async (isNSFW: boolean): Promise<string | null> => {
     if (!Array.isArray(data) || data.length === 0) {
       return null;
     }
+
     return data[0].file_url;
   } catch (error) {
     console.error("[KonoChan Randomizer] Error fetching image:", error);
@@ -43,6 +45,11 @@ const showNSFWWarning = () => {
     confirmColor: "brand",
     isDismissable: true,
   });
+};
+
+// Generate consistent nonce
+const generateNonce = () => {
+  return (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
 };
 
 // Common options for both commands
@@ -62,30 +69,36 @@ export const konoSelfCommand = {
   displayDescription: "Fetch a random image from KonoChan for yourself.",
   options: [nsfwOption],
   execute: async (args: any, ctx: any) => {
-    const options = new Map(args.map((option: any) => [option.name, option]));
-    const isNSFW = options.get("nsfw")?.value || false;
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
 
-    // Check if channel is NSFW for NSFW content
-    if (isNSFW && !ctx.channel.nsfw) {
-      showNSFWWarning();
-      return { type: 4 };
-    }
+    try {
+      const options = new Map(args.map((option: any) => [option.name, option]));
+      const isNSFW = options.get("nsfw")?.value || false;
 
-    const imageUrl = await fetchImage(isNSFW);
+      // Check if channel is NSFW for NSFW content
+      if (isNSFW && !ctx.channel.nsfw) {
+        showNSFWWarning();
+        return { type: 4 };
+      }
 
-    if (!imageUrl) {
+      const imageUrl = await fetchImage(isNSFW);
+
+      if (!imageUrl) {
+        // Silent fail - no error message
+        return { type: 4 };
+      }
+
       messageUtil.sendBotMessage(
         ctx.channel.id,
-        "No image found. Try again later.",
+        `Here's your random image: ${imageUrl}`,
       );
       return { type: 4 };
+    } catch (error) {
+      console.error('[KonoSelf] Error:', error);
+      // Silent fail - no error message in chat
+      return { type: 4 };
     }
-
-    messageUtil.sendBotMessage(
-      ctx.channel.id,
-      `Here's your random image: ${imageUrl}`,
-    );
-    return { type: 4 };
   },
   applicationId: "-1",
   inputType: 1,
@@ -100,33 +113,36 @@ export const konoSendCommand = {
     "Fetch a random image from KonoChan and send it to the channel.",
   options: [nsfwOption],
   execute: async (args: any, ctx: any) => {
-    const options = new Map(args.map((option: any) => [option.name, option]));
-    const isNSFW = options.get("nsfw")?.value || false;
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
 
-    // Check if channel is NSFW for NSFW content
-    if (isNSFW && !ctx.channel.nsfw) {
-      showNSFWWarning();
+    try {
+      const options = new Map(args.map((option: any) => [option.name, option]));
+      const isNSFW = options.get("nsfw")?.value || false;
+
+      // Check if channel is NSFW for NSFW content
+      if (isNSFW && !ctx.channel.nsfw) {
+        showNSFWWarning();
+        return { type: 4 };
+      }
+
+      const imageUrl = await fetchImage(isNSFW);
+
+      if (!imageUrl) {
+        // Silent fail - no error message
+        return { type: 4 };
+      }
+
+      const nonce = generateNonce();
+      MessageActions.sendMessage(ctx.channel.id, { content: imageUrl }, void 0, {
+        nonce,
+      });
+      return { type: 4 };
+    } catch (error) {
+      console.error('[KonoSend] Error:', error);
+      // Silent fail - no error message in chat
       return { type: 4 };
     }
-
-    const imageUrl = await fetchImage(isNSFW);
-
-    if (!imageUrl) {
-      const fixNonce = Date.now().toString();
-      MessageActions.sendMessage(
-        ctx.channel.id,
-        { content: "No image found. Try again later." },
-        void 0,
-        { nonce: fixNonce },
-      );
-      return { type: 4 };
-    }
-
-    const fixNonce = Date.now().toString();
-    MessageActions.sendMessage(ctx.channel.id, { content: imageUrl }, void 0, {
-      nonce: fixNonce,
-    });
-    return { type: 4 };
   },
   applicationId: "-1",
   inputType: 1,

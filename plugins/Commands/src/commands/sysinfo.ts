@@ -2,6 +2,7 @@ import { findByProps } from "@vendetta/metro";
 import { getDebugInfo } from "@vendetta/debug";
 import { ReactNative } from "@vendetta/metro/common";
 import { storage } from "@vendetta/plugin";
+import { validateChannelForCommand } from "../utils/messages";
 
 const MessageActions = findByProps("sendMessage");
 const messageUtil = findByProps("sendBotMessage", "sendMessage", "receiveMessage");
@@ -145,8 +146,16 @@ for (const cat of categories) {
   if (storage[cat] === undefined) storage[cat] = true;
 }
 
-// Command execution function
-function sysinfoCommand(args: any[], ctx: any) {
+// Generate consistent nonce
+const generateNonce = () => {
+  return (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
+};
+
+// Command execution function (renamed to avoid conflict)
+function executeSysinfoCommand(args: any[], ctx: any) {
+  const channelValidation = validateChannelForCommand(ctx);
+  if (channelValidation) return channelValidation;
+
   try {
     let output = ["__System Information__\n"];
     const data = generateSystemInfo();
@@ -171,18 +180,18 @@ function sysinfoCommand(args: any[], ctx: any) {
       messageUtil.sendBotMessage(ctx.channel.id, output.join("\n"));
       return { type: 4 };
     } else {
-      const fixNonce = Date.now().toString();
+      const nonce = generateNonce();
       MessageActions.sendMessage(
         ctx.channel.id,
         { content: output.join("\n") },
         void 0,
-        { nonce: fixNonce }
+        { nonce }
       );
       return { type: 4 };
     }
   } catch (e) {
     console.error("[Sysinfo] Error:", e);
-    messageUtil.sendBotMessage(ctx.channel.id, "Failed to generate system information. Please try again.");
+    // Silent fail - no chat message
     return { type: 4 };
   }
 }
@@ -210,7 +219,7 @@ export const sysinfoCommand = {
       required: false,
     })),
   ],
-  execute: sysinfoCommand,
+  execute: executeSysinfoCommand,
   applicationId: "-1",
   inputType: 1,
   type: 1,

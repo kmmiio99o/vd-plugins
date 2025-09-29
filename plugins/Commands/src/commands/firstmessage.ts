@@ -1,9 +1,15 @@
 import { findByProps } from "@vendetta/metro";
 import { url } from "@vendetta/metro/common";
+import { validateChannelForCommand } from "../utils/messages";
 
 const APIUtils = findByProps("getAPIBaseURL", "get");
 const MessageActions = findByProps("sendMessage");
 const messageUtil = findByProps("sendBotMessage", "sendMessage", "receiveMessage");
+
+// Generate consistent nonce
+const generateNonce = () => {
+  return (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
+};
 
 // Helper functions for fetching messages
 const getFirstGuildMessage = async (
@@ -65,6 +71,20 @@ export const firstMessageCommand = {
     },
   ],
   execute: async (args: any, ctx: any) => {
+    // Special handling for threads/forum channels
+    if (ctx.channel.type >= 10 && ctx.channel.type <= 15) {
+      return {
+        type: 4,
+        data: { 
+          content: "FirstMessage command doesn't work in thread or forum channels.", 
+          flags: 64 
+        }
+      };
+    }
+
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
+
     try {
       const options = new Map(args.map((option: any) => [option.name, option]));
       const user = options.get("user")?.value;
@@ -96,7 +116,7 @@ export const firstMessageCommand = {
         }
       } else if (channel) {
         if (isDM) {
-          messageUtil.sendBotMessage(channelId, "This combination cannot be used in DMs!");
+          // Silent fail for invalid combination
           return { type: 4 };
         }
         message = await getFirstGuildMessage(guildId, null, channel);
@@ -104,7 +124,7 @@ export const firstMessageCommand = {
       } else {
         // both user and channel specified
         if (isDM) {
-          messageUtil.sendBotMessage(channelId, "This combination cannot be used in DMs!");
+          // Silent fail for invalid combination
           return { type: 4 };
         }
         message = await getFirstGuildMessage(guildId, user, channel);
@@ -112,12 +132,12 @@ export const firstMessageCommand = {
       }
 
       if (send) {
-        const fixNonce = Date.now().toString();
+        const nonce = generateNonce();
         MessageActions.sendMessage(
           ctx.channel.id,
           { content: result },
           void 0,
-          { nonce: fixNonce }
+          { nonce }
         );
         return { type: 4 };
       } else {
@@ -126,7 +146,7 @@ export const firstMessageCommand = {
       }
     } catch (error) {
       console.error("[FirstMessage] Error:", error);
-      messageUtil.sendBotMessage(ctx.channel.id, "Failed to fetch the first message. Please try again.");
+      // Silent fail - no error message in chat
       return { type: 4 };
     }
   },

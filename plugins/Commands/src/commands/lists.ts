@@ -1,63 +1,56 @@
-import { findByProps } from "@vendetta/metro";
-import { themes } from "@vendetta/themes";
-import { plugins } from "@vendetta/plugins";
+import { plugins, themes } from "@vendetta";
 import { storage } from "@vendetta/plugin";
 import { alerts } from "@vendetta/ui";
-import { sendMessage } from "../utils/messages";
-import { openURL } from "@vendetta/metro/common";
+import { sendMessage, validateChannelForCommand } from "../utils/messages";
 
-const SPLIT_LARGE_MESSAGES_PLUGIN =
-  "https://vd-plugins.github.io/proxy/actuallythesun.github.io/vendetta-plugins/SplitLargeMessages/";
+const SPLIT_LARGE_MESSAGES_PLUGIN = "github.com/fres621/vendetta-plugins";
 
 const STATUS = {
-  ENABLED: "🟢",
-  DISABLED: "🔴",
-  SELECTED: "🔶",
-  NOT_SELECTED: "🔷",
-} as const;
+  ENABLED: "✅",
+  DISABLED: "❌",
+  SELECTED: "✅",
+  NOT_SELECTED: "❌",
+};
 
-// Helper Functions
-const addonAuthors = (authors: Array<{ name: string }>) =>
-  authors.map((author) => author.name).join(", ");
+// Helper functions
+const addonAuthors = (authors: any[]) => {
+  if (!authors || authors.length === 0) return "Unknown";
+  return authors.map((author) => author.name).join(", ");
+};
 
-const formatList = (list: string[]) => list.join("\n").trimEnd();
+const formatList = (list: string[]) => list.join("\n");
 
 const getListLength = (list: string[]) => formatList(list).length;
 
-const isSLMPluginInstalled = () =>
-  Object.keys(plugins).includes(SPLIT_LARGE_MESSAGES_PLUGIN);
+const isSLMPluginInstalled = () => {
+  return Object.values(plugins).some((plugin) => plugin.id === SPLIT_LARGE_MESSAGES_PLUGIN);
+};
 
-const isSLMPluginEnabled = () =>
-  Object.values(plugins).find((p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN)
-    ?.enabled ?? false;
+const isSLMPluginEnabled = () => {
+  const slmPlugin = Object.values(plugins).find((p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN);
+  return slmPlugin?.enabled ?? false;
+};
 
 const showSplitPluginDialog = () => {
   return alerts.showConfirmationAlert({
-    title: "Large Message Warning",
-    content:
-      "This list is too long to send! Would you like to install the Split Large Messages plugin?",
-    confirmText: "Install Plugin",
+    title: "Install Split Large Messages Plugin",
+    content: "This list is over 2000 characters. Install the Split Large Messages plugin to send it.",
+    confirmText: "Install",
     cancelText: "Cancel",
-    confirmColor: "brand",
     onConfirm: () => {
-      openURL(SPLIT_LARGE_MESSAGES_PLUGIN);
+      // Implementation to install plugin would go here
     },
   });
 };
 
 const showEnablePluginDialog = () => {
   return alerts.showConfirmationAlert({
-    title: "Plugin Disabled",
-    content:
-      "The Split Large Messages plugin is installed but disabled. Would you like to enable it now?",
-    confirmText: "Enable Plugin",
+    title: "Enable Split Large Messages Plugin",
+    content: "This list is over 2000 characters. Enable the Split Large Messages plugin to send it.",
+    confirmText: "Enable",
     cancelText: "Cancel",
-    confirmColor: "brand",
     onConfirm: () => {
-      // Enable the plugin
-      const slmPlugin = Object.values(plugins).find(
-        (p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN,
-      );
+      const slmPlugin = Object.values(plugins).find((p) => p.id === SPLIT_LARGE_MESSAGES_PLUGIN);
       if (slmPlugin) {
         slmPlugin.enabled = true;
       }
@@ -67,8 +60,7 @@ const showEnablePluginDialog = () => {
 
 // Command handlers
 async function handlePluginList(detailed: boolean, ctx: any) {
-  const alwaysDetailed =
-    storage.listSettings?.pluginListAlwaysDetailed ?? false;
+  const alwaysDetailed = storage.listSettings?.pluginListAlwaysDetailed ?? false;
   const pluginList = [
     `**My Plugin List | ${Object.keys(plugins).length} Plugins**`,
     "",
@@ -182,9 +174,17 @@ export const pluginListCommand = {
     },
   ],
   execute: async (args: any, ctx: any) => {
-    const detailed =
-      args.find((arg: any) => arg.name === "detailed")?.value ?? false;
-    return handlePluginList(detailed, ctx);
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
+
+    try {
+      const detailed = args.find((arg: any) => arg.name === "detailed")?.value ?? false;
+      return handlePluginList(detailed, ctx);
+    } catch (error) {
+      console.error('[PluginList] Error:', error);
+      // Silent fail - no error message in chat
+      return { type: 4 };
+    }
   },
   applicationId: "-1",
   inputType: 1,
@@ -207,9 +207,17 @@ export const themeListCommand = {
     },
   ],
   execute: async (args: any, ctx: any) => {
-    const detailed =
-      args.find((arg: any) => arg.name === "detailed")?.value ?? false;
-    return handleThemeList(detailed, ctx);
+    const channelValidation = validateChannelForCommand(ctx);
+    if (channelValidation) return channelValidation;
+
+    try {
+      const detailed = args.find((arg: any) => arg.name === "detailed")?.value ?? false;
+      return handleThemeList(detailed, ctx);
+    } catch (error) {
+      console.error('[ThemeList] Error:', error);
+      // Silent fail - no error message in chat
+      return { type: 4 };
+    }
   },
   applicationId: "-1",
   inputType: 1,
