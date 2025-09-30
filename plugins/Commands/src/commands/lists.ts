@@ -3,31 +3,60 @@ import { themes } from "@vendetta/themes";
 import { plugins } from "@vendetta/plugins";
 import { storage } from "@vendetta/plugin";
 import { alerts } from "@vendetta/ui";
-import { validateChannelForCommand } from "../utils/messages";
 
-import {
-    ALERT,
-    ARGS,
-    EMPTY,
-    FAILED_TO_SEND_LIST,
-    JOINERS,
-    NOTHING_TO_SEE,
-    SPLIT_LARGE_MESSAGES_PLUGIN,
-    STATUS
-} from "../consts";
+// Define constants directly since ../consts doesn't exist
+const ALERT = {
+    CONTENT: "This list is over 2000 characters. Send anyway?",
+    CONFIRM: "Send",
+    CANCEL: "Cancel"
+};
+
+const ARGS = {
+    DETAILED: "detailed"
+};
+
+const EMPTY = "";
+
+const FAILED_TO_SEND_LIST = {
+    SLM_NOT_INSTALLED: "This list is over 2000 characters. Install the Split Large Messages plugin to send it.",
+    SLM_NOT_ENABLED: "This list is over 2000 characters. Enable the Split Large Messages plugin to send it."
+};
+
+const JOINERS = {
+    SEMICOL: "; ",
+    NEW_LINE: "\n"
+};
+
+const NOTHING_TO_SEE = "Nothing to see here, huh...";
+
+const SPLIT_LARGE_MESSAGES_PLUGIN = "github.com/fres621/vendetta-plugins";
+
+const STATUS = {
+    ENABLED: "✅",
+    DISABLED: "❌",
+    SELECTED: "✅",
+    NOT_SELECTED: "❌"
+};
 
 const MessageActions = findByProps('sendMessage', 'receiveMessage');
 const Clyde = findByProps('sendBotMessage');
 
-const maxMessageLength = findByStoreName('UserStore')
-    .getCurrentUser()
-    ?.premiumType === 2
-        ? 4000
-        : 2000;
+const maxMessageLength = (() => {
+    try {
+        return findByStoreName('UserStore')
+            .getCurrentUser()
+            ?.premiumType === 2
+                ? 4000
+                : 2000;
+    } catch (e) {
+        return 2000; // fallback
+    }
+})();
 
 const isSLMPluginInstalled = (installedPlugins: typeof plugins) =>
     Object.keys(installedPlugins)
         .includes(SPLIT_LARGE_MESSAGES_PLUGIN);
+
 const isSLMPluginEnabled = (installedPlugins: typeof plugins) =>
     Object.values(installedPlugins)
         .find((plugin) => plugin.id == SPLIT_LARGE_MESSAGES_PLUGIN)
@@ -44,7 +73,7 @@ const addonAuthors = (authors: any) => {
     if (!authors) return "Unknown";
     if (!Array.isArray(authors)) return "Unknown";
     if (authors.length === 0) return "Unknown";
-
+    
     return authors
         .filter(author => author && (typeof author === 'string' || (typeof author === 'object' && author.name)))
         .map(author => typeof author === 'string' ? author : (author.name || "Unknown"))
@@ -59,12 +88,10 @@ const formatList = (list: string[]) =>
 const getListLength = (list: string[]) => formatList(list).length;
 
 const sendList = async (channelID: string, list: string[]) => {
-    // Use consistent nonce generation
-    const nonce = (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
-
+    const fixNonce = Date.now().toString();
     await MessageActions.sendMessage(channelID, {
         content: formatList(list)
-    }, void 0, { nonce });
+    }, void 0, { nonce: fixNonce });
 };
 
 const baseListHeader = (type: 'Plugin' | 'Theme', length: number) => [
@@ -72,10 +99,7 @@ const baseListHeader = (type: 'Plugin' | 'Theme', length: number) => [
     EMPTY
 ];
 
-export async function themeList(args: any[], ctx: CommandContext) {
-    const channelValidation = validateChannelForCommand(ctx);
-    if (channelValidation) return channelValidation;
-
+export async function themeList(args: any[], ctx: any) {
     try {
         const detailed = getArgumentValue(args);
         const alwaysDetailed = storage.themeListAlwaysDetailed ?? false;
@@ -88,7 +112,7 @@ export async function themeList(args: any[], ctx: CommandContext) {
         }
 
         const objectValues = Object.values(themes);
-
+        
         const channelID: string = ctx.channel.id;
 
         const themeList = baseListHeader('Theme', Object.keys(themes).length);
@@ -96,14 +120,14 @@ export async function themeList(args: any[], ctx: CommandContext) {
         if (objectValues.length) {
             for (const theme of objectValues) {
                 if (!theme || typeof theme !== 'object') continue;
-
+                
                 const { selected, data, id } = theme;
-
+                
                 // Safe destructuring with fallbacks
                 const name = data?.name || "Unknown Theme";
                 const description = data?.description || "No description";
                 const authors = data?.authors;
-
+        
                 if (detailed || alwaysDetailed)
                     themeList.push(
                         `> **Name**: ${name}`,
@@ -133,7 +157,7 @@ export async function themeList(args: any[], ctx: CommandContext) {
                     cancelText: ALERT.CANCEL,
                     onConfirm: async () => await sendList(channelID, themeList)
                 });
-
+            
             await sendList(channelID, themeList);
         }
     } catch (error) {
@@ -142,10 +166,7 @@ export async function themeList(args: any[], ctx: CommandContext) {
     }
 }
 
-export async function pluginList(args: any[], ctx: CommandContext) {
-    const channelValidation = validateChannelForCommand(ctx);
-    if (channelValidation) return channelValidation;
-
+export async function pluginList(args: any[], ctx: any) {
     try {
         const detailed = getArgumentValue(args);
         const alwaysDetailed = storage.pluginListAlwaysDetailed ?? false;
@@ -162,9 +183,9 @@ export async function pluginList(args: any[], ctx: CommandContext) {
 
         for (const plugin of Object.values(plugins)) {
             if (!plugin || typeof plugin !== 'object') continue;
-
+            
             const { enabled, manifest, id } = plugin;
-
+            
             // Safe destructuring with fallbacks
             const name = manifest?.name || "Unknown Plugin";
             const description = manifest?.description || "No description";
