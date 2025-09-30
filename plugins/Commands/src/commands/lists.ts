@@ -44,7 +44,7 @@ const addonAuthors = (authors: any) => {
     if (!authors) return "Unknown";
     if (!Array.isArray(authors)) return "Unknown";
     if (authors.length === 0) return "Unknown";
-    
+
     return authors
         .filter(author => author && (typeof author === 'string' || (typeof author === 'object' && author.name)))
         .map(author => typeof author === 'string' ? author : (author.name || "Unknown"))
@@ -61,7 +61,7 @@ const getListLength = (list: string[]) => formatList(list).length;
 const sendList = async (channelID: string, list: string[]) => {
     // Use consistent nonce generation
     const nonce = (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
-    
+
     await MessageActions.sendMessage(channelID, {
         content: formatList(list)
     }, void 0, { nonce });
@@ -88,7 +88,7 @@ export async function themeList(args: any[], ctx: CommandContext) {
         }
 
         const objectValues = Object.values(themes);
-        
+
         const channelID: string = ctx.channel.id;
 
         const themeList = baseListHeader('Theme', Object.keys(themes).length);
@@ -96,14 +96,14 @@ export async function themeList(args: any[], ctx: CommandContext) {
         if (objectValues.length) {
             for (const theme of objectValues) {
                 if (!theme || typeof theme !== 'object') continue;
-                
+
                 const { selected, data, id } = theme;
-                
+
                 // Safe destructuring with fallbacks
                 const name = data?.name || "Unknown Theme";
                 const description = data?.description || "No description";
                 const authors = data?.authors;
-        
+
                 if (detailed || alwaysDetailed)
                     themeList.push(
                         `> **Name**: ${name}`,
@@ -133,7 +133,7 @@ export async function themeList(args: any[], ctx: CommandContext) {
                     cancelText: ALERT.CANCEL,
                     onConfirm: async () => await sendList(channelID, themeList)
                 });
-            
+
             await sendList(channelID, themeList);
         }
     } catch (error) {
@@ -162,9 +162,9 @@ export async function pluginList(args: any[], ctx: CommandContext) {
 
         for (const plugin of Object.values(plugins)) {
             if (!plugin || typeof plugin !== 'object') continue;
-            
+
             const { enabled, manifest, id } = plugin;
-            
+
             // Safe destructuring with fallbacks
             const name = manifest?.name || "Unknown Plugin";
             const description = manifest?.description || "No description";

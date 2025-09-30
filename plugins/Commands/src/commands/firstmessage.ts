@@ -1,15 +1,8 @@
 import { findByProps } from "@vendetta/metro";
 import { url } from "@vendetta/metro/common";
-import { validateChannelForCommand } from "../utils/messages";
 
 const APIUtils = findByProps("getAPIBaseURL", "get");
 const MessageActions = findByProps("sendMessage");
-const messageUtil = findByProps("sendBotMessage", "sendMessage", "receiveMessage");
-
-// Generate consistent nonce
-const generateNonce = () => {
-  return (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
-};
 
 // Helper functions for fetching messages
 const getFirstGuildMessage = async (
@@ -71,20 +64,6 @@ export const firstMessageCommand = {
     },
   ],
   execute: async (args: any, ctx: any) => {
-    // Special handling for threads/forum channels
-    if (ctx.channel.type >= 10 && ctx.channel.type <= 15) {
-      return {
-        type: 4,
-        data: { 
-          content: "FirstMessage command doesn't work in thread or forum channels.", 
-          flags: 64 
-        }
-      };
-    }
-
-    const channelValidation = validateChannelForCommand(ctx);
-    if (channelValidation) return channelValidation;
-
     try {
       const options = new Map(args.map((option: any) => [option.name, option]));
       const user = options.get("user")?.value;
@@ -132,12 +111,12 @@ export const firstMessageCommand = {
       }
 
       if (send) {
-        const nonce = generateNonce();
+        const fixNonce = Date.now().toString();
         MessageActions.sendMessage(
           ctx.channel.id,
           { content: result },
           void 0,
-          { nonce }
+          { nonce: fixNonce }
         );
         return { type: 4 };
       } else {
