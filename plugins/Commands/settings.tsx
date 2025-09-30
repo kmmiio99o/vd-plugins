@@ -41,6 +41,10 @@ if (!storage.enabledCommands) {
     konosend: true,
     firstmessage: true,
     sysinfo: true,
+    spotifyTrack: true,
+    spotifyAlbum: true,
+    spotifyArtists: true,
+    spotifyCover: true,
   };
 }
 
@@ -156,7 +160,7 @@ export default function Settings() {
           </TableRowGroup>
 
           {/* Image Commands */}
-          <TableRowGroup title="Image Commands">
+          <TableRowGroup title="Petpet Commands">
             <TableSwitchRow
               label="/petpet"
               subLabel="Create pet-pet GIF of a user"
@@ -201,6 +205,34 @@ export default function Settings() {
             />
           </TableRowGroup>
 
+          {/* Spotify Commands */}
+          <TableRowGroup title="Spotify Commands">
+            <TableSwitchRow
+              label="/spotify track"
+              subLabel="Share your current Spotify track"
+              value={storage.enabledCommands?.spotifyTrack ?? true}
+              onValueChange={(v) => handleCommandToggle("spotifyTrack", v)}
+            />
+            <TableSwitchRow
+              label="/spotify album"
+              subLabel="Share your current track's album"
+              value={storage.enabledCommands?.spotifyAlbum ?? true}
+              onValueChange={(v) => handleCommandToggle("spotifyAlbum", v)}
+            />
+            <TableSwitchRow
+              label="/spotify artists"
+              subLabel="Share your current track's artists"
+              value={storage.enabledCommands?.spotifyArtists ?? true}
+              onValueChange={(v) => handleCommandToggle("spotifyArtists", v)}
+            />
+            <TableSwitchRow
+              label="/spotify cover"
+              subLabel="Share your current track's cover"
+              value={storage.enabledCommands?.spotifyCover ?? true}
+              onValueChange={(v) => handleCommandToggle("spotifyCover", v)}
+            />
+          </TableRowGroup>
+
           {/* Credits */}
           <TableRowGroup title="Credits">
             <TableRow label="Facts Commands" subLabel="by jdev082" />
@@ -212,6 +244,7 @@ export default function Settings() {
             />
             <TableRow label="FirstMessage Command" subLabel="by sapphire" />
             <TableRow label="Sysinfo Command" subLabel="by mugman" />
+            <TableRow label="Spotify Commands" subLabel="by Kitomanari" />
           </TableRowGroup>
 
           {/* About */}

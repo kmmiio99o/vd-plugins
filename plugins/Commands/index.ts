@@ -9,7 +9,13 @@ import { pluginListCommand, themeListCommand } from "./src/commands/lists";
 import { petPetCommand } from "./src/commands/petpet";
 import { konoSelfCommand, konoSendCommand } from "./src/commands/konochan";
 import { firstMessageCommand } from "./src/commands/firstmessage";
-import { sysinfoCommand } from "./src/commands/sysinfo"; 
+import { sysinfoCommand } from "./src/commands/sysinfo";
+import {
+  spotifyTrackCommand,
+  spotifyAlbumCommand,
+  spotifyArtistsCommand,
+  spotifyCoverCommand
+} from "./src/commands/spotify";
 import settings from "./settings";
 
 // Initialize storage with default values
@@ -38,7 +44,11 @@ if (!storage.enabledCommands) {
     konoself: true,
     konosend: true,
     firstmessage: true,
-    sysinfo: true, // Add sysinfo to enabled commands
+    sysinfo: true,
+    spotifyTrack: true,
+    spotifyAlbum: true,
+    spotifyArtists: true,
+    spotifyCover: true,
   };
 }
 
@@ -53,7 +63,11 @@ const commandMap = {
   konoself: konoSelfCommand,
   konosend: konoSendCommand,
   firstmessage: firstMessageCommand,
-  sysinfo: sysinfoCommand, // Add sysinfo to command map
+  sysinfo: sysinfoCommand,
+  spotifyTrack: spotifyTrackCommand,
+  spotifyAlbum: spotifyAlbumCommand,
+  spotifyArtists: spotifyArtistsCommand,
+  spotifyCover: spotifyCoverCommand,
 };
 
 // Store registered commands for cleanup
