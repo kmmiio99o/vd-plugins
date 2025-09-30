@@ -1,4 +1,5 @@
 import { findByProps, findByStoreName } from "@vendetta/metro";
+import { getPetPetData } from "../utils/api";
 
 const UserStore = findByStoreName("UserStore");
 const MessageActions = findByProps("sendMessage");
@@ -42,9 +43,3 @@ export const petPetCommand = {
   inputType: 1,
   type: 1,
 };
-
-// Mock function since we don't have the actual API
-async function getPetPetData(image: string): Promise<{ url: string }> {
-  // This would normally call an API to generate petpet gif
-  return { url: `https://example.com/petpet.gif?image=${image}` };
-}

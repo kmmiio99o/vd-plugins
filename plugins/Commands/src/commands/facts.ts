@@ -1,5 +1,6 @@
 import { findByProps } from "@vendetta/metro";
 import { storage } from "@vendetta/plugin";
+import { catFact, dogFact, uselessFact } from "../utils/api";
 
 const MessageActions = findByProps("sendMessage");
 
@@ -92,16 +93,3 @@ export const uselessFactCommand = {
     }
   },
 };
-
-// Mock API functions since we don't have the actual implementations
-async function catFact(): Promise<{ text: string; source?: string }> {
-  return { text: "Cats can jump up to 6 times their height.", source: "catfacts.com" };
-}
-
-async function dogFact(): Promise<{ text: string; source?: string }> {
-  return { text: "Dogs have an exceptional sense of smell.", source: "dogfacts.com" };
-}
-
-async function uselessFact(): Promise<{ text: string; source?: string }> {
-  return { text: "Bananas are berries, but strawberries aren't.", source: "uselessfacts.com" };
-}
