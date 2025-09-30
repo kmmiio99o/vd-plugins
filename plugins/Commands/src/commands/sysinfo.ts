@@ -2,7 +2,6 @@ import { findByProps } from "@vendetta/metro";
 import { getDebugInfo } from "@vendetta/debug";
 import { ReactNative } from "@vendetta/metro/common";
 import { storage } from "@vendetta/plugin";
-import { validateChannelForCommand } from "../utils/messages";
 
 const MessageActions = findByProps("sendMessage");
 const messageUtil = findByProps("sendBotMessage", "sendMessage", "receiveMessage");
@@ -146,16 +145,8 @@ for (const cat of categories) {
   if (storage[cat] === undefined) storage[cat] = true;
 }
 
-// Generate consistent nonce
-const generateNonce = () => {
-  return (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
-};
-
-// Command execution function (renamed to avoid conflict)
+// Command execution function
 function executeSysinfoCommand(args: any[], ctx: any) {
-  const channelValidation = validateChannelForCommand(ctx);
-  if (channelValidation) return channelValidation;
-
   try {
     let output = ["__System Information__\n"];
     const data = generateSystemInfo();
@@ -180,12 +171,12 @@ function executeSysinfoCommand(args: any[], ctx: any) {
       messageUtil.sendBotMessage(ctx.channel.id, output.join("\n"));
       return { type: 4 };
     } else {
-      const nonce = generateNonce();
+      const fixNonce = Date.now().toString();
       MessageActions.sendMessage(
         ctx.channel.id,
         { content: output.join("\n") },
         void 0,
-        { nonce }
+        { nonce: fixNonce }
       );
       return { type: 4 };
     }

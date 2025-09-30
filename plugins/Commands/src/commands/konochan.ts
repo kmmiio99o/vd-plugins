@@ -1,13 +1,8 @@
 import { findByProps } from "@vendetta/metro";
 import { alerts } from "@vendetta/ui";
-import { validateChannelForCommand } from "../utils/messages";
 
 const MessageActions = findByProps("sendMessage");
-const messageUtil = findByProps(
-  "sendBotMessage",
-  "sendMessage",
-  "receiveMessage",
-);
+const messageUtil = findByProps("sendBotMessage", "sendMessage", "receiveMessage");
 
 /**
  * Fetches a random image from KonoChan.
@@ -20,9 +15,7 @@ const fetchImage = async (isNSFW: boolean): Promise<string | null> => {
   const randomPage = Math.floor(Math.random() * 100);
 
   try {
-    const response = await fetch(
-      `${baseURL}?tags=${tag}&limit=1&page=${randomPage}`,
-    );
+    const response = await fetch(`${baseURL}?tags=${tag}&limit=1&page=${randomPage}`);
     const data = await response.json();
 
     if (!Array.isArray(data) || data.length === 0) {
@@ -47,11 +40,6 @@ const showNSFWWarning = () => {
   });
 };
 
-// Generate consistent nonce
-const generateNonce = () => {
-  return (BigInt(Date.now()) * BigInt(4194304) + BigInt(Math.floor(Math.random() * 4194304))).toString();
-};
-
 // Common options for both commands
 const nsfwOption = {
   name: "nsfw",
@@ -69,9 +57,6 @@ export const konoSelfCommand = {
   displayDescription: "Fetch a random image from KonoChan for yourself.",
   options: [nsfwOption],
   execute: async (args: any, ctx: any) => {
-    const channelValidation = validateChannelForCommand(ctx);
-    if (channelValidation) return channelValidation;
-
     try {
       const options = new Map(args.map((option: any) => [option.name, option]));
       const isNSFW = options.get("nsfw")?.value || false;
@@ -109,13 +94,9 @@ export const konoSendCommand = {
   name: "konosend",
   displayName: "konosend",
   description: "Fetch a random image from KonoChan and send it to the channel.",
-  displayDescription:
-    "Fetch a random image from KonoChan and send it to the channel.",
+  displayDescription: "Fetch a random image from KonoChan and send it to the channel.",
   options: [nsfwOption],
   execute: async (args: any, ctx: any) => {
-    const channelValidation = validateChannelForCommand(ctx);
-    if (channelValidation) return channelValidation;
-
     try {
       const options = new Map(args.map((option: any) => [option.name, option]));
       const isNSFW = options.get("nsfw")?.value || false;
@@ -133,9 +114,9 @@ export const konoSendCommand = {
         return { type: 4 };
       }
 
-      const nonce = generateNonce();
+      const fixNonce = Date.now().toString();
       MessageActions.sendMessage(ctx.channel.id, { content: imageUrl }, void 0, {
-        nonce,
+        nonce: fixNonce,
       });
       return { type: 4 };
     } catch (error) {
