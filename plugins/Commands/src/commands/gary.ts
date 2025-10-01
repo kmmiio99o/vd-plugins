@@ -12,7 +12,12 @@ export const garyCommand = {
   options: [],
   execute: async (args: any, ctx: any) => {
     try {
-      const source = storage.garySettings?.imageSource || "gary";
+      // Determine which API to use based on switches
+      let source = "gary"; // default
+      if (storage.garySettings?.useCatAPI) source = "catapi";
+      else if (storage.garySettings?.useMinkerAPI) source = "minker";
+      else if (storage.garySettings?.useGooberAPI) source = "goober";
+      
       const imageUrl = await getGaryUrl(source);
 
       if (!imageUrl) {

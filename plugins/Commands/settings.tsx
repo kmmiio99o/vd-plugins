@@ -31,7 +31,10 @@ if (!storage.listSettings) {
 
 if (!storage.garySettings) {
   storage.garySettings = {
-    imageSource: "gary",
+    useGaryAPI: true,
+    useCatAPI: false,
+    useMinkerAPI: false,
+    useGooberAPI: false,
   };
 }
 
@@ -85,41 +88,15 @@ export default function Settings() {
     forceRerender();
   };
 
-  const handleGarySourceChange = (source: string) => {
-    storage.garySettings.imageSource = source;
+  const handleGaryAPIToggle = (apiName: string, value: boolean) => {
+    // Only allow one API to be selected at a time
+    if (value) {
+      storage.garySettings.useGaryAPI = apiName === "gary";
+      storage.garySettings.useCatAPI = apiName === "catapi";
+      storage.garySettings.useMinkerAPI = apiName === "minker";
+      storage.garySettings.useGooberAPI = apiName === "goober";
+    }
     forceRerender();
-  };
-
-  const showGarySourceSelection = () => {
-    alerts.showConfirmationAlert({
-      title: "Choose Gary Image Source",
-      content: "Select an image source for the Gary command:",
-      confirmText: "Gary API",
-      cancelText: "Other Options",
-      confirmColor: "brand",
-      onConfirm: () => handleGarySourceChange("gary"),
-      onCancel: () => {
-        alerts.showConfirmationAlert({
-          title: "Choose Image Source",
-          content: "Select from remaining options:",
-          confirmText: "Cat API",
-          cancelText: "More Options",
-          confirmColor: "brand",
-          onConfirm: () => handleGarySourceChange("catapi"),
-          onCancel: () => {
-            alerts.showConfirmationAlert({
-              title: "Choose Image Source",
-              content: "Select from final options:",
-              confirmText: "Minker API",
-              cancelText: "Goober API",
-              confirmColor: "brand",
-              onConfirm: () => handleGarySourceChange("minker"),
-              onCancel: () => handleGarySourceChange("goober"),
-            });
-          },
-        });
-      },
-    });
   };
 
   return (
@@ -213,24 +190,6 @@ export default function Settings() {
             />
           </TableRowGroup>
 
-          {/* Gary Commands */}
-          <TableRowGroup title="Gary Commands">
-            <TableSwitchRow
-              label="/gary"
-              subLabel="Send random Gary images to channel"
-              value={storage.enabledCommands?.gary ?? true}
-              onValueChange={(v) => handleCommandToggle("gary", v)}
-            />
-            <TableRow
-              label="Gary Image Source"
-              subLabel={`Current: ${storage.garySettings?.imageSource === "gary" ? "Gary API" : 
-                storage.garySettings?.imageSource === "catapi" ? "Cat API" : 
-                storage.garySettings?.imageSource === "minker" ? "Minker API" : 
-                storage.garySettings?.imageSource === "goober" ? "Goober API" : "Gary API"}`}
-              onPress={showGarySourceSelection}
-            />
-          </TableRowGroup>
-
           {/* KonoChan Commands */}
           <TableRowGroup title="KonoChan Commands">
             <TableSwitchRow
@@ -292,6 +251,40 @@ export default function Settings() {
               subLabel="Share your current track's cover"
               value={storage.enabledCommands?.spotifyCover ?? true}
               onValueChange={(v) => handleCommandToggle("spotifyCover", v)}
+            />
+          </TableRowGroup>
+
+          {/* Gary Commands */}
+          <TableRowGroup title="Gary Commands">
+            <TableSwitchRow
+              label="/gary"
+              subLabel="Send random Gary images to channel"
+              value={storage.enabledCommands?.gary ?? true}
+              onValueChange={(v) => handleCommandToggle("gary", v)}
+            />
+            <TableSwitchRow
+              label="Use Gary API"
+              subLabel="Get images from Gary API"
+              value={storage.garySettings?.useGaryAPI ?? true}
+              onValueChange={(v) => handleGaryAPIToggle("gary", v)}
+            />
+            <TableSwitchRow
+              label="Use Cat API"
+              subLabel="Get images from Cat API"
+              value={storage.garySettings?.useCatAPI ?? false}
+              onValueChange={(v) => handleGaryAPIToggle("catapi", v)}
+            />
+            <TableSwitchRow
+              label="Use Minker API"
+              subLabel="Get images from Minker API"
+              value={storage.garySettings?.useMinkerAPI ?? false}
+              onValueChange={(v) => handleGaryAPIToggle("minker", v)}
+            />
+            <TableSwitchRow
+              label="Use Goober API"
+              subLabel="Get images from Goober API"
+              value={storage.garySettings?.useGooberAPI ?? false}
+              onValueChange={(v) => handleGaryAPIToggle("goober", v)}
             />
           </TableRowGroup>
 
