@@ -143,7 +143,7 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="Send as Reply"
             subLabel="Send facts as a reply to the command message"
-            leading={<FormRow.Icon source={getAssetIDByName("ReplyIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("ArrowAngleLeftUpIcon")} />}
             value={storage.factSettings?.sendAsReply ?? true}
             onValueChange={(v: boolean) => {
               storage.factSettings.sendAsReply = v;
@@ -166,7 +166,7 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/catfact"
             subLabel="Get random cat facts"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.catfact ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.catfact = v;
@@ -177,7 +177,7 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/dogfact"
             subLabel="Get random dog facts"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_dog")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.dogfact ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.dogfact = v;
@@ -188,7 +188,7 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/useless"
             subLabel="Get random useless facts"
-            leading={<FormRow.Icon source={getAssetIDByName("QuestionMarkIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.useless ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.useless = v;
@@ -202,7 +202,7 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// REFACTORED Gary API Settings Page with better switches
+// Gary API Settings Page
 function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
   useProxy(storage);
   
@@ -240,7 +240,7 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/gary"
             subLabel="Send random Gary images to channel"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("AttachmentIcon")} />}
             value={storage.enabledCommands?.gary ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.gary = v;
@@ -260,14 +260,14 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="Gary API"
             subLabel="Original Gary the cat images from api.garythe.cat"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={currentSource === "gary"}
             onValueChange={(v) => v && handleSourceChange("gary")}
           />
           <FormSwitchRow
             label="Cat API"
             subLabel="Random cat pictures from thecatapi.com"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={currentSource === "catapi"}
             onValueChange={(v) => v && handleSourceChange("catapi")}
           />
@@ -382,7 +382,7 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/petpet"
             subLabel="Create pet-pet GIF of a user"
-            leading={<FormRow.Icon source={getAssetIDByName("HandIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("HandRequestSpeakIcon")} />}
             value={storage.enabledCommands?.petpet ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.petpet = v;
@@ -421,7 +421,7 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// FIXED Spotify Commands Settings Page
+// Spotify Commands Settings Page
 function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -430,7 +430,7 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
     },
     infoText: {
       fontSize: 14,
-      color: semanticColors.TEXT_MUTED, // FIXED: Use semantic color
+      color: semanticColors.TEXT_MUTED,
       textAlign: "center",
       lineHeight: 20,
     },
@@ -605,7 +605,7 @@ function CreditsPage() {
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
-        <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("PeopleIcon")} padding={true}>
+        <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("HeartIcon")} padding={true}>
           <RN.Text style={styles.infoText}>
             Thanks to all the amazing developers who contributed to this plugin collection!
           </RN.Text>
@@ -755,7 +755,7 @@ export default function Settings() {
               storage.garySettings?.imageSource === "catapi" ? "Cat API" : 
               storage.garySettings?.imageSource === "minker" ? "Minker API" : 
               storage.garySettings?.imageSource === "goober" ? "Goober API" : "Gary API"}`}
-            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("CameraIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Gary Commands", GaryAPIPage)}
           />
@@ -780,7 +780,7 @@ export default function Settings() {
           <FormRow
             label="Credits"
             subLabel="View plugin authors and contributors"
-            leading={<FormRow.Icon source={getAssetIDByName("PeopleIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Credits", CreditsPage)}
           />
