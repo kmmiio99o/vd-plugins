@@ -127,7 +127,7 @@ function Header() {
   );
 }
 
-// Facts Commands Settings Page - Fixed with nexpid's approach
+// Facts Commands Settings Page
 function FactsSettingsPage() {
   useProxy(storage);
 
@@ -147,14 +147,18 @@ function FactsSettingsPage() {
             subLabel="Send facts as a reply to the command message"
             leading={<FormRow.Icon source={getAssetIDByName("ArrowAngleLeftUpIcon")} />}
             value={storage.factSettings?.sendAsReply ?? true}
-            onValueChange={() => (storage.factSettings.sendAsReply = !storage.factSettings.sendAsReply)}
+            onValueChange={() => {
+              storage.factSettings.sendAsReply = !storage.factSettings.sendAsReply;
+            }}
           />
           <FormSwitchRow
             label="Include Source Citation"
             subLabel="Include the source of facts when available"
             leading={<FormRow.Icon source={getAssetIDByName("LinkIcon")} />}
             value={storage.factSettings?.includeCitation ?? false}
-            onValueChange={() => (storage.factSettings.includeCitation = !storage.factSettings.includeCitation)}
+            onValueChange={() => {
+              storage.factSettings.includeCitation = !storage.factSettings.includeCitation;
+            }}
           />
         </BetterTableRowGroup>
 
@@ -195,7 +199,7 @@ function FactsSettingsPage() {
   );
 }
 
-// Gary API Settings Page - Fixed with nexpid's approach
+// Gary API Settings Page with proper reactivity
 function GaryAPIPage() {
   useProxy(storage);
   
@@ -399,7 +403,7 @@ function GaryAPIPage() {
   );
 }
 
-// List Commands Settings Page - Fixed with nexpid's approach
+// List Commands Settings Page
 function ListSettingsPage() {
   useProxy(storage);
 
@@ -419,14 +423,18 @@ function ListSettingsPage() {
             subLabel="Always use detailed mode when listing plugins"
             leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
             value={storage.listSettings?.pluginListAlwaysDetailed ?? false}
-            onValueChange={() => (storage.listSettings.pluginListAlwaysDetailed = !storage.listSettings.pluginListAlwaysDetailed)}
+            onValueChange={() => {
+              storage.listSettings.pluginListAlwaysDetailed = !storage.listSettings.pluginListAlwaysDetailed;
+            }}
           />
           <FormSwitchRow
             label="Always Send Detailed Theme List"
             subLabel="Always use detailed mode when listing themes"
             leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
             value={storage.listSettings?.themeListAlwaysDetailed ?? false}
-            onValueChange={() => (storage.listSettings.themeListAlwaysDetailed = !storage.listSettings.themeListAlwaysDetailed)}
+            onValueChange={() => {
+              storage.listSettings.themeListAlwaysDetailed = !storage.listSettings.themeListAlwaysDetailed;
+            }}
           />
         </BetterTableRowGroup>
 
@@ -457,7 +465,7 @@ function ListSettingsPage() {
   );
 }
 
-// Image Commands Settings Page - Fixed with nexpid's approach
+// Image Commands Settings Page
 function ImageSettingsPage() {
   useProxy(storage);
 
@@ -511,7 +519,7 @@ function ImageSettingsPage() {
   );
 }
 
-// Spotify Commands Settings Page - Fixed with nexpid's approach
+// Spotify Commands Settings Page
 function SpotifySettingsPage() {
   useProxy(storage);
 
@@ -584,7 +592,7 @@ function SpotifySettingsPage() {
   );
 }
 
-// Other Commands Settings Page - Fixed with nexpid's approach
+// Other Commands Settings Page
 function OtherSettingsPage() {
   useProxy(storage);
 
@@ -628,7 +636,7 @@ function OtherSettingsPage() {
   );
 }
 
-// UPDATED Credits Page with requested changes
+// FIXED Credits Page - changed "contributor" to "developer"
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -753,7 +761,7 @@ function CreditsPage() {
         <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("HeartIcon")} padding={true}>
           <RN.Text style={styles.infoText}>
             Thanks to this developers for creating such a nice plugins!{'\n'}
-            Tap on any contributor to visit their GitHub profile.
+            Tap on any developer to visit their GitHub profile.
           </RN.Text>
         </BetterTableRowGroup>
 
@@ -832,10 +840,9 @@ if (!storage.pendingRestart) {
   storage.pendingRestart = false;
 }
 
-// Main Settings Component - Fixed with nexpid's approach
+// Main Settings Component - COMPLETELY FIXED
 export default function Settings() {
   useProxy(storage);
-  const [rerender, forceRerender] = React.useReducer((x) => x + 1, 0);
   const navigation = NavigationNative.useNavigation();
 
   const styles = stylesheet.createThemedStyleSheet({
@@ -861,13 +868,6 @@ export default function Settings() {
     };
   }, []);
 
-  const navigateToPage = (title: string, component: React.ComponentType<any>) => {
-    navigation.push("VendettaCustomPage", {
-      title,
-      render: component,
-    });
-  };
-
   return (
     <RN.View style={styles.container}>
       <ScrollView
@@ -884,21 +884,30 @@ export default function Settings() {
             subLabel="Cat facts, dog facts, and useless facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookmarkIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigateToPage("Facts Commands", FactsSettingsPage)}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "Facts Commands",
+              render: FactsSettingsPage,
+            })}
           />
           <FormRow
             label="List Commands"
             subLabel="Plugin lists and theme lists"
             leading={<FormRow.Icon source={getAssetIDByName("ListViewIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigateToPage("List Commands", ListSettingsPage)}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "List Commands",
+              render: ListSettingsPage,
+            })}
           />
           <FormRow
             label="Image Commands"
             subLabel="PetPet, KonoChan, and image utilities"
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigateToPage("Image Commands", ImageSettingsPage)}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "Image Commands",
+              render: ImageSettingsPage,
+            })}
           />
           <FormRow
             label="Gary Commands"
@@ -908,21 +917,30 @@ export default function Settings() {
               storage.garySettings?.imageSource === "goober" ? "Goober API" : "Gary API"}`}
             leading={<FormRow.Icon source={getAssetIDByName("CameraIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigateToPage("Gary Commands", GaryAPIPage)}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "Gary Commands",
+              render: GaryAPIPage,
+            })}
           />
           <FormRow
             label="Spotify Commands"
             subLabel="Share your Spotify activity"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigateToPage("Spotify Commands", SpotifySettingsPage)}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "Spotify Commands",
+              render: SpotifySettingsPage,
+            })}
           />
           <FormRow
             label="Other Commands"
             subLabel="System info and miscellaneous"
             leading={<FormRow.Icon source={getAssetIDByName("MoreHorizontalIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigateToPage("Other Commands", OtherSettingsPage)}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "Other Commands",
+              render: OtherSettingsPage,
+            })}
           />
         </BetterTableRowGroup>
 
@@ -933,7 +951,10 @@ export default function Settings() {
             subLabel="View original authors of the plugins"
             leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigateToPage("Credits", CreditsPage)}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "Credits",
+              render: CreditsPage,
+            })}
           />
         </BetterTableRowGroup>
       </ScrollView>
