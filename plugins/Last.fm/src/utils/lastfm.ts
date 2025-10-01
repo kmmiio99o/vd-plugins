@@ -71,7 +71,6 @@ class LastFMClient {
 
     const errorMessages: { [key: number]: string } = {
       2: "Invalid API key",
-      6: "User not found",
       11: "Service temporarily unavailable",
       16: "Service temporarily unavailable",
       29: "Rate limit exceeded",
