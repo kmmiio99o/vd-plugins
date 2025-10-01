@@ -202,7 +202,6 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// REFACTORED Gary API Settings Page with working round switches
 function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
   useProxy(storage);
   
@@ -487,7 +486,7 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
-        <BetterTableRowGroup title="Image Commands" icon={getAssetIDByName("ImageIcon")}>
+        <BetterTableRowGroup title="Petpet Command" icon={getAssetIDByName("ImageIcon")}>
           <FormSwitchRow
             label="/petpet"
             subLabel="Create pet-pet GIF of a user"
@@ -649,7 +648,6 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// UPDATED Credits Page with proper spacing and correct GitHub links
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -773,8 +771,7 @@ function CreditsPage() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
         <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("HeartIcon")} padding={true}>
           <RN.Text style={styles.infoText}>
-            Thanks to all the amazing developers who contributed to this plugin collection!{'\n'}
-            Tap on any contributor to visit their GitHub profile.
+            Thanks to all this developers for creating this amazing commands!{'\n'}
           </RN.Text>
         </BetterTableRowGroup>
 
@@ -801,8 +798,6 @@ function CreditsPage() {
           <RN.Text style={styles.versionText}>
             Commands Plugin Collection{'\n'}
             Version 1.0.0{'\n'}
-            Built on {new Date().toLocaleDateString()}{'\n'}
-            Made with ❤️ for the community
           </RN.Text>
         </BetterTableRowGroup>
       </ScrollView>
@@ -953,7 +948,7 @@ export default function Settings() {
         <BetterTableRowGroup title="More Options" icon={getAssetIDByName("SettingsIcon")}>
           <FormRow
             label="Credits"
-            subLabel="View plugin authors and contributors"
+            subLabel="View original authors of the plugins"
             leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Credits", CreditsPage)}
