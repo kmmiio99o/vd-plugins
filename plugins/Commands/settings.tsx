@@ -202,7 +202,7 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Gary API Settings Page
+// REFACTORED Gary API Settings Page with working round switches
 function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
   useProxy(storage);
   
@@ -223,19 +223,152 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
       textAlign: "center",
       fontWeight: "600",
     },
+    optionContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      marginHorizontal: 0,
+      backgroundColor: "transparent",
+    },
+    radioContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
+    radioButton: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: semanticColors.TEXT_MUTED,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    },
+    radioButtonSelected: {
+      borderColor: semanticColors.BRAND_500,
+    },
+    radioInner: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: semanticColors.BRAND_500,
+    },
+    optionIcon: {
+      width: 20,
+      height: 20,
+      marginRight: 12,
+      tintColor: semanticColors.TEXT_MUTED,
+    },
+    optionIconSelected: {
+      tintColor: semanticColors.BRAND_500,
+    },
+    textContainer: {
+      flex: 1,
+    },
+    optionTitle: {
+      fontSize: 16,
+      fontWeight: "500",
+      color: semanticColors.TEXT_NORMAL,
+    },
+    optionTitleSelected: {
+      color: semanticColors.BRAND_500,
+      fontWeight: "600",
+    },
+    optionDescription: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      marginTop: 2,
+      lineHeight: 18,
+    },
   });
 
   const currentSource = storage.garySettings?.imageSource || "gary";
 
-  const handleSourceChange = (newSource: string) => {
-    console.log(`[Gary Settings] Changing from ${currentSource} to ${newSource}`);
-    storage.garySettings.imageSource = newSource;
+  const options = [
+    {
+      value: "gary",
+      title: "Gary API",
+      description: "Original Gary the cat images from api.garythe.cat",
+      icon: getAssetIDByName("ImageIcon"),
+    },
+    {
+      value: "catapi", 
+      title: "Cat API",
+      description: "Random cat pictures from thecatapi.com",
+      icon: getAssetIDByName("ImageIcon"),
+    },
+    {
+      value: "minker",
+      title: "Minker API", 
+      description: "Minky images from minky.materii.dev",
+      icon: getAssetIDByName("ImageIcon"),
+    },
+    {
+      value: "goober",
+      title: "Goober API",
+      description: "Goober images from api.garythe.cat/goober", 
+      icon: getAssetIDByName("ImageIcon"),
+    },
+  ];
+
+  const handleOptionPress = (value: string) => {
+    console.log(`[Gary Settings] Changing API from ${currentSource} to ${value}`);
+    storage.garySettings.imageSource = value;
     forceRerender();
+  };
+
+  const renderOption = (option: typeof options[0]) => {
+    const isSelected = currentSource === option.value;
+    
+    return (
+      <RN.Pressable
+        key={option.value}
+        style={styles.optionContainer}
+        onPress={() => handleOptionPress(option.value)}
+        android_ripple={{ color: semanticColors.ANDROID_RIPPLE, radius: 300 }}
+      >
+        <RN.View style={styles.radioContainer}>
+          <RN.View style={[
+            styles.radioButton,
+            isSelected && styles.radioButtonSelected
+          ]}>
+            {isSelected && <RN.View style={styles.radioInner} />}
+          </RN.View>
+          
+          <RN.Image
+            source={option.icon}
+            style={[
+              styles.optionIcon,
+              isSelected && styles.optionIconSelected
+            ]}
+            resizeMode="contain"
+          />
+          
+          <RN.View style={styles.textContainer}>
+            <RN.Text style={[
+              styles.optionTitle,
+              isSelected && styles.optionTitleSelected
+            ]}>
+              {option.title}
+            </RN.Text>
+            <RN.Text style={styles.optionDescription}>
+              {option.description}
+            </RN.Text>
+          </RN.View>
+        </RN.View>
+      </RN.Pressable>
+    );
   };
 
   return (
     <RN.View style={styles.container}>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+      <ScrollView 
+        style={{ flex: 1 }} 
+        contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}
+        showsVerticalScrollIndicator={false}
+      >
         <BetterTableRowGroup title="Gary Command Settings" icon={getAssetIDByName("SettingsIcon")}>
           <FormSwitchRow
             label="/gary"
@@ -257,34 +390,7 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
         </BetterTableRowGroup>
 
         <BetterTableRowGroup title="API Options" icon={getAssetIDByName("CloudIcon")}>
-          <FormSwitchRow
-            label="Gary API"
-            subLabel="Original Gary the cat images from api.garythe.cat"
-            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
-            value={currentSource === "gary"}
-            onValueChange={(v) => v && handleSourceChange("gary")}
-          />
-          <FormSwitchRow
-            label="Cat API"
-            subLabel="Random cat pictures from thecatapi.com"
-            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
-            value={currentSource === "catapi"}
-            onValueChange={(v) => v && handleSourceChange("catapi")}
-          />
-          <FormSwitchRow
-            label="Minker API"
-            subLabel="Minky images from minky.materii.dev"
-            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
-            value={currentSource === "minker"}
-            onValueChange={(v) => v && handleSourceChange("minker")}
-          />
-          <FormSwitchRow
-            label="Goober API"
-            subLabel="Goober images from api.garythe.cat/goober"
-            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
-            value={currentSource === "goober"}
-            onValueChange={(v) => v && handleSourceChange("goober")}
-          />
+          {options.map(renderOption)}
         </BetterTableRowGroup>
 
         <BetterTableRowGroup title="Current Selection" icon={getAssetIDByName("CheckmarkIcon")} padding={true}>
@@ -295,6 +401,9 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
               currentSource === "minker" ? "Minker API" :
               currentSource === "goober" ? "Goober API" : "Gary API"
             }
+          </RN.Text>
+          <RN.Text style={[styles.infoText, { marginBottom: 0, marginTop: 8 }]}>
+            Tap an option above to change the image source.
           </RN.Text>
         </BetterTableRowGroup>
       </ScrollView>
@@ -540,7 +649,7 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Credits Page
+// UPDATED Credits Page with proper spacing and correct GitHub links
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -550,69 +659,132 @@ function CreditsPage() {
     creditItem: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 16,
+      paddingVertical: 16,
+      paddingHorizontal: 20,
       backgroundColor: semanticColors.CARD_PRIMARY_BG,
       borderRadius: 12,
       marginHorizontal: 16,
-      marginVertical: 4,
+      marginVertical: 6,
+      shadowColor: semanticColors.BLACK,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
     },
     avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      marginRight: 12,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      marginRight: 16,
+      backgroundColor: semanticColors.BACKGROUND_SECONDARY,
     },
     textContainer: {
       flex: 1,
     },
     commandText: {
-      fontSize: 16,
+      fontSize: 17,
       fontWeight: "600",
       color: semanticColors.TEXT_NORMAL,
+      marginBottom: 4,
     },
     authorText: {
-      fontSize: 14,
+      fontSize: 15,
       color: semanticColors.TEXT_MUTED,
-      marginTop: 2,
+      marginBottom: 2,
+    },
+    linkText: {
+      fontSize: 13,
+      color: semanticColors.TEXT_BRAND,
+      fontWeight: "500",
     },
     infoText: {
       fontSize: 14,
       color: semanticColors.TEXT_MUTED,
-      marginBottom: 16,
+      marginBottom: 20,
       textAlign: "center",
+      lineHeight: 20,
     },
     versionText: {
-      fontSize: 14,
+      fontSize: 15,
       color: semanticColors.TEXT_NORMAL,
       textAlign: "center",
       fontWeight: "600",
-      lineHeight: 20,
+      lineHeight: 22,
     },
   });
 
   const credits = [
-    { command: "Facts Commands", author: "jdev082", avatar: "https://github.com/jdev082.png" },
-    { command: "List Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
-    { command: "PetPet Command", author: "wolfieeee", avatar: "https://github.com/wolfieeee.png" },
-    { command: "KonoChan Commands", author: "btmc727 & Rico040", avatar: "https://github.com/btmc727.png" },
-    { command: "FirstMessage Command", author: "sapphire", avatar: "https://github.com/sapphiredevs.png" },
-    { command: "Sysinfo Command", author: "mugman", avatar: "https://github.com/mugmandev.png" },
-    { command: "Spotify Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
-    { command: "Gary Command", author: "Zach Orange", avatar: "https://github.com/zachorange.png" },
+    { 
+      command: "Facts Commands", 
+      author: "jdev082", 
+      avatar: "https://github.com/jdev082.png",
+      github: "https://github.com/jdev082"
+    },
+    { 
+      command: "List Commands", 
+      author: "Kitomanari", 
+      avatar: "https://github.com/Kitosight.png",
+      github: "https://github.com/Kitosight"
+    },
+    { 
+      command: "PetPet Command", 
+      author: "wolfieeee", 
+      avatar: "https://github.com/WolfPlugs.png",
+      github: "https://github.com/WolfPlugs"
+    },
+    { 
+      command: "KonoChan Commands", 
+      author: "btmc727 & Rico040", 
+      avatar: "https://github.com/OTKUSteyler.png",
+      github: "https://github.com/OTKUSteyler"
+    },
+    { 
+      command: "FirstMessage Command", 
+      author: "sapphire", 
+      avatar: "https://github.com/aeongdesu.png",
+      github: "https://github.com/aeongdesu"
+    },
+    { 
+      command: "Sysinfo Command", 
+      author: "mugman", 
+      avatar: "https://github.com/mugman174.png",
+      github: "https://github.com/mugman174"
+    },
+    { 
+      command: "Spotify Commands", 
+      author: "Kitomanari", 
+      avatar: "https://github.com/Kitosight.png",
+      github: "https://github.com/Kitosight"
+    },
+    { 
+      command: "Gary Command", 
+      author: "Zach Orange", 
+      avatar: "https://github.com/Zach11111.png",
+      github: "https://github.com/Zach11111"
+    },
   ];
+
+  const handleProfilePress = (githubUrl: string) => {
+    RN.Linking.openURL(githubUrl);
+  };
 
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
         <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("HeartIcon")} padding={true}>
           <RN.Text style={styles.infoText}>
-            Thanks to all the amazing developers who contributed to this plugin collection!
+            Thanks to all the amazing developers who contributed to this plugin collection!{'\n'}
+            Tap on any contributor to visit their GitHub profile.
           </RN.Text>
         </BetterTableRowGroup>
 
         {credits.map((credit, index) => (
-          <RN.View key={index} style={styles.creditItem}>
+          <RN.Pressable
+            key={index}
+            style={styles.creditItem}
+            onPress={() => handleProfilePress(credit.github)}
+            android_ripple={{ color: semanticColors.ANDROID_RIPPLE, radius: 200 }}
+          >
             <RN.Image
               source={{ uri: credit.avatar }}
               style={styles.avatar}
@@ -620,14 +792,16 @@ function CreditsPage() {
             <RN.View style={styles.textContainer}>
               <RN.Text style={styles.commandText}>{credit.command}</RN.Text>
               <RN.Text style={styles.authorText}>by {credit.author}</RN.Text>
+              <RN.Text style={styles.linkText}>{credit.github.replace('https://github.com/', '@')}</RN.Text>
             </RN.View>
-          </RN.View>
+          </RN.Pressable>
         ))}
 
         <BetterTableRowGroup title="About" icon={getAssetIDByName("InfoIcon")} padding={true}>
           <RN.Text style={styles.versionText}>
             Commands Plugin Collection{'\n'}
             Version 1.0.0{'\n'}
+            Built on {new Date().toLocaleDateString()}{'\n'}
             Made with ❤️ for the community
           </RN.Text>
         </BetterTableRowGroup>
