@@ -127,14 +127,27 @@ function Header() {
   );
 }
 
-// Facts Commands Settings Page
+// Facts Commands Settings Page - FIXED with proper storage proxy
 function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  useProxy(storage); // Add storage proxy to this page
+  
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
   });
+
+  const handleToggle = (key: string, value: boolean) => {
+    storage.enabledCommands[key] = value;
+    storage.pendingRestart = true;
+    forceRerender(); // Force parent to rerender
+  };
+
+  const handleSettingToggle = (setting: string, value: boolean) => {
+    storage.factSettings[setting] = value;
+    forceRerender(); // Force parent to rerender
+  };
 
   return (
     <RN.View style={styles.container}>
@@ -145,20 +158,14 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Send facts as a reply to the command message"
             leading={<FormRow.Icon source={getAssetIDByName("ArrowAngleLeftUpIcon")} />}
             value={storage.factSettings?.sendAsReply ?? true}
-            onValueChange={(v: boolean) => {
-              storage.factSettings.sendAsReply = v;
-              forceRerender();
-            }}
+            onValueChange={(v: boolean) => handleSettingToggle("sendAsReply", v)}
           />
           <FormSwitchRow
             label="Include Source Citation"
             subLabel="Include the source of facts when available"
             leading={<FormRow.Icon source={getAssetIDByName("LinkIcon")} />}
             value={storage.factSettings?.includeCitation ?? false}
-            onValueChange={(v: boolean) => {
-              storage.factSettings.includeCitation = v;
-              forceRerender();
-            }}
+            onValueChange={(v: boolean) => handleSettingToggle("includeCitation", v)}
           />
         </BetterTableRowGroup>
 
@@ -168,33 +175,21 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Get random cat facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.catfact ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.catfact = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("catfact", v)}
           />
           <FormSwitchRow
             label="/dogfact"
             subLabel="Get random dog facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.dogfact ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.dogfact = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("dogfact", v)}
           />
           <FormSwitchRow
             label="/useless"
             subLabel="Get random useless facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.useless ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.useless = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("useless", v)}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -202,8 +197,12 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
+// COMPLETELY FIXED Gary API Settings Page
 function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage);
+  useProxy(storage); // Storage proxy for reactivity
+  
+  // Force component re-render when storage changes
+  const [, localForceRerender] = React.useReducer((x) => x + 1, 0);
   
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -314,7 +313,21 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
 
   const handleOptionPress = (value: string) => {
     console.log(`[Gary Settings] Changing API from ${currentSource} to ${value}`);
+    
+    // Update storage directly
     storage.garySettings.imageSource = value;
+    
+    // Force both local and parent re-renders
+    localForceRerender();
+    forceRerender();
+    
+    console.log(`[Gary Settings] Updated to: ${storage.garySettings.imageSource}`);
+  };
+
+  const handleGaryToggle = (value: boolean) => {
+    storage.enabledCommands.gary = value;
+    storage.pendingRestart = true;
+    localForceRerender();
     forceRerender();
   };
 
@@ -374,11 +387,7 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Send random Gary images to channel"
             leading={<FormRow.Icon source={getAssetIDByName("AttachmentIcon")} />}
             value={storage.enabledCommands?.gary ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.gary = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={handleGaryToggle}
           />
         </BetterTableRowGroup>
 
@@ -410,14 +419,27 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// List Commands Settings Page
+// List Commands Settings Page - FIXED with proper storage proxy
 function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  useProxy(storage); // Add storage proxy
+
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
   });
+
+  const handleToggle = (key: string, value: boolean) => {
+    storage.enabledCommands[key] = value;
+    storage.pendingRestart = true;
+    forceRerender(); // Force parent to rerender
+  };
+
+  const handleSettingToggle = (setting: string, value: boolean) => {
+    storage.listSettings[setting] = value;
+    forceRerender(); // Force parent to rerender
+  };
 
   return (
     <RN.View style={styles.container}>
@@ -428,20 +450,14 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Always use detailed mode when listing plugins"
             leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
             value={storage.listSettings?.pluginListAlwaysDetailed ?? false}
-            onValueChange={(v: boolean) => {
-              storage.listSettings.pluginListAlwaysDetailed = v;
-              forceRerender();
-            }}
+            onValueChange={(v: boolean) => handleSettingToggle("pluginListAlwaysDetailed", v)}
           />
           <FormSwitchRow
             label="Always Send Detailed Theme List"
             subLabel="Always use detailed mode when listing themes"
             leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
             value={storage.listSettings?.themeListAlwaysDetailed ?? false}
-            onValueChange={(v: boolean) => {
-              storage.listSettings.themeListAlwaysDetailed = v;
-              forceRerender();
-            }}
+            onValueChange={(v: boolean) => handleSettingToggle("themeListAlwaysDetailed", v)}
           />
         </BetterTableRowGroup>
 
@@ -451,22 +467,14 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="List all installed plugins"
             leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
             value={storage.enabledCommands?.pluginList ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.pluginList = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("pluginList", v)}
           />
           <FormSwitchRow
             label="/theme-list"
             subLabel="List all installed themes"
             leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
             value={storage.enabledCommands?.themeList ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.themeList = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("themeList", v)}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -474,8 +482,10 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Image Commands Settings Page
+// Image Commands Settings Page - FIXED with proper storage proxy
 function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  useProxy(storage); // Add storage proxy
+
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
@@ -483,20 +493,22 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
     },
   });
 
+  const handleToggle = (key: string, value: boolean) => {
+    storage.enabledCommands[key] = value;
+    storage.pendingRestart = true;
+    forceRerender(); // Force parent to rerender
+  };
+
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
-        <BetterTableRowGroup title="Petpet Command" icon={getAssetIDByName("ImageIcon")}>
+        <BetterTableRowGroup title="Image Commands" icon={getAssetIDByName("ImageIcon")}>
           <FormSwitchRow
             label="/petpet"
             subLabel="Create pet-pet GIF of a user"
             leading={<FormRow.Icon source={getAssetIDByName("HandRequestSpeakIcon")} />}
             value={storage.enabledCommands?.petpet ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.petpet = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("petpet", v)}
           />
         </BetterTableRowGroup>
 
@@ -506,22 +518,14 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Get random image from KonoChan (private)"
             leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
             value={storage.enabledCommands?.konoself ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.konoself = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("konoself", v)}
           />
           <FormSwitchRow
             label="/konosend"
             subLabel="Send random image from KonoChan to channel"
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={storage.enabledCommands?.konosend ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.konosend = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("konosend", v)}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -529,8 +533,10 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Spotify Commands Settings Page
+// Spotify Commands Settings Page - FIXED with proper storage proxy
 function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  useProxy(storage); // Add storage proxy
+
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
@@ -544,6 +550,12 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
     },
   });
 
+  const handleToggle = (key: string, value: boolean) => {
+    storage.enabledCommands[key] = value;
+    storage.pendingRestart = true;
+    forceRerender(); // Force parent to rerender
+  };
+
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
@@ -553,44 +565,28 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Share your current Spotify track"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyTrack ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.spotifyTrack = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("spotifyTrack", v)}
           />
           <FormSwitchRow
             label="/spotify album"
             subLabel="Share your current track's album"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyAlbum ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.spotifyAlbum = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("spotifyAlbum", v)}
           />
           <FormSwitchRow
             label="/spotify artists"
             subLabel="Share your current track's artists"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyArtists ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.spotifyArtists = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("spotifyArtists", v)}
           />
           <FormSwitchRow
             label="/spotify cover"
             subLabel="Share your current track's cover"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyCover ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.spotifyCover = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("spotifyCover", v)}
           />
         </BetterTableRowGroup>
 
@@ -604,14 +600,22 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Other Commands Settings Page
+// Other Commands Settings Page - FIXED with proper storage proxy
 function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  useProxy(storage); // Add storage proxy
+
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
   });
+
+  const handleToggle = (key: string, value: boolean) => {
+    storage.enabledCommands[key] = value;
+    storage.pendingRestart = true;
+    forceRerender(); // Force parent to rerender
+  };
 
   return (
     <RN.View style={styles.container}>
@@ -622,11 +626,7 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Get the first message in a channel"
             leading={<FormRow.Icon source={getAssetIDByName("ChatIcon")} />}
             value={storage.enabledCommands?.firstmessage ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.firstmessage = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("firstmessage", v)}
           />
         </BetterTableRowGroup>
 
@@ -636,11 +636,7 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Display system information"
             leading={<FormRow.Icon source={getAssetIDByName("SettingsIcon")} />}
             value={storage.enabledCommands?.sysinfo ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.sysinfo = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
+            onValueChange={(v) => handleToggle("sysinfo", v)}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -648,6 +644,7 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
+// Credits Page with proper spacing and correct GitHub links
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -771,7 +768,8 @@ function CreditsPage() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
         <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("HeartIcon")} padding={true}>
           <RN.Text style={styles.infoText}>
-            Thanks to all this developers for creating this amazing commands!{'\n'}
+            Thanks to all the amazing developers who contributed to this plugin collection!{'\n'}
+            Tap on any contributor to visit their GitHub profile.
           </RN.Text>
         </BetterTableRowGroup>
 
@@ -798,6 +796,8 @@ function CreditsPage() {
           <RN.Text style={styles.versionText}>
             Commands Plugin Collection{'\n'}
             Version 1.0.0{'\n'}
+            Built on 2025-10-01{'\n'}
+            Made with ❤️ for the community
           </RN.Text>
         </BetterTableRowGroup>
       </ScrollView>
@@ -850,9 +850,9 @@ if (!storage.pendingRestart) {
   storage.pendingRestart = false;
 }
 
-// Main Settings Component
+// Main Settings Component - ENHANCED with better reactivity
 export default function Settings() {
-  useProxy(storage);
+  useProxy(storage); // Main storage proxy
   const [rerender, forceRerender] = React.useReducer((x) => x + 1, 0);
   const navigation = NavigationNative.useNavigation();
 
@@ -948,7 +948,7 @@ export default function Settings() {
         <BetterTableRowGroup title="More Options" icon={getAssetIDByName("SettingsIcon")}>
           <FormRow
             label="Credits"
-            subLabel="View original authors of the plugins"
+            subLabel="View plugin authors and contributors"
             leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Credits", CreditsPage)}
