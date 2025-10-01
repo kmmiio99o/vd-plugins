@@ -29,6 +29,12 @@ if (!storage.listSettings) {
   };
 }
 
+if (!storage.garySettings) {
+  storage.garySettings = {
+    imageSource: "gary",
+  };
+}
+
 if (!storage.enabledCommands) {
   storage.enabledCommands = {
     catfact: true,
@@ -45,6 +51,7 @@ if (!storage.enabledCommands) {
     spotifyAlbum: true,
     spotifyArtists: true,
     spotifyCover: true,
+    gary: true,
   };
 }
 
@@ -75,6 +82,11 @@ export default function Settings() {
   const handleCommandToggle = (commandName: string, value: boolean) => {
     storage.enabledCommands[commandName] = value;
     storage.pendingRestart = true;
+    forceRerender();
+  };
+
+  const handleGarySourceChange = (source: string) => {
+    storage.garySettings.imageSource = source;
     forceRerender();
   };
 
@@ -169,6 +181,54 @@ export default function Settings() {
             />
           </TableRowGroup>
 
+          {/* Gary Commands */}
+          <TableRowGroup title="Gary Commands">
+            <TableSwitchRow
+              label="/gary"
+              subLabel="Send random Gary images to channel"
+              value={storage.enabledCommands?.gary ?? true}
+              onValueChange={(v) => handleCommandToggle("gary", v)}
+            />
+            <TableRow
+              label="Gary Image Source"
+              subLabel={`Current: ${storage.garySettings?.imageSource === "gary" ? "Gary API" : 
+                storage.garySettings?.imageSource === "catapi" ? "Cat API" : 
+                storage.garySettings?.imageSource === "minker" ? "Minker API" : 
+                storage.garySettings?.imageSource === "goober" ? "Goober API" : "Gary API"}`}
+              onPress={() => {
+                alerts.showConfirmationAlert({
+                  title: "Choose Gary Image Source",
+                  content: "Select the source for Gary images:",
+                  confirmText: "Gary API",
+                  confirmColor: "brand",
+                  cancelText: "More Options",
+                  onConfirm: () => handleGarySourceChange("gary"),
+                  onCancel: () => {
+                    alerts.showConfirmationAlert({
+                      title: "More Image Sources",
+                      content: "Choose another source:",
+                      confirmText: "Cat API",
+                      cancelText: "Even More",
+                      confirmColor: "brand",
+                      onConfirm: () => handleGarySourceChange("catapi"),
+                      onCancel: () => {
+                        alerts.showConfirmationAlert({
+                          title: "Final Options",
+                          content: "Last two options:",
+                          confirmText: "Minker API",
+                          cancelText: "Goober API",
+                          confirmColor: "brand",
+                          onConfirm: () => handleGarySourceChange("minker"),
+                          onCancel: () => handleGarySourceChange("goober"),
+                        });
+                      },
+                    });
+                  },
+                });
+              }}
+            />
+          </TableRowGroup>
+
           {/* KonoChan Commands */}
           <TableRowGroup title="KonoChan Commands">
             <TableSwitchRow
@@ -245,6 +305,7 @@ export default function Settings() {
             <TableRow label="FirstMessage Command" subLabel="by sapphire" />
             <TableRow label="Sysinfo Command" subLabel="by mugman" />
             <TableRow label="Spotify Commands" subLabel="by Kitomanari" />
+            <TableRow label="Gary Command" subLabel="by Zach Orange" />
           </TableRowGroup>
 
           {/* About */}

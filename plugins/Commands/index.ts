@@ -16,6 +16,7 @@ import {
   spotifyArtistsCommand,
   spotifyCoverCommand
 } from "./src/commands/spotify";
+import { garyCommand } from "./src/commands/gary";
 import settings from "./settings";
 
 // Initialize storage with default values
@@ -30,6 +31,12 @@ if (!storage.listSettings) {
   storage.listSettings = {
     pluginListAlwaysDetailed: false,
     themeListAlwaysDetailed: false,
+  };
+}
+
+if (!storage.garySettings) {
+  storage.garySettings = {
+    imageSource: "gary",
   };
 }
 
@@ -49,6 +56,7 @@ if (!storage.enabledCommands) {
     spotifyAlbum: true,
     spotifyArtists: true,
     spotifyCover: true,
+    gary: true,
   };
 }
 
@@ -68,6 +76,7 @@ const commandMap = {
   spotifyAlbum: spotifyAlbumCommand,
   spotifyArtists: spotifyArtistsCommand,
   spotifyCover: spotifyCoverCommand,
+  gary: garyCommand,
 };
 
 // Store registered commands for cleanup

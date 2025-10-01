@@ -36,3 +36,30 @@ export const getPetPetData = async (image: string) => {
   const body = await data.json();
   return body;
 };
+
+// Gary API function
+export const getGaryUrl = async (source: string = "gary"): Promise<string | null> => {
+  try {
+    switch (source) {
+      case "gary":
+        const response = await fetch("https://api.garythe.cat/gary");
+        const json = await response.json();
+        return json.url;
+      case "goober":
+        const gooberResponse = await fetch("https://api.garythe.cat/goober");
+        const gooberJson = await gooberResponse.json();
+        return gooberJson.url;
+      case "catapi":
+        const catResponse = await fetch("https://api.thecatapi.com/v1/images/search");
+        const catJson = await catResponse.json();
+        return catJson[0].url;
+      case "minker":
+        return "https://minky.materii.dev/";
+      default:
+        throw new Error("Invalid Gary image source value");
+    }
+  } catch (error) {
+    console.error(`[Gary API] Error fetching image from ${source}:`, error);
+    return null;
+  }
+};
