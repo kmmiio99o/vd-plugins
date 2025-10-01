@@ -3,6 +3,7 @@ import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
 import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
+import { NavigationNative } from "@vendetta/metro/common";
 import { semanticColors } from "@vendetta/ui";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Forms } from "@vendetta/ui/components";
@@ -133,6 +134,293 @@ function Header() {
   );
 }
 
+// Credits Page Component
+function CreditsPage() {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+    creditItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: semanticColors.CARD_PRIMARY_BG,
+      borderRadius: 12,
+      marginHorizontal: 16,
+      marginVertical: 4,
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    textContainer: {
+      flex: 1,
+    },
+    commandText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: semanticColors.TEXT_NORMAL,
+    },
+    authorText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      marginTop: 2,
+    },
+  });
+
+  const credits = [
+    { command: "Facts Commands", author: "jdev082", avatar: "https://github.com/jdev082.png" },
+    { command: "List Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
+    { command: "PetPet Command", author: "wolfieeee", avatar: "https://github.com/wolfieeee.png" },
+    { command: "KonoChan Commands", author: "btmc727 & Rico040", avatar: "https://github.com/btmc727.png" },
+    { command: "FirstMessage Command", author: "sapphire", avatar: "https://github.com/sapphiredevs.png" },
+    { command: "Sysinfo Command", author: "mugman", avatar: "https://github.com/mugmandev.png" },
+    { command: "Spotify Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
+    { command: "Gary Command", author: "Zach Orange", avatar: "https://github.com/zachorange.png" },
+  ];
+
+  return (
+    <RN.View style={styles.container}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <BetterTableRowGroup 
+          title="Plugin Authors" 
+          icon={getAssetIDByName("PeopleIcon")}
+          padding={true}
+        >
+          <RN.Text style={{
+            fontSize: 14,
+            color: semanticColors.TEXT_MUTED,
+            marginBottom: 16,
+            textAlign: "center",
+          }}>
+            Thanks to all the amazing developers who contributed to this plugin collection!
+          </RN.Text>
+        </BetterTableRowGroup>
+
+        {credits.map((credit, index) => (
+          <RN.View key={index} style={styles.creditItem}>
+            <RN.Image
+              source={{ uri: credit.avatar }}
+              style={styles.avatar}
+            />
+            <RN.View style={styles.textContainer}>
+              <RN.Text style={styles.commandText}>{credit.command}</RN.Text>
+              <RN.Text style={styles.authorText}>by {credit.author}</RN.Text>
+            </RN.View>
+          </RN.View>
+        ))}
+
+        <BetterTableRowGroup 
+          title="About" 
+          icon={getAssetIDByName("InfoIcon")}
+          padding={true}
+        >
+          <RN.Text style={{
+            fontSize: 14,
+            color: semanticColors.TEXT_MUTED,
+            textAlign: "center",
+            lineHeight: 20,
+          }}>
+            Commands Plugin Collection{'\n'}
+            Version 1.0.0{'\n'}
+            Made with ❤️ for the community
+          </RN.Text>
+        </BetterTableRowGroup>
+      </ScrollView>
+    </RN.View>
+  );
+}
+
+// Gary API Settings Page Component
+function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+    optionContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      backgroundColor: semanticColors.CARD_PRIMARY_BG,
+      borderRadius: 12,
+      marginHorizontal: 16,
+      marginVertical: 4,
+    },
+    selectedOption: {
+      backgroundColor: semanticColors.BRAND_500_ALPHA,
+      borderColor: semanticColors.BRAND_500,
+      borderWidth: 2,
+    },
+    normalOption: {
+      borderColor: semanticColors.BORDER_FAINT,
+      borderWidth: 1,
+    },
+    radioButton: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: semanticColors.TEXT_MUTED,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    },
+    selectedRadio: {
+      borderColor: semanticColors.BRAND_500,
+    },
+    radioInner: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: semanticColors.BRAND_500,
+    },
+    textContainer: {
+      flex: 1,
+    },
+    optionTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: semanticColors.TEXT_NORMAL,
+    },
+    optionDesc: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      marginTop: 2,
+    },
+    selectedText: {
+      color: semanticColors.BRAND_500,
+    },
+  });
+
+  const options = [
+    { 
+      value: "gary", 
+      title: "Gary API", 
+      desc: "Original Gary the cat images from api.garythe.cat",
+      icon: getAssetIDByName("ic_cat")
+    },
+    { 
+      value: "catapi", 
+      title: "Cat API", 
+      desc: "Random cat pictures from thecatapi.com",
+      icon: getAssetIDByName("ic_cat")
+    },
+    { 
+      value: "minker", 
+      title: "Minker API", 
+      desc: "Minky images from minky.materii.dev",
+      icon: getAssetIDByName("ImageIcon")
+    },
+    { 
+      value: "goober", 
+      title: "Goober API", 
+      desc: "Goober images from api.garythe.cat/goober",
+      icon: getAssetIDByName("ImageIcon")
+    },
+  ];
+
+  const currentSource = storage.garySettings?.imageSource || "gary";
+
+  return (
+    <RN.View style={styles.container}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <BetterTableRowGroup 
+          title="Image Source Selection" 
+          icon={getAssetIDByName("DownloadIcon")}
+          padding={true}
+        >
+          <RN.Text style={{
+            fontSize: 14,
+            color: semanticColors.TEXT_MUTED,
+            marginBottom: 16,
+            textAlign: "center",
+          }}>
+            Choose which API the /gary command should use to fetch images.
+          </RN.Text>
+        </BetterTableRowGroup>
+
+        {options.map((option) => {
+          const isSelected = currentSource === option.value;
+          return (
+            <RN.Pressable
+              key={option.value}
+              style={[
+                styles.optionContainer,
+                isSelected ? styles.selectedOption : styles.normalOption,
+              ]}
+              onPress={() => {
+                storage.garySettings.imageSource = option.value;
+                forceRerender();
+              }}
+            >
+              <RN.View style={[
+                styles.radioButton,
+                isSelected && styles.selectedRadio,
+              ]}>
+                {isSelected && <RN.View style={styles.radioInner} />}
+              </RN.View>
+              <RN.Image
+                source={option.icon}
+                style={{
+                  width: 24,
+                  height: 24,
+                  tintColor: isSelected ? semanticColors.BRAND_500 : semanticColors.TEXT_MUTED,
+                  marginRight: 12,
+                }}
+              />
+              <RN.View style={styles.textContainer}>
+                <RN.Text style={[
+                  styles.optionTitle,
+                  isSelected && styles.selectedText,
+                ]}>
+                  {option.title}
+                </RN.Text>
+                <RN.Text style={styles.optionDesc}>
+                  {option.desc}
+                </RN.Text>
+              </RN.View>
+            </RN.Pressable>
+          );
+        })}
+
+        <BetterTableRowGroup 
+          title="Current Selection" 
+          icon={getAssetIDByName("CheckmarkIcon")}
+          padding={true}
+        >
+          <RN.Text style={{
+            fontSize: 14,
+            color: semanticColors.TEXT_NORMAL,
+            textAlign: "center",
+            fontWeight: "600",
+          }}>
+            Currently using: {
+              currentSource === "gary" ? "Gary API" :
+              currentSource === "catapi" ? "Cat API" :
+              currentSource === "minker" ? "Minker API" :
+              currentSource === "goober" ? "Goober API" : "Gary API"
+            }
+          </RN.Text>
+        </BetterTableRowGroup>
+      </ScrollView>
+    </RN.View>
+  );
+}
+
 // Initialize storage with default values
 if (!storage.factSettings) {
   storage.factSettings = {
@@ -178,9 +466,11 @@ if (!storage.pendingRestart) {
   storage.pendingRestart = false;
 }
 
+// Main Settings Component
 export default function Settings() {
   useProxy(storage);
   const [rerender, forceRerender] = React.useReducer((x) => x + 1, 0);
+  const navigation = NavigationNative.useNavigation();
 
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -214,47 +504,17 @@ export default function Settings() {
     forceRerender();
   };
 
-  const showGarySourceSelection = () => {
-    alerts.showConfirmationAlert({
-      title: "Choose Gary Image Source",
-      content: "Select an image source for the Gary command:",
-      confirmText: "Gary API",
-      cancelText: "Other Options",
-      confirmColor: "brand",
-      onConfirm: () => {
-        storage.garySettings.imageSource = "gary";
-        forceRerender();
-      },
-      onCancel: () => {
-        alerts.showConfirmationAlert({
-          title: "Choose Image Source",
-          content: "Select from remaining options:",
-          confirmText: "Cat API",
-          cancelText: "More Options",
-          confirmColor: "brand",
-          onConfirm: () => {
-            storage.garySettings.imageSource = "catapi";
-            forceRerender();
-          },
-          onCancel: () => {
-            alerts.showConfirmationAlert({
-              title: "Choose Image Source",
-              content: "Select from final options:",
-              confirmText: "Minker API",
-              cancelText: "Goober API",
-              confirmColor: "brand",
-              onConfirm: () => {
-                storage.garySettings.imageSource = "minker";
-                forceRerender();
-              },
-              onCancel: () => {
-                storage.garySettings.imageSource = "goober";
-                forceRerender();
-              },
-            });
-          },
-        });
-      },
+  const navigateToCredits = () => {
+    navigation.push("VendettaCustomPage", {
+      title: "Credits",
+      render: () => <CreditsPage />,
+    });
+  };
+
+  const navigateToGaryAPI = () => {
+    navigation.push("VendettaCustomPage", {
+      title: "Gary API Settings",
+      render: () => <GaryAPIPage forceRerender={forceRerender} />,
     });
   };
 
@@ -383,14 +643,14 @@ export default function Settings() {
             onValueChange={(v) => handleCommandToggle("gary", v)}
           />
           <FormRow
-            label="Gary Image Source"
+            label="Gary API Settings"
             subLabel={`Current: ${storage.garySettings?.imageSource === "gary" ? "Gary API" : 
               storage.garySettings?.imageSource === "catapi" ? "Cat API" : 
               storage.garySettings?.imageSource === "minker" ? "Minker API" : 
               storage.garySettings?.imageSource === "goober" ? "Goober API" : "Gary API"}`}
             leading={<FormRow.Icon source={getAssetIDByName("DownloadIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={showGarySourceSelection}
+            onPress={navigateToGaryAPI}
           />
         </BetterTableRowGroup>
 
@@ -478,26 +738,18 @@ export default function Settings() {
           />
         </BetterTableRowGroup>
 
-        {/* Credits */}
+        {/* Navigation Pages */}
         <BetterTableRowGroup 
-          title="Credits" 
-          icon={getAssetIDByName("PeopleIcon")}
-          padding={true}
+          title="More Options" 
+          icon={getAssetIDByName("MoreHorizontalIcon")}
         >
-          <RN.Text style={{ 
-            fontSize: 14, 
-            color: semanticColors.TEXT_MUTED,
-            lineHeight: 20 
-          }}>
-            Facts Commands by jdev082{'\n'}
-            List Commands by Kitomanari{'\n'}
-            PetPet Command by wolfieeee{'\n'}
-            KonoChan Commands by btmc727 & Rico040{'\n'}
-            FirstMessage Command by sapphire{'\n'}
-            Sysinfo Command by mugman{'\n'}
-            Spotify Commands by Kitomanari{'\n'}
-            Gary Command by Zach Orange
-          </RN.Text>
+          <FormRow
+            label="Credits"
+            subLabel="View plugin authors and contributors"
+            leading={<FormRow.Icon source={getAssetIDByName("PeopleIcon")} />}
+            trailing={<FormRow.Arrow />}
+            onPress={navigateToCredits}
+          />
         </BetterTableRowGroup>
 
         <RN.View style={styles.spacing} />
