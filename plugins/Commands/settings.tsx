@@ -587,10 +587,19 @@ function ImageSettingsPage() {
   );
 }
 
-// Spotify Settings Page
+// Spotify Settings Page - FIXED with proper text styling
 function SpotifySettingsPage() {
   useProxy(storage);
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+  const styles = stylesheet.createThemedStyleSheet({
+    infoText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      textAlign: "center",
+      lineHeight: 20,
+    },
+  });
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
@@ -643,12 +652,7 @@ function SpotifySettingsPage() {
         </BetterTableRowGroup>
 
         <BetterTableRowGroup title="About Spotify Commands" icon={getAssetIDByName("InfoIcon")} padding={true}>
-          <RN.Text style={{
-            fontSize: 14,
-            color: semanticColors.TEXT_MUTED,
-            textAlign: "center",
-            lineHeight: 20,
-          }}>
+          <RN.Text style={styles.infoText}>
             These commands allow you to share your current Spotify activity in Discord. Make sure you have Spotify connected to Discord for these commands to work properly.
           </RN.Text>
         </BetterTableRowGroup>
@@ -697,7 +701,7 @@ function OtherSettingsPage() {
   );
 }
 
-// Credits Page
+// Credits Page - UPDATED VERSION TO 1.0.1
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -848,7 +852,7 @@ function CreditsPage() {
         <BetterTableRowGroup title="About" icon={getAssetIDByName("InfoIcon")} padding={true}>
           <RN.Text style={styles.versionText}>
             Commands Plugin Collection{'\n'}
-            Version 1.0.0
+            Version 1.0.1
           </RN.Text>
         </BetterTableRowGroup>
       </RN.View>
