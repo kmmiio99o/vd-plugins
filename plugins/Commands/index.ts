@@ -18,7 +18,7 @@ import {
 } from "./src/commands/spotify";
 import { garyCommand } from "./src/commands/gary";
 import { lovefemboysCommand } from "./src/commands/lovefemboys";
-import settings from "./settings";
+import settings from "./src/settings"; // Fixed import path
 
 // Initialize storage with default values
 if (!storage.factSettings) {
