@@ -31,6 +31,18 @@ interface RedditPost {
         thumbnail_url: string;
         type: string;
       };
+      reddit_video?: {
+        fallback_url: string;
+        width: number;
+        height: number;
+      };
+    };
+    media?: {
+      reddit_video?: {
+        fallback_url: string;
+        width: number;
+        height: number;
+      };
     };
     media_embed?: {
       content: string;
@@ -38,6 +50,7 @@ interface RedditPost {
     url_overridden_by_dest?: string;
     domain: string;
     post_hint?: string;
+    selftext: string;
   };
 }
 
@@ -50,43 +63,58 @@ interface RedditResponse {
   };
 }
 
-function isValidImageUrl(url: string): boolean {
+function isValidMediaUrl(url: string): boolean {
   if (!url) return false;
   
   const lowerUrl = url.toLowerCase();
   
-  // Check for direct image URLs
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-  if (imageExtensions.some(ext => lowerUrl.includes(ext))) {
+  // Check for image/video/gif extensions
+  const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.webm', '.mov'];
+  if (mediaExtensions.some(ext => lowerUrl.includes(ext))) {
     return true;
   }
   
-  // Known image hosting domains
-  const imageHosts = [
+  // Known media hosting domains (including video/gif hosts)
+  const mediaHosts = [
     'i.redd.it',
     'i.imgur.com',
-    'preview.redd.it'
+    'preview.redd.it',
+    'v.redd.it',
+    'redgifs.com',
+    'gfycat.com',
+    'imgur.com'
   ];
   
-  return imageHosts.some(host => lowerUrl.includes(host));
+  return mediaHosts.some(host => lowerUrl.includes(host));
 }
 
-function extractImageUrl(post: RedditPost): string | null {
+function containsNsfwKeywords(text: string): boolean {
+  const nsfwKeywords = [
+    'nsfw', 'nude', 'naked', 'dick', 'cock', 'penis', 'pussy', 'vagina', 'ass', 'boobs', 'tits',
+    'sex', 'fuck', 'cum', 'orgasm', 'horny', 'slutty', 'daddy', 'kinky', 'bdsm', 'anal',
+    'blow', 'suck', 'stroke', 'masturbat', 'jerk', 'hard', 'wet', 'tight', 'deep', 'throat',
+    '18+', 'xxx', 'porn', 'sexual', 'erotic', 'explicit', 'adult', 'mature'
+  ];
+  
+  const lowerText = text.toLowerCase();
+  return nsfwKeywords.some(keyword => lowerText.includes(keyword));
+}
+
+function extractMediaUrl(post: RedditPost): string | null {
   const postData = post.data;
   
-  // Skip videos and GIFs from redgifs/etc
-  if (postData.is_video || postData.domain.includes('redgifs.com') || postData.domain.includes('gfycat.com')) {
-    return null;
+  // Try Reddit video first
+  if (postData.secure_media?.reddit_video?.fallback_url) {
+    return postData.secure_media.reddit_video.fallback_url;
   }
   
-  // Check post hint for image types
-  if (postData.post_hint && !['image', 'hosted:video'].includes(postData.post_hint)) {
-    return null;
+  if (postData.media?.reddit_video?.fallback_url) {
+    return postData.media.reddit_video.fallback_url;
   }
   
-  // Try the main URL first
+  // Try the main URL
   const mainUrl = postData.url;
-  if (isValidImageUrl(mainUrl)) {
+  if (isValidMediaUrl(mainUrl)) {
     return mainUrl;
   }
   
@@ -97,7 +125,7 @@ function extractImageUrl(post: RedditPost): string | null {
     // Try source image first (highest quality)
     if (previewImage.source?.url) {
       const sourceUrl = previewImage.source.url.replace(/&amp;/g, '&');
-      if (isValidImageUrl(sourceUrl)) {
+      if (isValidMediaUrl(sourceUrl)) {
         return sourceUrl;
       }
     }
@@ -107,28 +135,28 @@ function extractImageUrl(post: RedditPost): string | null {
       const highestRes = previewImage.resolutions[previewImage.resolutions.length - 1];
       if (highestRes?.url) {
         const resUrl = highestRes.url.replace(/&amp;/g, '&');
-        if (isValidImageUrl(resUrl)) {
+        if (isValidMediaUrl(resUrl)) {
           return resUrl;
         }
       }
     }
   }
   
-  // Try secure_media oembed thumbnail for some cases
-  if (postData.secure_media?.oembed?.thumbnail_url && postData.secure_media.oembed.type === 'photo') {
+  // Try secure_media oembed thumbnail
+  if (postData.secure_media?.oembed?.thumbnail_url) {
     const thumbUrl = postData.secure_media.oembed.thumbnail_url;
-    if (isValidImageUrl(thumbUrl)) {
+    if (isValidMediaUrl(thumbUrl)) {
       return thumbUrl;
     }
   }
   
-  // Try regular thumbnail as last resort (but only if it's not a default thumbnail)
+  // Try regular thumbnail as last resort
   if (postData.thumbnail && 
       postData.thumbnail !== 'self' && 
       postData.thumbnail !== 'default' && 
       postData.thumbnail !== 'nsfw' &&
       postData.thumbnail.startsWith('http')) {
-    if (isValidImageUrl(postData.thumbnail)) {
+    if (isValidMediaUrl(postData.thumbnail)) {
       return postData.thumbnail;
     }
   }
@@ -136,11 +164,10 @@ function extractImageUrl(post: RedditPost): string | null {
   return null;
 }
 
-async function getFemboyImage(includeNsfw: boolean = false): Promise<{ url: string; isNsfw: boolean; title: string } | null> {
+async function getFemboyMedia(includeNsfw: boolean = false): Promise<{ url: string; isNsfw: boolean; title: string } | null> {
   try {
-    console.log(`[LoveFemboys] Fetching images, includeNsfw: ${includeNsfw}`);
+    console.log(`[LoveFemboys] Fetching media, includeNsfw: ${includeNsfw}`);
     
-    // Fetch more posts to increase chances of finding images
     const response = await fetch('https://reddit.com/r/femboys.json?limit=100&raw_json=1');
     if (!response.ok) {
       console.log('[LoveFemboys] Failed to fetch from Reddit API:', response.status, response.statusText);
@@ -150,48 +177,58 @@ async function getFemboyImage(includeNsfw: boolean = false): Promise<{ url: stri
     const data: RedditResponse = await response.json();
     console.log(`[LoveFemboys] Fetched ${data.data.children.length} posts`);
     
-    // Filter posts that are images and match NSFW preference
     const validPosts = [];
     
     for (const post of data.data.children) {
       const postData = post.data;
       
-      console.log(`[LoveFemboys] Checking post: "${postData.title}" (NSFW: ${postData.over_18}, Domain: ${postData.domain})`);
-      
-      // Filter by NSFW preference first
-      if (!includeNsfw && postData.over_18) {
-        console.log(`[LoveFemboys] Skipping NSFW post: ${postData.title}`);
+      // Skip text-only posts
+      if (postData.selftext && !postData.url) {
         continue;
       }
       
-      // Try to extract image URL
-      const imageUrl = extractImageUrl(post);
-      if (imageUrl) {
-        console.log(`[LoveFemboys] Found valid image: ${imageUrl}`);
+      console.log(`[LoveFemboys] Checking post: "${postData.title}" (Reddit NSFW: ${postData.over_18})`);
+      
+      // Check for NSFW keywords in title/content
+      const hasNsfwKeywords = containsNsfwKeywords(postData.title + ' ' + postData.selftext);
+      const isNsfwContent = postData.over_18 || hasNsfwKeywords;
+      
+      console.log(`[LoveFemboys] NSFW analysis - Reddit flag: ${postData.over_18}, Keywords detected: ${hasNsfwKeywords}, Final NSFW: ${isNsfwContent}`);
+      
+      // Filter by NSFW preference
+      if (!includeNsfw && isNsfwContent) {
+        console.log(`[LoveFemboys] Skipping NSFW content: ${postData.title}`);
+        continue;
+      }
+      
+      // Try to extract media URL
+      const mediaUrl = extractMediaUrl(post);
+      if (mediaUrl) {
+        console.log(`[LoveFemboys] Found valid media: ${mediaUrl}`);
         validPosts.push({
-          url: imageUrl,
-          isNsfw: postData.over_18,
+          url: mediaUrl,
+          isNsfw: isNsfwContent,
           title: postData.title
         });
       } else {
-        console.log(`[LoveFemboys] No valid image URL found for: ${postData.title}`);
+        console.log(`[LoveFemboys] No valid media URL found for: ${postData.title}`);
       }
     }
 
-    console.log(`[LoveFemboys] Found ${validPosts.length} valid image posts (includeNsfw: ${includeNsfw})`);
+    console.log(`[LoveFemboys] Found ${validPosts.length} valid media posts (includeNsfw: ${includeNsfw})`);
 
     if (validPosts.length === 0) {
-      console.log('[LoveFemboys] No suitable images found');
+      console.log('[LoveFemboys] No suitable media found');
       return null;
     }
 
-    // Get random image
+    // Get random media
     const randomPost = validPosts[Math.floor(Math.random() * validPosts.length)];
     console.log(`[LoveFemboys] Selected: ${randomPost.title} - ${randomPost.url}`);
     
     return randomPost;
   } catch (error) {
-    console.error('[LoveFemboys] Error fetching image:', error);
+    console.error('[LoveFemboys] Error fetching media:', error);
     return null;
   }
 }
@@ -199,14 +236,14 @@ async function getFemboyImage(includeNsfw: boolean = false): Promise<{ url: stri
 export const lovefemboysCommand = {
   name: "lovefemboys",
   displayName: "lovefemboys",
-  description: "Get a random femboy image from r/femboys",
-  displayDescription: "Get a random femboy image from r/femboys",
+  description: "Get random femboy content from r/femboys",
+  displayDescription: "Get random femboy content from r/femboys",
   options: [
     {
       name: "nsfw",
       displayName: "nsfw",
-      description: "Include NSFW images",
-      displayDescription: "Include NSFW images",
+      description: "Include NSFW content",
+      displayDescription: "Include NSFW content",
       type: 5, // Boolean
       required: false,
     },
@@ -221,17 +258,18 @@ export const lovefemboysCommand = {
   ],
   execute: async (args: any, ctx: any) => {
     try {
-      const includeNsfw = args.find((arg: any) => arg.name === "nsfw")?.value || false;
-      const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
+      const includeNsfw = args?.find?.((arg: any) => arg.name === "nsfw")?.value ?? false;
+      const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
       
       console.log(`[LoveFemboys] Command executed with nsfw: ${includeNsfw}, ephemeral: ${isEphemeral}`);
+      console.log(`[LoveFemboys] Args received:`, args);
       
-      const result = await getFemboyImage(includeNsfw);
+      const result = await getFemboyMedia(includeNsfw);
 
       if (!result) {
         const errorMessage = includeNsfw 
-          ? "❌ Failed to fetch femboy image. Reddit might be having issues or no images available."
-          : "❌ No SFW femboy images found. Try with `nsfw:true` or try again later.";
+          ? "❌ No femboy content found. Reddit might be having issues."
+          : "❌ No SFW femboy content found. Try with `nsfw:true` or try again later.";
         
         if (isEphemeral) {
           return {
@@ -242,19 +280,18 @@ export const lovefemboysCommand = {
             },
           };
         } else {
-          const fixNonce = Date.now().toString();
-          MessageActions.sendMessage(ctx.channel.id, { content: errorMessage }, void 0, {
-            nonce: fixNonce,
+          MessageActions.sendMessage(ctx.channel.id, { 
+            content: errorMessage 
           });
           return { type: 4 };
         }
       }
 
-      const nsfwTag = result.isNsfw ? " 🔞" : " ✅";
-      const modeTag = includeNsfw ? " (NSFW allowed)" : " (SFW only)";
-      const content = `💖 **Femboy Image**${nsfwTag}${modeTag}\n*${result.title}*\n${result.url}`;
+      // Simple content without extra text
+      const content = result.url;
 
       if (isEphemeral) {
+        console.log(`[LoveFemboys] Sending ephemeral response`);
         return {
           type: 4,
           data: {
@@ -263,17 +300,17 @@ export const lovefemboysCommand = {
           },
         };
       } else {
-        const fixNonce = Date.now().toString();
-        MessageActions.sendMessage(ctx.channel.id, { content }, void 0, {
-          nonce: fixNonce,
+        console.log(`[LoveFemboys] Sending public message`);
+        MessageActions.sendMessage(ctx.channel.id, { 
+          content 
         });
         return { type: 4 };
       }
     } catch (error) {
       console.error('[LoveFemboys] Command error:', error);
-      const errorMessage = "❌ An error occurred while fetching femboy image. Check console for details.";
+      const errorMessage = "❌ An error occurred while fetching femboy content.";
       
-      const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
+      const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
       
       if (isEphemeral) {
         return {
@@ -284,9 +321,8 @@ export const lovefemboysCommand = {
           },
         };
       } else {
-        const fixNonce = Date.now().toString();
-        MessageActions.sendMessage(ctx.channel.id, { content: errorMessage }, void 0, {
-          nonce: fixNonce,
+        MessageActions.sendMessage(ctx.channel.id, { 
+          content: errorMessage 
         });
         return { type: 4 };
       }
