@@ -127,27 +127,16 @@ function Header() {
   );
 }
 
-// Facts Commands Settings Page - FIXED with proper storage proxy
-function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage); // Add storage proxy to this page
-  
+// Facts Commands Settings Page - Fixed with nexpid's approach
+function FactsSettingsPage() {
+  useProxy(storage);
+
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
   });
-
-  const handleToggle = (key: string, value: boolean) => {
-    storage.enabledCommands[key] = value;
-    storage.pendingRestart = true;
-    forceRerender(); // Force parent to rerender
-  };
-
-  const handleSettingToggle = (setting: string, value: boolean) => {
-    storage.factSettings[setting] = value;
-    forceRerender(); // Force parent to rerender
-  };
 
   return (
     <RN.View style={styles.container}>
@@ -158,14 +147,14 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Send facts as a reply to the command message"
             leading={<FormRow.Icon source={getAssetIDByName("ArrowAngleLeftUpIcon")} />}
             value={storage.factSettings?.sendAsReply ?? true}
-            onValueChange={(v: boolean) => handleSettingToggle("sendAsReply", v)}
+            onValueChange={() => (storage.factSettings.sendAsReply = !storage.factSettings.sendAsReply)}
           />
           <FormSwitchRow
             label="Include Source Citation"
             subLabel="Include the source of facts when available"
             leading={<FormRow.Icon source={getAssetIDByName("LinkIcon")} />}
             value={storage.factSettings?.includeCitation ?? false}
-            onValueChange={(v: boolean) => handleSettingToggle("includeCitation", v)}
+            onValueChange={() => (storage.factSettings.includeCitation = !storage.factSettings.includeCitation)}
           />
         </BetterTableRowGroup>
 
@@ -175,21 +164,30 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Get random cat facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.catfact ?? true}
-            onValueChange={(v) => handleToggle("catfact", v)}
+            onValueChange={() => {
+              storage.enabledCommands.catfact = !storage.enabledCommands.catfact;
+              storage.pendingRestart = true;
+            }}
           />
           <FormSwitchRow
             label="/dogfact"
             subLabel="Get random dog facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.dogfact ?? true}
-            onValueChange={(v) => handleToggle("dogfact", v)}
+            onValueChange={() => {
+              storage.enabledCommands.dogfact = !storage.enabledCommands.dogfact;
+              storage.pendingRestart = true;
+            }}
           />
           <FormSwitchRow
             label="/useless"
             subLabel="Get random useless facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.useless ?? true}
-            onValueChange={(v) => handleToggle("useless", v)}
+            onValueChange={() => {
+              storage.enabledCommands.useless = !storage.enabledCommands.useless;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -197,12 +195,9 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// COMPLETELY FIXED Gary API Settings Page
-function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage); // Storage proxy for reactivity
-  
-  // Force component re-render when storage changes
-  const [, localForceRerender] = React.useReducer((x) => x + 1, 0);
+// Gary API Settings Page - Fixed with nexpid's approach
+function GaryAPIPage() {
+  useProxy(storage);
   
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -311,26 +306,6 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
     },
   ];
 
-  const handleOptionPress = (value: string) => {
-    console.log(`[Gary Settings] Changing API from ${currentSource} to ${value}`);
-    
-    // Update storage directly
-    storage.garySettings.imageSource = value;
-    
-    // Force both local and parent re-renders
-    localForceRerender();
-    forceRerender();
-    
-    console.log(`[Gary Settings] Updated to: ${storage.garySettings.imageSource}`);
-  };
-
-  const handleGaryToggle = (value: boolean) => {
-    storage.enabledCommands.gary = value;
-    storage.pendingRestart = true;
-    localForceRerender();
-    forceRerender();
-  };
-
   const renderOption = (option: typeof options[0]) => {
     const isSelected = currentSource === option.value;
     
@@ -338,7 +313,9 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
       <RN.Pressable
         key={option.value}
         style={styles.optionContainer}
-        onPress={() => handleOptionPress(option.value)}
+        onPress={() => {
+          storage.garySettings.imageSource = option.value;
+        }}
         android_ripple={{ color: semanticColors.ANDROID_RIPPLE, radius: 300 }}
       >
         <RN.View style={styles.radioContainer}>
@@ -387,7 +364,10 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Send random Gary images to channel"
             leading={<FormRow.Icon source={getAssetIDByName("AttachmentIcon")} />}
             value={storage.enabledCommands?.gary ?? true}
-            onValueChange={handleGaryToggle}
+            onValueChange={() => {
+              storage.enabledCommands.gary = !storage.enabledCommands.gary;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
 
@@ -419,9 +399,9 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// List Commands Settings Page - FIXED with proper storage proxy
-function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage); // Add storage proxy
+// List Commands Settings Page - Fixed with nexpid's approach
+function ListSettingsPage() {
+  useProxy(storage);
 
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -429,17 +409,6 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
   });
-
-  const handleToggle = (key: string, value: boolean) => {
-    storage.enabledCommands[key] = value;
-    storage.pendingRestart = true;
-    forceRerender(); // Force parent to rerender
-  };
-
-  const handleSettingToggle = (setting: string, value: boolean) => {
-    storage.listSettings[setting] = value;
-    forceRerender(); // Force parent to rerender
-  };
 
   return (
     <RN.View style={styles.container}>
@@ -450,14 +419,14 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Always use detailed mode when listing plugins"
             leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
             value={storage.listSettings?.pluginListAlwaysDetailed ?? false}
-            onValueChange={(v: boolean) => handleSettingToggle("pluginListAlwaysDetailed", v)}
+            onValueChange={() => (storage.listSettings.pluginListAlwaysDetailed = !storage.listSettings.pluginListAlwaysDetailed)}
           />
           <FormSwitchRow
             label="Always Send Detailed Theme List"
             subLabel="Always use detailed mode when listing themes"
             leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
             value={storage.listSettings?.themeListAlwaysDetailed ?? false}
-            onValueChange={(v: boolean) => handleSettingToggle("themeListAlwaysDetailed", v)}
+            onValueChange={() => (storage.listSettings.themeListAlwaysDetailed = !storage.listSettings.themeListAlwaysDetailed)}
           />
         </BetterTableRowGroup>
 
@@ -467,14 +436,20 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="List all installed plugins"
             leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
             value={storage.enabledCommands?.pluginList ?? true}
-            onValueChange={(v) => handleToggle("pluginList", v)}
+            onValueChange={() => {
+              storage.enabledCommands.pluginList = !storage.enabledCommands.pluginList;
+              storage.pendingRestart = true;
+            }}
           />
           <FormSwitchRow
             label="/theme-list"
             subLabel="List all installed themes"
             leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
             value={storage.enabledCommands?.themeList ?? true}
-            onValueChange={(v) => handleToggle("themeList", v)}
+            onValueChange={() => {
+              storage.enabledCommands.themeList = !storage.enabledCommands.themeList;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -482,9 +457,9 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Image Commands Settings Page - FIXED with proper storage proxy
-function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage); // Add storage proxy
+// Image Commands Settings Page - Fixed with nexpid's approach
+function ImageSettingsPage() {
+  useProxy(storage);
 
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -492,12 +467,6 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
   });
-
-  const handleToggle = (key: string, value: boolean) => {
-    storage.enabledCommands[key] = value;
-    storage.pendingRestart = true;
-    forceRerender(); // Force parent to rerender
-  };
 
   return (
     <RN.View style={styles.container}>
@@ -508,7 +477,10 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Create pet-pet GIF of a user"
             leading={<FormRow.Icon source={getAssetIDByName("HandRequestSpeakIcon")} />}
             value={storage.enabledCommands?.petpet ?? true}
-            onValueChange={(v) => handleToggle("petpet", v)}
+            onValueChange={() => {
+              storage.enabledCommands.petpet = !storage.enabledCommands.petpet;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
 
@@ -518,14 +490,20 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Get random image from KonoChan (private)"
             leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
             value={storage.enabledCommands?.konoself ?? true}
-            onValueChange={(v) => handleToggle("konoself", v)}
+            onValueChange={() => {
+              storage.enabledCommands.konoself = !storage.enabledCommands.konoself;
+              storage.pendingRestart = true;
+            }}
           />
           <FormSwitchRow
             label="/konosend"
             subLabel="Send random image from KonoChan to channel"
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={storage.enabledCommands?.konosend ?? true}
-            onValueChange={(v) => handleToggle("konosend", v)}
+            onValueChange={() => {
+              storage.enabledCommands.konosend = !storage.enabledCommands.konosend;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -533,9 +511,9 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Spotify Commands Settings Page - FIXED with proper storage proxy
-function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage); // Add storage proxy
+// Spotify Commands Settings Page - Fixed with nexpid's approach
+function SpotifySettingsPage() {
+  useProxy(storage);
 
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -550,12 +528,6 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
     },
   });
 
-  const handleToggle = (key: string, value: boolean) => {
-    storage.enabledCommands[key] = value;
-    storage.pendingRestart = true;
-    forceRerender(); // Force parent to rerender
-  };
-
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
@@ -565,28 +537,40 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Share your current Spotify track"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyTrack ?? true}
-            onValueChange={(v) => handleToggle("spotifyTrack", v)}
+            onValueChange={() => {
+              storage.enabledCommands.spotifyTrack = !storage.enabledCommands.spotifyTrack;
+              storage.pendingRestart = true;
+            }}
           />
           <FormSwitchRow
             label="/spotify album"
             subLabel="Share your current track's album"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyAlbum ?? true}
-            onValueChange={(v) => handleToggle("spotifyAlbum", v)}
+            onValueChange={() => {
+              storage.enabledCommands.spotifyAlbum = !storage.enabledCommands.spotifyAlbum;
+              storage.pendingRestart = true;
+            }}
           />
           <FormSwitchRow
             label="/spotify artists"
             subLabel="Share your current track's artists"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyArtists ?? true}
-            onValueChange={(v) => handleToggle("spotifyArtists", v)}
+            onValueChange={() => {
+              storage.enabledCommands.spotifyArtists = !storage.enabledCommands.spotifyArtists;
+              storage.pendingRestart = true;
+            }}
           />
           <FormSwitchRow
             label="/spotify cover"
             subLabel="Share your current track's cover"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyCover ?? true}
-            onValueChange={(v) => handleToggle("spotifyCover", v)}
+            onValueChange={() => {
+              storage.enabledCommands.spotifyCover = !storage.enabledCommands.spotifyCover;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
 
@@ -600,9 +584,9 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Other Commands Settings Page - FIXED with proper storage proxy
-function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage); // Add storage proxy
+// Other Commands Settings Page - Fixed with nexpid's approach
+function OtherSettingsPage() {
+  useProxy(storage);
 
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -610,12 +594,6 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
   });
-
-  const handleToggle = (key: string, value: boolean) => {
-    storage.enabledCommands[key] = value;
-    storage.pendingRestart = true;
-    forceRerender(); // Force parent to rerender
-  };
 
   return (
     <RN.View style={styles.container}>
@@ -626,7 +604,10 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Get the first message in a channel"
             leading={<FormRow.Icon source={getAssetIDByName("ChatIcon")} />}
             value={storage.enabledCommands?.firstmessage ?? true}
-            onValueChange={(v) => handleToggle("firstmessage", v)}
+            onValueChange={() => {
+              storage.enabledCommands.firstmessage = !storage.enabledCommands.firstmessage;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
 
@@ -636,7 +617,10 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             subLabel="Display system information"
             leading={<FormRow.Icon source={getAssetIDByName("SettingsIcon")} />}
             value={storage.enabledCommands?.sysinfo ?? true}
-            onValueChange={(v) => handleToggle("sysinfo", v)}
+            onValueChange={() => {
+              storage.enabledCommands.sysinfo = !storage.enabledCommands.sysinfo;
+              storage.pendingRestart = true;
+            }}
           />
         </BetterTableRowGroup>
       </ScrollView>
@@ -644,7 +628,7 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Credits Page with proper spacing and correct GitHub links
+// UPDATED Credits Page with requested changes
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -722,7 +706,7 @@ function CreditsPage() {
       github: "https://github.com/Kitosight"
     },
     { 
-      command: "PetPet Command", 
+      command: "PetPet", 
       author: "wolfieeee", 
       avatar: "https://github.com/WolfPlugs.png",
       github: "https://github.com/WolfPlugs"
@@ -768,7 +752,7 @@ function CreditsPage() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
         <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("HeartIcon")} padding={true}>
           <RN.Text style={styles.infoText}>
-            Thanks to all the amazing developers who contributed to this plugin collection!{'\n'}
+            Thanks to this developers for creating such a nice plugins!{'\n'}
             Tap on any contributor to visit their GitHub profile.
           </RN.Text>
         </BetterTableRowGroup>
@@ -795,9 +779,7 @@ function CreditsPage() {
         <BetterTableRowGroup title="About" icon={getAssetIDByName("InfoIcon")} padding={true}>
           <RN.Text style={styles.versionText}>
             Commands Plugin Collection{'\n'}
-            Version 1.0.0{'\n'}
-            Built on 2025-10-01{'\n'}
-            Made with ❤️ for the community
+            Version 1.0.0
           </RN.Text>
         </BetterTableRowGroup>
       </ScrollView>
@@ -850,9 +832,9 @@ if (!storage.pendingRestart) {
   storage.pendingRestart = false;
 }
 
-// Main Settings Component - ENHANCED with better reactivity
+// Main Settings Component - Fixed with nexpid's approach
 export default function Settings() {
-  useProxy(storage); // Main storage proxy
+  useProxy(storage);
   const [rerender, forceRerender] = React.useReducer((x) => x + 1, 0);
   const navigation = NavigationNative.useNavigation();
 
@@ -882,7 +864,7 @@ export default function Settings() {
   const navigateToPage = (title: string, component: React.ComponentType<any>) => {
     navigation.push("VendettaCustomPage", {
       title,
-      render: () => React.createElement(component, { forceRerender }),
+      render: component,
     });
   };
 
@@ -948,7 +930,7 @@ export default function Settings() {
         <BetterTableRowGroup title="More Options" icon={getAssetIDByName("SettingsIcon")}>
           <FormRow
             label="Credits"
-            subLabel="View plugin authors and contributors"
+            subLabel="View original authors of the plugins"
             leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Credits", CreditsPage)}
