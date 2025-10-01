@@ -1,9 +1,11 @@
 import { plugin } from "@vendetta";
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
-import { React } from "@vendetta/metro/common";
+import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
-import { View } from "react-native";
+import { semanticColors } from "@vendetta/ui";
+import { getAssetIDByName } from "@vendetta/ui/assets";
+import { Forms } from "@vendetta/ui/components";
 import { alerts } from "@vendetta/ui";
 
 const { ScrollView } = findByProps("ScrollView");
@@ -13,6 +15,166 @@ const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
   "Stack",
   "TableRow",
 );
+
+// Header Component
+function Header() {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flexDirection: "column",
+      alignItems: "center",
+      paddingVertical: 24,
+      paddingHorizontal: 16,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: semanticColors.TEXT_NORMAL,
+      marginBottom: 4,
+    },
+    subtitle: {
+      fontSize: 16,
+      fontWeight: "500",
+      color: semanticColors.TEXT_MUTED,
+    },
+    iconContainer: {
+      backgroundColor: semanticColors.BACKGROUND_SECONDARY,
+      borderRadius: 16,
+      padding: 12,
+      marginBottom: 16,
+    },
+    icon: {
+      width: 32,
+      height: 32,
+      tintColor: semanticColors.TEXT_NORMAL,
+    },
+  });
+
+  return (
+    <RN.View style={styles.container}>
+      <RN.View style={styles.iconContainer}>
+        <RN.Image
+          source={getAssetIDByName("SettingsIcon")}
+          style={styles.icon}
+        />
+      </RN.View>
+      <RN.Text style={styles.title}>Commands</RN.Text>
+      <RN.Text style={styles.subtitle}>A collection of useful commands</RN.Text>
+    </RN.View>
+  );
+}
+
+// Gary API Selection Component
+function GaryAPISelection({ forceRerender }: { forceRerender: () => void }) {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      backgroundColor: semanticColors.BACKGROUND_SECONDARY,
+      borderRadius: 12,
+      marginHorizontal: 16,
+      marginVertical: 8,
+      padding: 16,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: semanticColors.TEXT_NORMAL,
+      marginBottom: 12,
+    },
+    optionContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+      borderRadius: 8,
+      marginVertical: 2,
+    },
+    selectedOption: {
+      backgroundColor: semanticColors.BACKGROUND_MODIFIER_SELECTED,
+    },
+    optionText: {
+      fontSize: 16,
+      fontWeight: "500",
+      marginLeft: 12,
+      flex: 1,
+    },
+    selectedText: {
+      color: semanticColors.TEXT_BRAND,
+    },
+    normalText: {
+      color: semanticColors.TEXT_NORMAL,
+    },
+    radioButton: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: semanticColors.TEXT_MUTED,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    selectedRadio: {
+      borderColor: semanticColors.TEXT_BRAND,
+    },
+    radioInner: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: semanticColors.TEXT_BRAND,
+    },
+  });
+
+  const options = [
+    { value: "gary", label: "Gary API", desc: "Original Gary cat images" },
+    { value: "catapi", label: "Cat API", desc: "Random cat pictures" },
+    { value: "minker", label: "Minker API", desc: "Minky images" },
+    { value: "goober", label: "Goober API", desc: "Goober images" },
+  ];
+
+  const currentSource = storage.garySettings?.imageSource || "gary";
+
+  return (
+    <RN.View style={styles.container}>
+      <RN.Text style={styles.title}>Gary Image Source</RN.Text>
+      {options.map((option) => {
+        const isSelected = currentSource === option.value;
+        return (
+          <RN.Pressable
+            key={option.value}
+            style={[
+              styles.optionContainer,
+              isSelected && styles.selectedOption,
+            ]}
+            onPress={() => {
+              storage.garySettings.imageSource = option.value;
+              forceRerender();
+            }}
+          >
+            <RN.View style={[
+              styles.radioButton,
+              isSelected && styles.selectedRadio,
+            ]}>
+              {isSelected && <RN.View style={styles.radioInner} />}
+            </RN.View>
+            <RN.View style={{ flex: 1, marginLeft: 12 }}>
+              <RN.Text style={[
+                styles.optionText,
+                isSelected ? styles.selectedText : styles.normalText,
+              ]}>
+                {option.label}
+              </RN.Text>
+              <RN.Text style={{
+                fontSize: 14,
+                color: semanticColors.TEXT_MUTED,
+                marginTop: 2,
+              }}>
+                {option.desc}
+              </RN.Text>
+            </RN.View>
+          </RN.Pressable>
+        );
+      })}
+    </RN.View>
+  );
+}
 
 // Initialize storage with default values
 if (!storage.factSettings) {
@@ -31,10 +193,7 @@ if (!storage.listSettings) {
 
 if (!storage.garySettings) {
   storage.garySettings = {
-    useGaryAPI: true,
-    useCatAPI: false,
-    useMinkerAPI: false,
-    useGooberAPI: false,
+    imageSource: "gary",
   };
 }
 
@@ -66,6 +225,16 @@ export default function Settings() {
   useProxy(storage);
   const [rerender, forceRerender] = React.useReducer((x) => x + 1, 0);
 
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+    spacing: {
+      height: 16,
+    },
+  });
+
   // Check for pending restart when unmounting
   React.useEffect(() => {
     return () => {
@@ -88,23 +257,15 @@ export default function Settings() {
     forceRerender();
   };
 
-  const handleGaryAPIToggle = (apiName: string, value: boolean) => {
-    // Only allow one API to be selected at a time
-    if (value) {
-      storage.garySettings.useGaryAPI = apiName === "gary";
-      storage.garySettings.useCatAPI = apiName === "catapi";
-      storage.garySettings.useMinkerAPI = apiName === "minker";
-      storage.garySettings.useGooberAPI = apiName === "goober";
-    }
-    forceRerender();
-  };
-
   return (
-    <View style={{ flex: 1 }}>
+    <RN.View style={styles.container}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 38 }}
+        showsVerticalScrollIndicator={false}
       >
+        <Header />
+        
         <Stack spacing={8}>
           {/* Facts Commands */}
           <TableRowGroup title="Facts Commands">
@@ -262,32 +423,15 @@ export default function Settings() {
               value={storage.enabledCommands?.gary ?? true}
               onValueChange={(v) => handleCommandToggle("gary", v)}
             />
-            <TableSwitchRow
-              label="Use Gary API"
-              subLabel="Get images from Gary API"
-              value={storage.garySettings?.useGaryAPI ?? true}
-              onValueChange={(v) => handleGaryAPIToggle("gary", v)}
-            />
-            <TableSwitchRow
-              label="Use Cat API"
-              subLabel="Get images from Cat API"
-              value={storage.garySettings?.useCatAPI ?? false}
-              onValueChange={(v) => handleGaryAPIToggle("catapi", v)}
-            />
-            <TableSwitchRow
-              label="Use Minker API"
-              subLabel="Get images from Minker API"
-              value={storage.garySettings?.useMinkerAPI ?? false}
-              onValueChange={(v) => handleGaryAPIToggle("minker", v)}
-            />
-            <TableSwitchRow
-              label="Use Goober API"
-              subLabel="Get images from Goober API"
-              value={storage.garySettings?.useGooberAPI ?? false}
-              onValueChange={(v) => handleGaryAPIToggle("goober", v)}
-            />
           </TableRowGroup>
+        </Stack>
 
+        {/* Custom Gary API Selection */}
+        <GaryAPISelection forceRerender={forceRerender} />
+
+        <RN.View style={styles.spacing} />
+
+        <Stack spacing={8}>
           {/* Credits */}
           <TableRowGroup title="Credits">
             <TableRow label="Facts Commands" subLabel="by jdev082" />
@@ -311,7 +455,9 @@ export default function Settings() {
             />
           </TableRowGroup>
         </Stack>
+
+        <RN.View style={styles.spacing} />
       </ScrollView>
-    </View>
+    </RN.View>
   );
 }
