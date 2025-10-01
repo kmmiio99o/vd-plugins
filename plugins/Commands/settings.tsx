@@ -91,31 +91,34 @@ export default function Settings() {
   };
 
   const showGarySourceSelection = () => {
-    alerts.showInputAlert({
+    alerts.showConfirmationAlert({
       title: "Choose Gary Image Source",
-      content: "Select an image source:",
-      placeholder: "",
-      confirmText: "Cancel",
-      confirmColor: "grey",
-      onConfirm: () => {},
-      extraOptions: [
-        {
-          text: "Gary API",
-          onPress: () => handleGarySourceChange("gary"),
-        },
-        {
-          text: "Cat API", 
-          onPress: () => handleGarySourceChange("catapi"),
-        },
-        {
-          text: "Minker API",
-          onPress: () => handleGarySourceChange("minker"),
-        },
-        {
-          text: "Goober API",
-          onPress: () => handleGarySourceChange("goober"),
-        },
-      ],
+      content: "Select an image source for the Gary command:",
+      confirmText: "Gary API",
+      cancelText: "Other Options",
+      confirmColor: "brand",
+      onConfirm: () => handleGarySourceChange("gary"),
+      onCancel: () => {
+        alerts.showConfirmationAlert({
+          title: "Choose Image Source",
+          content: "Select from remaining options:",
+          confirmText: "Cat API",
+          cancelText: "More Options",
+          confirmColor: "brand",
+          onConfirm: () => handleGarySourceChange("catapi"),
+          onCancel: () => {
+            alerts.showConfirmationAlert({
+              title: "Choose Image Source",
+              content: "Select from final options:",
+              confirmText: "Minker API",
+              cancelText: "Goober API",
+              confirmColor: "brand",
+              onConfirm: () => handleGarySourceChange("minker"),
+              onCancel: () => handleGarySourceChange("goober"),
+            });
+          },
+        });
+      },
     });
   };
 
