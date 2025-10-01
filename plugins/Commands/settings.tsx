@@ -160,9 +160,10 @@ function Header() {
   );
 }
 
-// Facts Commands Settings Page - SIMPLIFIED
+// Facts Commands Settings Page - FIXED with local force update
 function FactsSettingsPage() {
   useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
@@ -197,6 +198,7 @@ function FactsSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.catfact = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
           <FormSwitchRow
@@ -207,6 +209,7 @@ function FactsSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.dogfact = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
           <FormSwitchRow
@@ -217,6 +220,7 @@ function FactsSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.useless = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -225,9 +229,10 @@ function FactsSettingsPage() {
   );
 }
 
-// Gary API Settings Page - SIMPLIFIED with working radio buttons
+// Gary API Settings Page - FIXED with local force update
 function GaryAPIPage() {
   useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
   
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -262,6 +267,7 @@ function GaryAPIPage() {
             onValueChange={(v) => {
               storage.enabledCommands.gary = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -279,7 +285,10 @@ function GaryAPIPage() {
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={currentSource === "gary"}
             onValueChange={(v) => {
-              if (v) storage.garySettings.imageSource = "gary";
+              if (v) {
+                storage.garySettings.imageSource = "gary";
+                forceUpdate(); // Force this page to re-render
+              }
             }}
           />
           <FormSwitchRow
@@ -288,7 +297,10 @@ function GaryAPIPage() {
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={currentSource === "catapi"}
             onValueChange={(v) => {
-              if (v) storage.garySettings.imageSource = "catapi";
+              if (v) {
+                storage.garySettings.imageSource = "catapi";
+                forceUpdate(); // Force this page to re-render
+              }
             }}
           />
           <FormSwitchRow
@@ -297,7 +309,10 @@ function GaryAPIPage() {
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={currentSource === "minker"}
             onValueChange={(v) => {
-              if (v) storage.garySettings.imageSource = "minker";
+              if (v) {
+                storage.garySettings.imageSource = "minker";
+                forceUpdate(); // Force this page to re-render
+              }
             }}
           />
           <FormSwitchRow
@@ -306,7 +321,10 @@ function GaryAPIPage() {
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={currentSource === "goober"}
             onValueChange={(v) => {
-              if (v) storage.garySettings.imageSource = "goober";
+              if (v) {
+                storage.garySettings.imageSource = "goober";
+                forceUpdate(); // Force this page to re-render
+              }
             }}
           />
         </BetterTableRowGroup>
@@ -326,9 +344,10 @@ function GaryAPIPage() {
   );
 }
 
-// Simple List Settings Page
+// List Settings Page - FIXED with local force update
 function ListSettingsPage() {
   useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
@@ -363,6 +382,7 @@ function ListSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.pluginList = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
           <FormSwitchRow
@@ -373,6 +393,7 @@ function ListSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.themeList = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -381,9 +402,10 @@ function ListSettingsPage() {
   );
 }
 
-// Simple Image Settings Page
+// Image Settings Page - FIXED with local force update
 function ImageSettingsPage() {
   useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
@@ -397,6 +419,7 @@ function ImageSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.petpet = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -410,6 +433,7 @@ function ImageSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.konoself = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
           <FormSwitchRow
@@ -420,6 +444,7 @@ function ImageSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.konosend = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -428,9 +453,10 @@ function ImageSettingsPage() {
   );
 }
 
-// Simple Spotify Settings Page
+// Spotify Settings Page - FIXED with local force update
 function SpotifySettingsPage() {
   useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
@@ -444,6 +470,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyTrack = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
           <FormSwitchRow
@@ -454,6 +481,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyAlbum = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
           <FormSwitchRow
@@ -464,6 +492,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyArtists = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
           <FormSwitchRow
@@ -474,6 +503,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyCover = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -493,9 +523,10 @@ function SpotifySettingsPage() {
   );
 }
 
-// Simple Other Settings Page
+// Other Settings Page - FIXED with local force update
 function OtherSettingsPage() {
   useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
@@ -509,6 +540,7 @@ function OtherSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.firstmessage = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -522,6 +554,7 @@ function OtherSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.sysinfo = v;
               storage.pendingRestart = true;
+              forceUpdate(); // Force this page to re-render
             }}
           />
         </BetterTableRowGroup>
@@ -689,7 +722,7 @@ function CreditsPage() {
   );
 }
 
-// MAIN SETTINGS COMPONENT - ULTRA SIMPLIFIED
+// MAIN SETTINGS COMPONENT
 export default function Settings() {
   useProxy(storage);
   const navigation = NavigationNative.useNavigation();
