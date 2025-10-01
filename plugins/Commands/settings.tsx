@@ -162,7 +162,7 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Available Fact Commands" icon={getAssetIDByName("BookIcon")}>
+        <BetterTableRowGroup title="Available Fact Commands" icon={getAssetIDByName("BookmarkIcon")}>
           <FormSwitchRow
             label="/catfact"
             subLabel="Get random cat facts"
@@ -202,65 +202,14 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Gary API Settings Page - FIXED VERSION
+// REFACTORED Gary API Settings Page with better switches
 function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
-  useProxy(storage); // Add this to make the component reactive to storage changes
+  useProxy(storage);
   
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
-    },
-    optionContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: 16,
-      paddingHorizontal: 16,
-      backgroundColor: semanticColors.CARD_PRIMARY_BG,
-      borderRadius: 12,
-      marginHorizontal: 16,
-      marginVertical: 4,
-    },
-    selectedOption: {
-      backgroundColor: semanticColors.BRAND_500_ALPHA || `${semanticColors.BRAND_500}20`,
-      borderColor: semanticColors.BRAND_500,
-      borderWidth: 2,
-    },
-    normalOption: {
-      borderColor: semanticColors.BORDER_FAINT,
-      borderWidth: 1,
-    },
-    radioButton: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      borderWidth: 2,
-      borderColor: semanticColors.TEXT_MUTED,
-      alignItems: "center",
-      justifyContent: "center",
-      marginRight: 12,
-    },
-    selectedRadio: {
-      borderColor: semanticColors.BRAND_500,
-    },
-    radioInner: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-      backgroundColor: semanticColors.BRAND_500,
-    },
-    textContainer: {
-      flex: 1,
-    },
-    optionTitle: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: semanticColors.TEXT_NORMAL, // Fixed: always use TEXT_NORMAL
-    },
-    optionDesc: {
-      fontSize: 14,
-      color: semanticColors.TEXT_MUTED,
-      marginTop: 2,
     },
     infoText: {
       fontSize: 14,
@@ -276,34 +225,13 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
     },
   });
 
-  const options = [
-    { 
-      value: "gary", 
-      title: "Gary API", 
-      desc: "Original Gary the cat images from api.garythe.cat",
-      icon: getAssetIDByName("ic_cat")
-    },
-    { 
-      value: "catapi", 
-      title: "Cat API", 
-      desc: "Random cat pictures from thecatapi.com",
-      icon: getAssetIDByName("ic_cat")
-    },
-    { 
-      value: "minker", 
-      title: "Minker API", 
-      desc: "Minky images from minky.materii.dev",
-      icon: getAssetIDByName("ImageIcon")
-    },
-    { 
-      value: "goober", 
-      title: "Goober API", 
-      desc: "Goober images from api.garythe.cat/goober",
-      icon: getAssetIDByName("ImageIcon")
-    },
-  ];
-
   const currentSource = storage.garySettings?.imageSource || "gary";
+
+  const handleSourceChange = (newSource: string) => {
+    console.log(`[Gary Settings] Changing from ${currentSource} to ${newSource}`);
+    storage.garySettings.imageSource = newSource;
+    forceRerender();
+  };
 
   return (
     <RN.View style={styles.container}>
@@ -328,48 +256,36 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
           </RN.Text>
         </BetterTableRowGroup>
 
-        {options.map((option) => {
-          const isSelected = currentSource === option.value;
-          return (
-            <RN.Pressable
-              key={option.value}
-              style={[
-                styles.optionContainer,
-                isSelected ? styles.selectedOption : styles.normalOption,
-              ]}
-              onPress={() => {
-                console.log(`[Settings] Changing Gary API from ${currentSource} to: ${option.value}`);
-                storage.garySettings.imageSource = option.value;
-                // Force immediate update
-                forceRerender();
-              }}
-            >
-              <RN.View style={[
-                styles.radioButton,
-                isSelected && styles.selectedRadio,
-              ]}>
-                {isSelected && <RN.View style={styles.radioInner} />}
-              </RN.View>
-              <RN.Image
-                source={option.icon}
-                style={{
-                  width: 24,
-                  height: 24,
-                  tintColor: isSelected ? semanticColors.BRAND_500 : semanticColors.TEXT_MUTED,
-                  marginRight: 12,
-                }}
-              />
-              <RN.View style={styles.textContainer}>
-                <RN.Text style={styles.optionTitle}>
-                  {option.title}
-                </RN.Text>
-                <RN.Text style={styles.optionDesc}>
-                  {option.desc}
-                </RN.Text>
-              </RN.View>
-            </RN.Pressable>
-          );
-        })}
+        <BetterTableRowGroup title="API Options" icon={getAssetIDByName("CloudIcon")}>
+          <FormSwitchRow
+            label="Gary API"
+            subLabel="Original Gary the cat images from api.garythe.cat"
+            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            value={currentSource === "gary"}
+            onValueChange={(v) => v && handleSourceChange("gary")}
+          />
+          <FormSwitchRow
+            label="Cat API"
+            subLabel="Random cat pictures from thecatapi.com"
+            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            value={currentSource === "catapi"}
+            onValueChange={(v) => v && handleSourceChange("catapi")}
+          />
+          <FormSwitchRow
+            label="Minker API"
+            subLabel="Minky images from minky.materii.dev"
+            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
+            value={currentSource === "minker"}
+            onValueChange={(v) => v && handleSourceChange("minker")}
+          />
+          <FormSwitchRow
+            label="Goober API"
+            subLabel="Goober images from api.garythe.cat/goober"
+            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
+            value={currentSource === "goober"}
+            onValueChange={(v) => v && handleSourceChange("goober")}
+          />
+        </BetterTableRowGroup>
 
         <BetterTableRowGroup title="Current Selection" icon={getAssetIDByName("CheckmarkIcon")} padding={true}>
           <RN.Text style={styles.currentText}>
@@ -421,7 +337,7 @@ function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Available List Commands" icon={getAssetIDByName("ListIcon")}>
+        <BetterTableRowGroup title="Available List Commands" icon={getAssetIDByName("ListViewIcon")}>
           <FormSwitchRow
             label="/plugin-list"
             subLabel="List all installed plugins"
@@ -505,23 +421,29 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// NEW: Separate Spotify Commands Settings Page
+// FIXED Spotify Commands Settings Page
 function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
+    infoText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED, // FIXED: Use semantic color
+      textAlign: "center",
+      lineHeight: 20,
+    },
   });
 
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
-        <BetterTableRowGroup title="Spotify Commands" icon={getAssetIDByName("SpotifyIcon")}>
+        <BetterTableRowGroup title="Spotify Commands" icon={getAssetIDByName("SpotifyNeutralIcon")}>
           <FormSwitchRow
             label="/spotify track"
             subLabel="Share your current Spotify track"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyTrack ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyTrack = v;
@@ -532,7 +454,7 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/spotify album"
             subLabel="Share your current track's album"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyAlbum ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyAlbum = v;
@@ -543,7 +465,7 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/spotify artists"
             subLabel="Share your current track's artists"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyArtists ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyArtists = v;
@@ -554,7 +476,7 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
           <FormSwitchRow
             label="/spotify cover"
             subLabel="Share your current track's cover"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyCover ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyCover = v;
@@ -565,12 +487,7 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
         </BetterTableRowGroup>
 
         <BetterTableRowGroup title="About Spotify Commands" icon={getAssetIDByName("InfoIcon")} padding={true}>
-          <RN.Text style={{
-            fontSize: 14,
-            color: semanticColors.TEXT_MUTED,
-            textAlign: "center",
-            lineHeight: 20,
-          }}>
+          <RN.Text style={styles.infoText}>
             These commands allow you to share your current Spotify activity in Discord. Make sure you have Spotify connected to Discord for these commands to work properly.
           </RN.Text>
         </BetterTableRowGroup>
@@ -579,7 +496,7 @@ function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Other Commands Settings Page - UPDATED (removed Spotify)
+// Other Commands Settings Page
 function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -810,18 +727,18 @@ export default function Settings() {
         <Header />
 
         {/* Command Categories */}
-        <BetterTableRowGroup title="Command Categories" icon={getAssetIDByName("FolderIcon")}>
+        <BetterTableRowGroup title="Command Categories" icon={getAssetIDByName("ChannelListIcon")}>
           <FormRow
             label="Facts Commands"
             subLabel="Cat facts, dog facts, and useless facts"
-            leading={<FormRow.Icon source={getAssetIDByName("BookIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("BookmarkIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Facts Commands", FactsSettingsPage)}
           />
           <FormRow
             label="List Commands"
             subLabel="Plugin lists and theme lists"
-            leading={<FormRow.Icon source={getAssetIDByName("ListIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("ListViewIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("List Commands", ListSettingsPage)}
           />
@@ -845,7 +762,7 @@ export default function Settings() {
           <FormRow
             label="Spotify Commands"
             subLabel="Share your Spotify activity"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Spotify Commands", SpotifySettingsPage)}
           />
