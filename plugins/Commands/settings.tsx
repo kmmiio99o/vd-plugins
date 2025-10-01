@@ -90,6 +90,35 @@ export default function Settings() {
     forceRerender();
   };
 
+  const showGarySourceSelection = () => {
+    alerts.showInputAlert({
+      title: "Choose Gary Image Source",
+      content: "Select an image source:",
+      placeholder: "",
+      confirmText: "Cancel",
+      confirmColor: "grey",
+      onConfirm: () => {},
+      extraOptions: [
+        {
+          text: "Gary API",
+          onPress: () => handleGarySourceChange("gary"),
+        },
+        {
+          text: "Cat API", 
+          onPress: () => handleGarySourceChange("catapi"),
+        },
+        {
+          text: "Minker API",
+          onPress: () => handleGarySourceChange("minker"),
+        },
+        {
+          text: "Goober API",
+          onPress: () => handleGarySourceChange("goober"),
+        },
+      ],
+    });
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
@@ -195,37 +224,7 @@ export default function Settings() {
                 storage.garySettings?.imageSource === "catapi" ? "Cat API" : 
                 storage.garySettings?.imageSource === "minker" ? "Minker API" : 
                 storage.garySettings?.imageSource === "goober" ? "Goober API" : "Gary API"}`}
-              onPress={() => {
-                alerts.showConfirmationAlert({
-                  title: "Choose Gary Image Source",
-                  content: "Select the source for Gary images:",
-                  confirmText: "Gary API",
-                  confirmColor: "brand",
-                  cancelText: "More Options",
-                  onConfirm: () => handleGarySourceChange("gary"),
-                  onCancel: () => {
-                    alerts.showConfirmationAlert({
-                      title: "More Image Sources",
-                      content: "Choose another source:",
-                      confirmText: "Cat API",
-                      cancelText: "Even More",
-                      confirmColor: "brand",
-                      onConfirm: () => handleGarySourceChange("catapi"),
-                      onCancel: () => {
-                        alerts.showConfirmationAlert({
-                          title: "Final Options",
-                          content: "Last two options:",
-                          confirmText: "Minker API",
-                          cancelText: "Goober API",
-                          confirmColor: "brand",
-                          onConfirm: () => handleGarySourceChange("minker"),
-                          onCancel: () => handleGarySourceChange("goober"),
-                        });
-                      },
-                    });
-                  },
-                });
-              }}
+              onPress={showGarySourceSelection}
             />
           </TableRowGroup>
 
