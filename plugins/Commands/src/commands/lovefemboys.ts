@@ -280,9 +280,8 @@ export const lovefemboysCommand = {
             },
           };
         } else {
-          MessageActions.sendMessage(ctx.channel.id, { 
-            content: errorMessage 
-          });
+          const fixNonce = Date.now().toString();
+          MessageActions.sendMessage(ctx.channel.id, { content: errorMessage }, void 0, {nonce: fixNonce});
           return { type: 4 };
         }
       }
@@ -301,9 +300,8 @@ export const lovefemboysCommand = {
         };
       } else {
         console.log(`[LoveFemboys] Sending public message`);
-        MessageActions.sendMessage(ctx.channel.id, { 
-          content 
-        });
+        const fixNonce = Date.now().toString();
+        MessageActions.sendMessage(ctx.channel.id, { content }, void 0, {nonce: fixNonce});
         return { type: 4 };
       }
     } catch (error) {
@@ -321,9 +319,8 @@ export const lovefemboysCommand = {
           },
         };
       } else {
-        MessageActions.sendMessage(ctx.channel.id, { 
-          content: errorMessage 
-        });
+        const fixNonce = Date.now().toString();
+        MessageActions.sendMessage(ctx.channel.id, { content: errorMessage }, void 0, {nonce: fixNonce});
         return { type: 4 };
       }
     }
