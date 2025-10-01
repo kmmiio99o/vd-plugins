@@ -17,6 +17,7 @@ import {
   spotifyCoverCommand
 } from "./src/commands/spotify";
 import { garyCommand } from "./src/commands/gary";
+import { lovefemboysCommand } from "./src/commands/lovefemboys";
 import settings from "./settings";
 
 // Initialize storage with default values
@@ -57,6 +58,15 @@ if (!storage.enabledCommands) {
     spotifyArtists: true,
     spotifyCover: true,
     gary: true,
+    lovefemboys: false, // Hidden command - disabled by default
+  };
+}
+
+// Initialize hidden settings storage
+if (!storage.hiddenSettings) {
+  storage.hiddenSettings = {
+    enabled: false,
+    visible: false,
   };
 }
 
@@ -77,6 +87,7 @@ const commandMap = {
   spotifyArtists: spotifyArtistsCommand,
   spotifyCover: spotifyCoverCommand,
   gary: garyCommand,
+  lovefemboys: lovefemboysCommand, // Add hidden command to map
 };
 
 // Store registered commands for cleanup
@@ -90,6 +101,7 @@ export default {
     for (const [key, command] of Object.entries(commandMap)) {
       if (storage.enabledCommands[key]) {
         commands.push(registerCommand(command));
+        console.log(`[All-In-One Commands] Registered command: ${key}`);
       }
     }
 

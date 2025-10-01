@@ -6,6 +6,7 @@ import { semanticColors } from "@vendetta/ui";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { Forms } from "@vendetta/ui/components";
 import { alerts } from "@vendetta/ui";
+import { showToast } from "@vendetta/ui/toasts";
 
 const { ScrollView } = RN;
 const { FormRow, FormSwitchRow } = Forms;
@@ -41,9 +42,16 @@ storage.enabledCommands ??= {
   spotifyArtists: true,
   spotifyCover: true,
   gary: true,
+  lovefemboys: false, // Hidden command - disabled by default
 };
 
 storage.pendingRestart ??= false;
+
+// Hidden settings storage
+storage.hiddenSettings ??= {
+  enabled: false,
+  visible: false,
+};
 
 // Better Table Row Group Component
 function BetterTableRowGroup({
@@ -51,10 +59,12 @@ function BetterTableRowGroup({
   icon,
   children,
   padding = false,
+  onTitlePress,
 }: React.PropsWithChildren<{
   title?: string;
   icon?: number;
   padding?: boolean;
+  onTitlePress?: () => void;
 }>) {
   const styles = stylesheet.createThemedStyleSheet({
     main: {
@@ -73,6 +83,11 @@ function BetterTableRowGroup({
       flexDirection: "row",
       alignItems: "center",
     },
+    titlePressable: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
     icon: {
       width: 16,
       height: 16,
@@ -90,16 +105,33 @@ function BetterTableRowGroup({
     <RN.View style={{ marginHorizontal: 16, marginTop: 16 }}>
       {title && (
         <RN.View style={styles.titleContainer}>
-          {icon && (
-            <RN.Image
-              style={styles.icon}
-              source={icon}
-              resizeMode="cover"
-            />
+          {onTitlePress ? (
+            <RN.Pressable style={styles.titlePressable} onPress={onTitlePress}>
+              {icon && (
+                <RN.Image
+                  style={styles.icon}
+                  source={icon}
+                  resizeMode="cover"
+                />
+              )}
+              <RN.Text style={styles.titleText}>
+                {title.toUpperCase()}
+              </RN.Text>
+            </RN.Pressable>
+          ) : (
+            <>
+              {icon && (
+                <RN.Image
+                  style={styles.icon}
+                  source={icon}
+                  resizeMode="cover"
+                />
+              )}
+              <RN.Text style={styles.titleText}>
+                {title.toUpperCase()}
+              </RN.Text>
+            </>
           )}
-          <RN.Text style={styles.titleText}>
-            {title.toUpperCase()}
-          </RN.Text>
         </RN.View>
       )}
       <RN.View style={styles.main}>
@@ -113,8 +145,11 @@ function BetterTableRowGroup({
   );
 }
 
-// Header Component
+// Header Component with SILENT secret unlock
 function Header() {
+  const [clickCounter, setClickCounter] = React.useState(0);
+  const [clickTimeout, setClickTimeout] = React.useState<NodeJS.Timeout | null>(null);
+  
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flexDirection: "column",
@@ -146,17 +181,139 @@ function Header() {
     },
   });
 
+  const handleIconPress = () => {
+    if (storage.hiddenSettings.enabled) {
+      storage.hiddenSettings.visible = !storage.hiddenSettings.visible;
+      showToast(
+        `Hidden settings ${storage.hiddenSettings.visible ? "visible" : "hidden"}`,
+        getAssetIDByName("SettingsIcon")
+      );
+      return;
+    }
+
+    if (clickTimeout) {
+      clearTimeout(clickTimeout);
+    }
+
+    const newTimeout = setTimeout(() => {
+      setClickCounter(0);
+    }, 1000);
+    setClickTimeout(newTimeout);
+
+    const newCounter = clickCounter + 1;
+    setClickCounter(newCounter);
+
+    // Silent counting - no progress notifications
+    if (newCounter < 10) {
+      return; // Just count silently
+    }
+
+    // Unlocked! Only show this notification
+    showToast("🔓 Hidden settings unlocked!", getAssetIDByName("CheckmarkIcon"));
+    storage.hiddenSettings.enabled = true;
+    storage.hiddenSettings.visible = true;
+    setClickCounter(0);
+  };
+
   return (
     <RN.View style={styles.container}>
-      <RN.View style={styles.iconContainer}>
+      <RN.Pressable style={styles.iconContainer} onPress={handleIconPress}>
         <RN.Image
           source={getAssetIDByName("SettingsIcon")}
           style={styles.icon}
         />
-      </RN.View>
+      </RN.Pressable>
       <RN.Text style={styles.title}>Commands</RN.Text>
       <RN.Text style={styles.subtitle}>A collection of useful commands</RN.Text>
     </RN.View>
+  );
+}
+
+// Hidden Commands Settings Page
+function HiddenSettingsPage() {
+  useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+    warningText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_DANGER,
+      textAlign: "center",
+      lineHeight: 20,
+      fontWeight: "600",
+    },
+    infoText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      textAlign: "center",
+      lineHeight: 20,
+      marginTop: 8,
+    },
+  });
+
+  return (
+    <ScrollView style={styles.container}>
+      <RN.View style={{ paddingVertical: 16 }}>
+        <BetterTableRowGroup title="⚠️ Warning" icon={getAssetIDByName("WarningIcon")} padding={true}>
+          <RN.Text style={styles.warningText}>
+            These are hidden commands that may contain mature content or experimental features.
+          </RN.Text>
+          <RN.Text style={styles.infoText}>
+            Use at your own discretion. Commands in this section are disabled by default.
+          </RN.Text>
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="Hidden Commands" icon={getAssetIDByName("EyeIcon")}>
+          <FormSwitchRow
+            label="/lovefemboys"
+            subLabel="Get random femboy images from r/femboys (NSFW content available)"
+            leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
+            value={storage.enabledCommands.lovefemboys}
+            onValueChange={(v) => {
+              storage.enabledCommands.lovefemboys = v;
+              storage.pendingRestart = true;
+              forceUpdate();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="Hidden Settings Control" icon={getAssetIDByName("SettingsIcon")}>
+          <FormSwitchRow
+            label="Keep Hidden Settings Visible"
+            subLabel="Keep this section visible even when navigating away"
+            leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
+            value={storage.hiddenSettings.visible}
+            onValueChange={(v) => {
+              storage.hiddenSettings.visible = v;
+            }}
+          />
+          <FormRow
+            label="Reset Hidden Settings"
+            subLabel="Hide this section and disable all hidden commands"
+            leading={<FormRow.Icon source={getAssetIDByName("TrashIcon")} />}
+            onPress={() => {
+              alerts.showConfirmationAlert({
+                title: "Reset Hidden Settings",
+                content: "This will hide the hidden settings section and disable all hidden commands. Are you sure?",
+                confirmText: "Reset",
+                onConfirm: () => {
+                  storage.hiddenSettings.enabled = false;
+                  storage.hiddenSettings.visible = false;
+                  storage.enabledCommands.lovefemboys = false;
+                  storage.pendingRestart = true;
+                  showToast("Hidden settings reset", getAssetIDByName("CheckmarkIcon"));
+                },
+                cancelText: "Cancel",
+              });
+            }}
+          />
+        </BetterTableRowGroup>
+      </RN.View>
+    </ScrollView>
   );
 }
 
@@ -198,7 +355,7 @@ function FactsSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.catfact = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
           <FormSwitchRow
@@ -209,7 +366,7 @@ function FactsSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.dogfact = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
           <FormSwitchRow
@@ -220,7 +377,7 @@ function FactsSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.useless = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -267,7 +424,7 @@ function GaryAPIPage() {
             onValueChange={(v) => {
               storage.enabledCommands.gary = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -287,7 +444,7 @@ function GaryAPIPage() {
             onValueChange={(v) => {
               if (v) {
                 storage.garySettings.imageSource = "gary";
-                forceUpdate(); // Force this page to re-render
+                forceUpdate();
               }
             }}
           />
@@ -299,7 +456,7 @@ function GaryAPIPage() {
             onValueChange={(v) => {
               if (v) {
                 storage.garySettings.imageSource = "catapi";
-                forceUpdate(); // Force this page to re-render
+                forceUpdate();
               }
             }}
           />
@@ -311,7 +468,7 @@ function GaryAPIPage() {
             onValueChange={(v) => {
               if (v) {
                 storage.garySettings.imageSource = "minker";
-                forceUpdate(); // Force this page to re-render
+                forceUpdate();
               }
             }}
           />
@@ -323,7 +480,7 @@ function GaryAPIPage() {
             onValueChange={(v) => {
               if (v) {
                 storage.garySettings.imageSource = "goober";
-                forceUpdate(); // Force this page to re-render
+                forceUpdate();
               }
             }}
           />
@@ -382,7 +539,7 @@ function ListSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.pluginList = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
           <FormSwitchRow
@@ -393,7 +550,7 @@ function ListSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.themeList = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -419,7 +576,7 @@ function ImageSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.petpet = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -433,7 +590,7 @@ function ImageSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.konoself = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
           <FormSwitchRow
@@ -444,7 +601,7 @@ function ImageSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.konosend = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -470,7 +627,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyTrack = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
           <FormSwitchRow
@@ -481,7 +638,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyAlbum = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
           <FormSwitchRow
@@ -492,7 +649,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyArtists = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
           <FormSwitchRow
@@ -503,7 +660,7 @@ function SpotifySettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.spotifyCover = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -540,7 +697,7 @@ function OtherSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.firstmessage = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -554,7 +711,7 @@ function OtherSettingsPage() {
             onValueChange={(v) => {
               storage.enabledCommands.sysinfo = v;
               storage.pendingRestart = true;
-              forceUpdate(); // Force this page to re-render
+              forceUpdate();
             }}
           />
         </BetterTableRowGroup>
@@ -722,7 +879,7 @@ function CreditsPage() {
   );
 }
 
-// MAIN SETTINGS COMPONENT
+// MAIN SETTINGS COMPONENT with hidden settings
 export default function Settings() {
   useProxy(storage);
   const navigation = NavigationNative.useNavigation();
@@ -813,6 +970,22 @@ export default function Settings() {
           })}
         />
       </BetterTableRowGroup>
+
+      {/* Hidden Settings Section - Only visible when unlocked */}
+      {storage.hiddenSettings?.enabled && storage.hiddenSettings?.visible && (
+        <BetterTableRowGroup title="🔓 Hidden Settings" icon={getAssetIDByName("EyeIcon")}>
+          <FormRow
+            label="Hidden Commands"
+            subLabel="Experimental and mature content commands"
+            leading={<FormRow.Icon source={getAssetIDByName("WarningIcon")} />}
+            trailing={<FormRow.Arrow />}
+            onPress={() => navigation.push("VendettaCustomPage", {
+              title: "Hidden Settings",
+              render: HiddenSettingsPage,
+            })}
+          />
+        </BetterTableRowGroup>
+      )}
 
       {/* More Options */}
       <BetterTableRowGroup title="More Options" icon={getAssetIDByName("SettingsIcon")}>
