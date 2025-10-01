@@ -10,16 +10,9 @@ import { Forms } from "@vendetta/ui/components";
 import { alerts } from "@vendetta/ui";
 
 const { ScrollView } = findByProps("ScrollView");
-const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
-  "TableSwitchRow",
-  "TableRowGroup",
-  "Stack",
-  "TableRow",
-);
-
 const { FormRow, FormSwitchRow } = Forms;
 
-// Better Table Row Group Component (inspired by nexpid's styling)
+// Better Table Row Group Component
 function BetterTableRowGroup({
   title,
   icon,
@@ -134,112 +127,82 @@ function Header() {
   );
 }
 
-// Credits Page Component
-function CreditsPage() {
+// Facts Commands Settings Page
+function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
-    creditItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      backgroundColor: semanticColors.CARD_PRIMARY_BG,
-      borderRadius: 12,
-      marginHorizontal: 16,
-      marginVertical: 4,
-    },
-    avatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      marginRight: 12,
-    },
-    textContainer: {
-      flex: 1,
-    },
-    commandText: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: semanticColors.TEXT_NORMAL,
-    },
-    authorText: {
-      fontSize: 14,
-      color: semanticColors.TEXT_MUTED,
-      marginTop: 2,
-    },
   });
-
-  const credits = [
-    { command: "Facts Commands", author: "jdev082", avatar: "https://github.com/jdev082.png" },
-    { command: "List Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
-    { command: "PetPet Command", author: "wolfieeee", avatar: "https://github.com/wolfieeee.png" },
-    { command: "KonoChan Commands", author: "btmc727 & Rico040", avatar: "https://github.com/btmc727.png" },
-    { command: "FirstMessage Command", author: "sapphire", avatar: "https://github.com/sapphiredevs.png" },
-    { command: "Sysinfo Command", author: "mugman", avatar: "https://github.com/mugmandev.png" },
-    { command: "Spotify Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
-    { command: "Gary Command", author: "Zach Orange", avatar: "https://github.com/zachorange.png" },
-  ];
 
   return (
     <RN.View style={styles.container}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <BetterTableRowGroup 
-          title="Plugin Authors" 
-          icon={getAssetIDByName("PeopleIcon")}
-          padding={true}
-        >
-          <RN.Text style={{
-            fontSize: 14,
-            color: semanticColors.TEXT_MUTED,
-            marginBottom: 16,
-            textAlign: "center",
-          }}>
-            Thanks to all the amazing developers who contributed to this plugin collection!
-          </RN.Text>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+        <BetterTableRowGroup title="Fact Display Settings" icon={getAssetIDByName("SettingsIcon")}>
+          <FormSwitchRow
+            label="Send as Reply"
+            subLabel="Send facts as a reply to the command message"
+            leading={<FormRow.Icon source={getAssetIDByName("ReplyIcon")} />}
+            value={storage.factSettings?.sendAsReply ?? true}
+            onValueChange={(v: boolean) => {
+              storage.factSettings.sendAsReply = v;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="Include Source Citation"
+            subLabel="Include the source of facts when available"
+            leading={<FormRow.Icon source={getAssetIDByName("LinkIcon")} />}
+            value={storage.factSettings?.includeCitation ?? false}
+            onValueChange={(v: boolean) => {
+              storage.factSettings.includeCitation = v;
+              forceRerender();
+            }}
+          />
         </BetterTableRowGroup>
 
-        {credits.map((credit, index) => (
-          <RN.View key={index} style={styles.creditItem}>
-            <RN.Image
-              source={{ uri: credit.avatar }}
-              style={styles.avatar}
-            />
-            <RN.View style={styles.textContainer}>
-              <RN.Text style={styles.commandText}>{credit.command}</RN.Text>
-              <RN.Text style={styles.authorText}>by {credit.author}</RN.Text>
-            </RN.View>
-          </RN.View>
-        ))}
-
-        <BetterTableRowGroup 
-          title="About" 
-          icon={getAssetIDByName("InfoIcon")}
-          padding={true}
-        >
-          <RN.Text style={{
-            fontSize: 14,
-            color: semanticColors.TEXT_MUTED,
-            textAlign: "center",
-            lineHeight: 20,
-          }}>
-            Commands Plugin Collection{'\n'}
-            Version 1.0.0{'\n'}
-            Made with ❤️ for the community
-          </RN.Text>
+        <BetterTableRowGroup title="Available Fact Commands" icon={getAssetIDByName("BookIcon")}>
+          <FormSwitchRow
+            label="/catfact"
+            subLabel="Get random cat facts"
+            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            value={storage.enabledCommands?.catfact ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.catfact = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="/dogfact"
+            subLabel="Get random dog facts"
+            leading={<FormRow.Icon source={getAssetIDByName("ic_dog")} />}
+            value={storage.enabledCommands?.dogfact ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.dogfact = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="/useless"
+            subLabel="Get random useless facts"
+            leading={<FormRow.Icon source={getAssetIDByName("QuestionMarkIcon")} />}
+            value={storage.enabledCommands?.useless ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.useless = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
         </BetterTableRowGroup>
       </ScrollView>
     </RN.View>
   );
 }
 
-// Gary API Settings Page Component
+// Gary API Settings Page
 function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -257,7 +220,7 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
       marginVertical: 4,
     },
     selectedOption: {
-      backgroundColor: semanticColors.BRAND_500_ALPHA,
+      backgroundColor: semanticColors.BRAND_500_ALPHA || `${semanticColors.BRAND_500}20`,
       borderColor: semanticColors.BRAND_500,
       borderWidth: 2,
     },
@@ -300,6 +263,18 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
     selectedText: {
       color: semanticColors.BRAND_500,
     },
+    infoText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      marginBottom: 16,
+      textAlign: "center",
+    },
+    currentText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_NORMAL,
+      textAlign: "center",
+      fontWeight: "600",
+    },
   });
 
   const options = [
@@ -333,22 +308,23 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
 
   return (
     <RN.View style={styles.container}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <BetterTableRowGroup 
-          title="Image Source Selection" 
-          icon={getAssetIDByName("DownloadIcon")}
-          padding={true}
-        >
-          <RN.Text style={{
-            fontSize: 14,
-            color: semanticColors.TEXT_MUTED,
-            marginBottom: 16,
-            textAlign: "center",
-          }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+        <BetterTableRowGroup title="Gary Command Settings" icon={getAssetIDByName("SettingsIcon")}>
+          <FormSwitchRow
+            label="/gary"
+            subLabel="Send random Gary images to channel"
+            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
+            value={storage.enabledCommands?.gary ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.gary = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="Image Source Selection" icon={getAssetIDByName("DownloadIcon")} padding={true}>
+          <RN.Text style={styles.infoText}>
             Choose which API the /gary command should use to fetch images.
           </RN.Text>
         </BetterTableRowGroup>
@@ -363,6 +339,7 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
                 isSelected ? styles.selectedOption : styles.normalOption,
               ]}
               onPress={() => {
+                console.log(`[Settings] Changing Gary API to: ${option.value}`);
                 storage.garySettings.imageSource = option.value;
                 forceRerender();
               }}
@@ -397,23 +374,320 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
           );
         })}
 
-        <BetterTableRowGroup 
-          title="Current Selection" 
-          icon={getAssetIDByName("CheckmarkIcon")}
-          padding={true}
-        >
-          <RN.Text style={{
-            fontSize: 14,
-            color: semanticColors.TEXT_NORMAL,
-            textAlign: "center",
-            fontWeight: "600",
-          }}>
+        <BetterTableRowGroup title="Current Selection" icon={getAssetIDByName("CheckmarkIcon")} padding={true}>
+          <RN.Text style={styles.currentText}>
             Currently using: {
               currentSource === "gary" ? "Gary API" :
               currentSource === "catapi" ? "Cat API" :
               currentSource === "minker" ? "Minker API" :
               currentSource === "goober" ? "Goober API" : "Gary API"
             }
+          </RN.Text>
+        </BetterTableRowGroup>
+      </ScrollView>
+    </RN.View>
+  );
+}
+
+// List Commands Settings Page
+function ListSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+  });
+
+  return (
+    <RN.View style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+        <BetterTableRowGroup title="List Display Settings" icon={getAssetIDByName("SettingsIcon")}>
+          <FormSwitchRow
+            label="Always Send Detailed Plugin List"
+            subLabel="Always use detailed mode when listing plugins"
+            leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
+            value={storage.listSettings?.pluginListAlwaysDetailed ?? false}
+            onValueChange={(v: boolean) => {
+              storage.listSettings.pluginListAlwaysDetailed = v;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="Always Send Detailed Theme List"
+            subLabel="Always use detailed mode when listing themes"
+            leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
+            value={storage.listSettings?.themeListAlwaysDetailed ?? false}
+            onValueChange={(v: boolean) => {
+              storage.listSettings.themeListAlwaysDetailed = v;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="Available List Commands" icon={getAssetIDByName("ListIcon")}>
+          <FormSwitchRow
+            label="/plugin-list"
+            subLabel="List all installed plugins"
+            leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
+            value={storage.enabledCommands?.pluginList ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.pluginList = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="/theme-list"
+            subLabel="List all installed themes"
+            leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
+            value={storage.enabledCommands?.themeList ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.themeList = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+      </ScrollView>
+    </RN.View>
+  );
+}
+
+// Image Commands Settings Page
+function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+  });
+
+  return (
+    <RN.View style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+        <BetterTableRowGroup title="Image Commands" icon={getAssetIDByName("ImageIcon")}>
+          <FormSwitchRow
+            label="/petpet"
+            subLabel="Create pet-pet GIF of a user"
+            leading={<FormRow.Icon source={getAssetIDByName("HandIcon")} />}
+            value={storage.enabledCommands?.petpet ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.petpet = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="KonoChan Commands" icon={getAssetIDByName("ImageIcon")}>
+          <FormSwitchRow
+            label="/konoself"
+            subLabel="Get random image from KonoChan (private)"
+            leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
+            value={storage.enabledCommands?.konoself ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.konoself = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="/konosend"
+            subLabel="Send random image from KonoChan to channel"
+            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
+            value={storage.enabledCommands?.konosend ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.konosend = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+      </ScrollView>
+    </RN.View>
+  );
+}
+
+// Other Commands Settings Page
+function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+  });
+
+  return (
+    <RN.View style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+        <BetterTableRowGroup title="Message Commands" icon={getAssetIDByName("ChatIcon")}>
+          <FormSwitchRow
+            label="/firstmessage"
+            subLabel="Get the first message in a channel"
+            leading={<FormRow.Icon source={getAssetIDByName("ChatIcon")} />}
+            value={storage.enabledCommands?.firstmessage ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.firstmessage = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="System Commands" icon={getAssetIDByName("SettingsIcon")}>
+          <FormSwitchRow
+            label="/sysinfo"
+            subLabel="Display system information"
+            leading={<FormRow.Icon source={getAssetIDByName("SettingsIcon")} />}
+            value={storage.enabledCommands?.sysinfo ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.sysinfo = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="Spotify Commands" icon={getAssetIDByName("SpotifyIcon")}>
+          <FormSwitchRow
+            label="/spotify track"
+            subLabel="Share your current Spotify track"
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            value={storage.enabledCommands?.spotifyTrack ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.spotifyTrack = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="/spotify album"
+            subLabel="Share your current track's album"
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            value={storage.enabledCommands?.spotifyAlbum ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.spotifyAlbum = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="/spotify artists"
+            subLabel="Share your current track's artists"
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            value={storage.enabledCommands?.spotifyArtists ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.spotifyArtists = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+          <FormSwitchRow
+            label="/spotify cover"
+            subLabel="Share your current track's cover"
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            value={storage.enabledCommands?.spotifyCover ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.spotifyCover = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+      </ScrollView>
+    </RN.View>
+  );
+}
+
+// Credits Page
+function CreditsPage() {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+    creditItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: semanticColors.CARD_PRIMARY_BG,
+      borderRadius: 12,
+      marginHorizontal: 16,
+      marginVertical: 4,
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    textContainer: {
+      flex: 1,
+    },
+    commandText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: semanticColors.TEXT_NORMAL,
+    },
+    authorText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      marginTop: 2,
+    },
+    infoText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_MUTED,
+      marginBottom: 16,
+      textAlign: "center",
+    },
+    versionText: {
+      fontSize: 14,
+      color: semanticColors.TEXT_NORMAL,
+      textAlign: "center",
+      fontWeight: "600",
+      lineHeight: 20,
+    },
+  });
+
+  const credits = [
+    { command: "Facts Commands", author: "jdev082", avatar: "https://github.com/jdev082.png" },
+    { command: "List Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
+    { command: "PetPet Command", author: "wolfieeee", avatar: "https://github.com/wolfieeee.png" },
+    { command: "KonoChan Commands", author: "btmc727 & Rico040", avatar: "https://github.com/btmc727.png" },
+    { command: "FirstMessage Command", author: "sapphire", avatar: "https://github.com/sapphiredevs.png" },
+    { command: "Sysinfo Command", author: "mugman", avatar: "https://github.com/mugmandev.png" },
+    { command: "Spotify Commands", author: "Kitomanari", avatar: "https://github.com/kitomanari.png" },
+    { command: "Gary Command", author: "Zach Orange", avatar: "https://github.com/zachorange.png" },
+  ];
+
+  return (
+    <RN.View style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+        <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("PeopleIcon")} padding={true}>
+          <RN.Text style={styles.infoText}>
+            Thanks to all the amazing developers who contributed to this plugin collection!
+          </RN.Text>
+        </BetterTableRowGroup>
+
+        {credits.map((credit, index) => (
+          <RN.View key={index} style={styles.creditItem}>
+            <RN.Image
+              source={{ uri: credit.avatar }}
+              style={styles.avatar}
+            />
+            <RN.View style={styles.textContainer}>
+              <RN.Text style={styles.commandText}>{credit.command}</RN.Text>
+              <RN.Text style={styles.authorText}>by {credit.author}</RN.Text>
+            </RN.View>
+          </RN.View>
+        ))}
+
+        <BetterTableRowGroup title="About" icon={getAssetIDByName("InfoIcon")} padding={true}>
+          <RN.Text style={styles.versionText}>
+            Commands Plugin Collection{'\n'}
+            Version 1.0.0{'\n'}
+            Made with ❤️ for the community
           </RN.Text>
         </BetterTableRowGroup>
       </ScrollView>
@@ -477,9 +751,6 @@ export default function Settings() {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
-    spacing: {
-      height: 16,
-    },
   });
 
   // Check for pending restart when unmounting
@@ -498,23 +769,10 @@ export default function Settings() {
     };
   }, []);
 
-  const handleCommandToggle = (commandName: string, value: boolean) => {
-    storage.enabledCommands[commandName] = value;
-    storage.pendingRestart = true;
-    forceRerender();
-  };
-
-  const navigateToCredits = () => {
+  const navigateToPage = (title: string, component: React.ComponentType<any>) => {
     navigation.push("VendettaCustomPage", {
-      title: "Credits",
-      render: () => <CreditsPage />,
-    });
-  };
-
-  const navigateToGaryAPI = () => {
-    navigation.push("VendettaCustomPage", {
-      title: "Gary API Settings",
-      render: () => <GaryAPIPage forceRerender={forceRerender} />,
+      title,
+      render: () => React.createElement(component, { forceRerender }),
     });
   };
 
@@ -526,233 +784,59 @@ export default function Settings() {
         showsVerticalScrollIndicator={false}
       >
         <Header />
-        
-        {/* Facts Commands */}
-        <BetterTableRowGroup 
-          title="Facts Commands" 
-          icon={getAssetIDByName("BookIcon")}
-        >
-          <FormSwitchRow
-            label="Send as Reply"
-            subLabel="Send facts as a reply to the command message"
-            leading={<FormRow.Icon source={getAssetIDByName("ReplyIcon")} />}
-            value={storage.factSettings?.sendAsReply ?? true}
-            onValueChange={(v: boolean) => {
-              storage.factSettings.sendAsReply = v;
-              forceRerender();
-            }}
-          />
-          <FormSwitchRow
-            label="Include Source Citation"
-            subLabel="Include the source of facts when available"
-            leading={<FormRow.Icon source={getAssetIDByName("LinkIcon")} />}
-            value={storage.factSettings?.includeCitation ?? false}
-            onValueChange={(v: boolean) => {
-              storage.factSettings.includeCitation = v;
-              forceRerender();
-            }}
-          />
-          <FormSwitchRow
-            label="/catfact"
-            subLabel="Get random cat facts"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
-            value={storage.enabledCommands?.catfact ?? true}
-            onValueChange={(v) => handleCommandToggle("catfact", v)}
-          />
-          <FormSwitchRow
-            label="/dogfact"
-            subLabel="Get random dog facts"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_dog")} />}
-            value={storage.enabledCommands?.dogfact ?? true}
-            onValueChange={(v) => handleCommandToggle("dogfact", v)}
-          />
-          <FormSwitchRow
-            label="/useless"
-            subLabel="Get random useless facts"
-            leading={<FormRow.Icon source={getAssetIDByName("QuestionMarkIcon")} />}
-            value={storage.enabledCommands?.useless ?? true}
-            onValueChange={(v) => handleCommandToggle("useless", v)}
-          />
-        </BetterTableRowGroup>
 
-        {/* List Commands */}
-        <BetterTableRowGroup 
-          title="List Commands" 
-          icon={getAssetIDByName("ListIcon")}
-        >
-          <FormSwitchRow
-            label="Always Send Detailed Plugin List"
-            subLabel="Always use detailed mode when listing plugins"
-            leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
-            value={storage.listSettings?.pluginListAlwaysDetailed ?? false}
-            onValueChange={(v: boolean) => {
-              storage.listSettings.pluginListAlwaysDetailed = v;
-              forceRerender();
-            }}
-          />
-          <FormSwitchRow
-            label="Always Send Detailed Theme List"
-            subLabel="Always use detailed mode when listing themes"
-            leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
-            value={storage.listSettings?.themeListAlwaysDetailed ?? false}
-            onValueChange={(v: boolean) => {
-              storage.listSettings.themeListAlwaysDetailed = v;
-              forceRerender();
-            }}
-          />
-          <FormSwitchRow
-            label="/plugin-list"
-            subLabel="List all installed plugins"
-            leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
-            value={storage.enabledCommands?.pluginList ?? true}
-            onValueChange={(v) => handleCommandToggle("pluginList", v)}
-          />
-          <FormSwitchRow
-            label="/theme-list"
-            subLabel="List all installed themes"
-            leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
-            value={storage.enabledCommands?.themeList ?? true}
-            onValueChange={(v) => handleCommandToggle("themeList", v)}
-          />
-        </BetterTableRowGroup>
-
-        {/* Image Commands */}
-        <BetterTableRowGroup 
-          title="Image Commands" 
-          icon={getAssetIDByName("ImageIcon")}
-        >
-          <FormSwitchRow
-            label="/petpet"
-            subLabel="Create pet-pet GIF of a user"
-            leading={<FormRow.Icon source={getAssetIDByName("HandIcon")} />}
-            value={storage.enabledCommands?.petpet ?? true}
-            onValueChange={(v) => handleCommandToggle("petpet", v)}
-          />
-        </BetterTableRowGroup>
-
-        {/* Gary Commands */}
-        <BetterTableRowGroup 
-          title="Gary Commands" 
-          icon={getAssetIDByName("ic_cat")}
-        >
-          <FormSwitchRow
-            label="/gary"
-            subLabel="Send random Gary images to channel"
-            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
-            value={storage.enabledCommands?.gary ?? true}
-            onValueChange={(v) => handleCommandToggle("gary", v)}
+        {/* Command Categories */}
+        <BetterTableRowGroup title="Command Categories" icon={getAssetIDByName("FolderIcon")}>
+          <FormRow
+            label="Facts Commands"
+            subLabel="Cat facts, dog facts, and useless facts"
+            leading={<FormRow.Icon source={getAssetIDByName("BookIcon")} />}
+            trailing={<FormRow.Arrow />}
+            onPress={() => navigateToPage("Facts Commands", FactsSettingsPage)}
           />
           <FormRow
-            label="Gary API Settings"
-            subLabel={`Current: ${storage.garySettings?.imageSource === "gary" ? "Gary API" : 
+            label="List Commands"
+            subLabel="Plugin lists and theme lists"
+            leading={<FormRow.Icon source={getAssetIDByName("ListIcon")} />}
+            trailing={<FormRow.Arrow />}
+            onPress={() => navigateToPage("List Commands", ListSettingsPage)}
+          />
+          <FormRow
+            label="Image Commands"
+            subLabel="PetPet, KonoChan, and image utilities"
+            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
+            trailing={<FormRow.Arrow />}
+            onPress={() => navigateToPage("Image Commands", ImageSettingsPage)}
+          />
+          <FormRow
+            label="Gary Commands"
+            subLabel={`Gary images - Current: ${storage.garySettings?.imageSource === "gary" ? "Gary API" : 
               storage.garySettings?.imageSource === "catapi" ? "Cat API" : 
               storage.garySettings?.imageSource === "minker" ? "Minker API" : 
               storage.garySettings?.imageSource === "goober" ? "Goober API" : "Gary API"}`}
-            leading={<FormRow.Icon source={getAssetIDByName("DownloadIcon")} />}
+            leading={<FormRow.Icon source={getAssetIDByName("ic_cat")} />}
             trailing={<FormRow.Arrow />}
-            onPress={navigateToGaryAPI}
+            onPress={() => navigateToPage("Gary Commands", GaryAPIPage)}
+          />
+          <FormRow
+            label="Other Commands"
+            subLabel="System info, Spotify, and miscellaneous"
+            leading={<FormRow.Icon source={getAssetIDByName("MoreHorizontalIcon")} />}
+            trailing={<FormRow.Arrow />}
+            onPress={() => navigateToPage("Other Commands", OtherSettingsPage)}
           />
         </BetterTableRowGroup>
 
-        {/* KonoChan Commands */}
-        <BetterTableRowGroup 
-          title="KonoChan Commands" 
-          icon={getAssetIDByName("ImageIcon")}
-        >
-          <FormSwitchRow
-            label="/konoself"
-            subLabel="Get random image from KonoChan (private)"
-            leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
-            value={storage.enabledCommands?.konoself ?? true}
-            onValueChange={(v) => handleCommandToggle("konoself", v)}
-          />
-          <FormSwitchRow
-            label="/konosend"
-            subLabel="Send random image from KonoChan to channel"
-            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
-            value={storage.enabledCommands?.konosend ?? true}
-            onValueChange={(v) => handleCommandToggle("konosend", v)}
-          />
-        </BetterTableRowGroup>
-
-        {/* Message Commands */}
-        <BetterTableRowGroup 
-          title="Message Commands" 
-          icon={getAssetIDByName("ChatIcon")}
-        >
-          <FormSwitchRow
-            label="/firstmessage"
-            subLabel="Get the first message in a channel"
-            leading={<FormRow.Icon source={getAssetIDByName("ChatIcon")} />}
-            value={storage.enabledCommands?.firstmessage ?? true}
-            onValueChange={(v) => handleCommandToggle("firstmessage", v)}
-          />
-        </BetterTableRowGroup>
-
-        {/* System Commands */}
-        <BetterTableRowGroup 
-          title="System Commands" 
-          icon={getAssetIDByName("SettingsIcon")}
-        >
-          <FormSwitchRow
-            label="/sysinfo"
-            subLabel="Display system information"
-            leading={<FormRow.Icon source={getAssetIDByName("SettingsIcon")} />}
-            value={storage.enabledCommands?.sysinfo ?? true}
-            onValueChange={(v) => handleCommandToggle("sysinfo", v)}
-          />
-        </BetterTableRowGroup>
-
-        {/* Spotify Commands */}
-        <BetterTableRowGroup 
-          title="Spotify Commands" 
-          icon={getAssetIDByName("SpotifyIcon")}
-        >
-          <FormSwitchRow
-            label="/spotify track"
-            subLabel="Share your current Spotify track"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
-            value={storage.enabledCommands?.spotifyTrack ?? true}
-            onValueChange={(v) => handleCommandToggle("spotifyTrack", v)}
-          />
-          <FormSwitchRow
-            label="/spotify album"
-            subLabel="Share your current track's album"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
-            value={storage.enabledCommands?.spotifyAlbum ?? true}
-            onValueChange={(v) => handleCommandToggle("spotifyAlbum", v)}
-          />
-          <FormSwitchRow
-            label="/spotify artists"
-            subLabel="Share your current track's artists"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
-            value={storage.enabledCommands?.spotifyArtists ?? true}
-            onValueChange={(v) => handleCommandToggle("spotifyArtists", v)}
-          />
-          <FormSwitchRow
-            label="/spotify cover"
-            subLabel="Share your current track's cover"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
-            value={storage.enabledCommands?.spotifyCover ?? true}
-            onValueChange={(v) => handleCommandToggle("spotifyCover", v)}
-          />
-        </BetterTableRowGroup>
-
-        {/* Navigation Pages */}
-        <BetterTableRowGroup 
-          title="More Options" 
-          icon={getAssetIDByName("MoreHorizontalIcon")}
-        >
+        {/* More Options */}
+        <BetterTableRowGroup title="More Options" icon={getAssetIDByName("SettingsIcon")}>
           <FormRow
             label="Credits"
             subLabel="View plugin authors and contributors"
             leading={<FormRow.Icon source={getAssetIDByName("PeopleIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={navigateToCredits}
+            onPress={() => navigateToPage("Credits", CreditsPage)}
           />
         </BetterTableRowGroup>
-
-        <RN.View style={styles.spacing} />
       </ScrollView>
     </RN.View>
   );

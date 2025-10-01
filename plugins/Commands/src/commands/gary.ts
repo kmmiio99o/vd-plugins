@@ -12,19 +12,23 @@ export const garyCommand = {
   options: [],
   execute: async (args: any, ctx: any) => {
     try {
-      // Determine which API to use based on switches
-      let source = "gary"; // default
-      if (storage.garySettings?.useCatAPI) source = "catapi";
-      else if (storage.garySettings?.useMinkerAPI) source = "minker";
-      else if (storage.garySettings?.useGooberAPI) source = "goober";
+      // Ensure garySettings exists and get the source
+      if (!storage.garySettings) {
+        storage.garySettings = { imageSource: "gary" };
+      }
+      
+      const source = storage.garySettings.imageSource || "gary";
+      console.log(`[Gary Command] Using image source: ${source}`); // Debug log
       
       const imageUrl = await getGaryUrl(source);
 
       if (!imageUrl) {
+        console.log("[Gary Command] No image URL received");
         // Silent fail - no error message
         return { type: 4 };
       }
 
+      console.log(`[Gary Command] Sending image: ${imageUrl}`); // Debug log
       const fixNonce = Date.now().toString();
       MessageActions.sendMessage(ctx.channel.id, { content: imageUrl }, void 0, {
         nonce: fixNonce,
