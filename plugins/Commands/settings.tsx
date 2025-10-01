@@ -127,7 +127,7 @@ function Header() {
   );
 }
 
-// Facts Commands Settings Page
+// Facts Commands Settings Page - FIXED with Last.fm pattern
 function FactsSettingsPage() {
   useProxy(storage);
 
@@ -147,18 +147,14 @@ function FactsSettingsPage() {
             subLabel="Send facts as a reply to the command message"
             leading={<FormRow.Icon source={getAssetIDByName("ArrowAngleLeftUpIcon")} />}
             value={storage.factSettings?.sendAsReply ?? true}
-            onValueChange={() => {
-              storage.factSettings.sendAsReply = !storage.factSettings.sendAsReply;
-            }}
+            onValueChange={(value: boolean) => storage.factSettings.sendAsReply = value}
           />
           <FormSwitchRow
             label="Include Source Citation"
             subLabel="Include the source of facts when available"
             leading={<FormRow.Icon source={getAssetIDByName("LinkIcon")} />}
             value={storage.factSettings?.includeCitation ?? false}
-            onValueChange={() => {
-              storage.factSettings.includeCitation = !storage.factSettings.includeCitation;
-            }}
+            onValueChange={(value: boolean) => storage.factSettings.includeCitation = value}
           />
         </BetterTableRowGroup>
 
@@ -168,8 +164,8 @@ function FactsSettingsPage() {
             subLabel="Get random cat facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.catfact ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.catfact = !storage.enabledCommands.catfact;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.catfact = value;
               storage.pendingRestart = true;
             }}
           />
@@ -178,8 +174,8 @@ function FactsSettingsPage() {
             subLabel="Get random dog facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.dogfact ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.dogfact = !storage.enabledCommands.dogfact;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.dogfact = value;
               storage.pendingRestart = true;
             }}
           />
@@ -188,8 +184,8 @@ function FactsSettingsPage() {
             subLabel="Get random useless facts"
             leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
             value={storage.enabledCommands?.useless ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.useless = !storage.enabledCommands.useless;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.useless = value;
               storage.pendingRestart = true;
             }}
           />
@@ -199,7 +195,7 @@ function FactsSettingsPage() {
   );
 }
 
-// Gary API Settings Page with proper reactivity
+// Gary API Settings Page - FIXED with Last.fm pattern
 function GaryAPIPage() {
   useProxy(storage);
   
@@ -368,8 +364,8 @@ function GaryAPIPage() {
             subLabel="Send random Gary images to channel"
             leading={<FormRow.Icon source={getAssetIDByName("AttachmentIcon")} />}
             value={storage.enabledCommands?.gary ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.gary = !storage.enabledCommands.gary;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.gary = value;
               storage.pendingRestart = true;
             }}
           />
@@ -403,7 +399,7 @@ function GaryAPIPage() {
   );
 }
 
-// List Commands Settings Page
+// List Commands Settings Page - FIXED with Last.fm pattern
 function ListSettingsPage() {
   useProxy(storage);
 
@@ -423,18 +419,14 @@ function ListSettingsPage() {
             subLabel="Always use detailed mode when listing plugins"
             leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
             value={storage.listSettings?.pluginListAlwaysDetailed ?? false}
-            onValueChange={() => {
-              storage.listSettings.pluginListAlwaysDetailed = !storage.listSettings.pluginListAlwaysDetailed;
-            }}
+            onValueChange={(value: boolean) => storage.listSettings.pluginListAlwaysDetailed = value}
           />
           <FormSwitchRow
             label="Always Send Detailed Theme List"
             subLabel="Always use detailed mode when listing themes"
             leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
             value={storage.listSettings?.themeListAlwaysDetailed ?? false}
-            onValueChange={() => {
-              storage.listSettings.themeListAlwaysDetailed = !storage.listSettings.themeListAlwaysDetailed;
-            }}
+            onValueChange={(value: boolean) => storage.listSettings.themeListAlwaysDetailed = value}
           />
         </BetterTableRowGroup>
 
@@ -444,8 +436,8 @@ function ListSettingsPage() {
             subLabel="List all installed plugins"
             leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
             value={storage.enabledCommands?.pluginList ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.pluginList = !storage.enabledCommands.pluginList;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.pluginList = value;
               storage.pendingRestart = true;
             }}
           />
@@ -454,8 +446,8 @@ function ListSettingsPage() {
             subLabel="List all installed themes"
             leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
             value={storage.enabledCommands?.themeList ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.themeList = !storage.enabledCommands.themeList;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.themeList = value;
               storage.pendingRestart = true;
             }}
           />
@@ -465,7 +457,7 @@ function ListSettingsPage() {
   );
 }
 
-// Image Commands Settings Page
+// Image Commands Settings Page - FIXED with Last.fm pattern
 function ImageSettingsPage() {
   useProxy(storage);
 
@@ -485,8 +477,8 @@ function ImageSettingsPage() {
             subLabel="Create pet-pet GIF of a user"
             leading={<FormRow.Icon source={getAssetIDByName("HandRequestSpeakIcon")} />}
             value={storage.enabledCommands?.petpet ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.petpet = !storage.enabledCommands.petpet;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.petpet = value;
               storage.pendingRestart = true;
             }}
           />
@@ -498,8 +490,8 @@ function ImageSettingsPage() {
             subLabel="Get random image from KonoChan (private)"
             leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
             value={storage.enabledCommands?.konoself ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.konoself = !storage.enabledCommands.konoself;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.konoself = value;
               storage.pendingRestart = true;
             }}
           />
@@ -508,8 +500,8 @@ function ImageSettingsPage() {
             subLabel="Send random image from KonoChan to channel"
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={storage.enabledCommands?.konosend ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.konosend = !storage.enabledCommands.konosend;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.konosend = value;
               storage.pendingRestart = true;
             }}
           />
@@ -519,7 +511,7 @@ function ImageSettingsPage() {
   );
 }
 
-// Spotify Commands Settings Page
+// Spotify Commands Settings Page - FIXED with Last.fm pattern
 function SpotifySettingsPage() {
   useProxy(storage);
 
@@ -545,8 +537,8 @@ function SpotifySettingsPage() {
             subLabel="Share your current Spotify track"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyTrack ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.spotifyTrack = !storage.enabledCommands.spotifyTrack;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.spotifyTrack = value;
               storage.pendingRestart = true;
             }}
           />
@@ -555,8 +547,8 @@ function SpotifySettingsPage() {
             subLabel="Share your current track's album"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyAlbum ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.spotifyAlbum = !storage.enabledCommands.spotifyAlbum;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.spotifyAlbum = value;
               storage.pendingRestart = true;
             }}
           />
@@ -565,8 +557,8 @@ function SpotifySettingsPage() {
             subLabel="Share your current track's artists"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyArtists ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.spotifyArtists = !storage.enabledCommands.spotifyArtists;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.spotifyArtists = value;
               storage.pendingRestart = true;
             }}
           />
@@ -575,8 +567,8 @@ function SpotifySettingsPage() {
             subLabel="Share your current track's cover"
             leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
             value={storage.enabledCommands?.spotifyCover ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.spotifyCover = !storage.enabledCommands.spotifyCover;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.spotifyCover = value;
               storage.pendingRestart = true;
             }}
           />
@@ -592,7 +584,7 @@ function SpotifySettingsPage() {
   );
 }
 
-// Other Commands Settings Page
+// Other Commands Settings Page - FIXED with Last.fm pattern
 function OtherSettingsPage() {
   useProxy(storage);
 
@@ -612,8 +604,8 @@ function OtherSettingsPage() {
             subLabel="Get the first message in a channel"
             leading={<FormRow.Icon source={getAssetIDByName("ChatIcon")} />}
             value={storage.enabledCommands?.firstmessage ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.firstmessage = !storage.enabledCommands.firstmessage;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.firstmessage = value;
               storage.pendingRestart = true;
             }}
           />
@@ -625,8 +617,8 @@ function OtherSettingsPage() {
             subLabel="Display system information"
             leading={<FormRow.Icon source={getAssetIDByName("SettingsIcon")} />}
             value={storage.enabledCommands?.sysinfo ?? true}
-            onValueChange={() => {
-              storage.enabledCommands.sysinfo = !storage.enabledCommands.sysinfo;
+            onValueChange={(value: boolean) => {
+              storage.enabledCommands.sysinfo = value;
               storage.pendingRestart = true;
             }}
           />
@@ -840,7 +832,7 @@ if (!storage.pendingRestart) {
   storage.pendingRestart = false;
 }
 
-// Main Settings Component - COMPLETELY FIXED
+// Main Settings Component - FIXED with Last.fm pattern
 export default function Settings() {
   useProxy(storage);
   const navigation = NavigationNative.useNavigation();
