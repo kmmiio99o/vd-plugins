@@ -1,4 +1,7 @@
 import { findByProps } from "@vendetta/metro";
+import { showToast } from "@vendetta/ui/toasts";
+import { getAssetIDByName } from "@vendetta/ui/assets";
+import { alerts } from "@vendetta/ui";
 
 const MessageActions = findByProps("sendMessage");
 
@@ -10,8 +13,6 @@ interface RedditPost {
     is_video: boolean;
     over_18: boolean;
     thumbnail: string;
-    thumbnail_width?: number;
-    thumbnail_height?: number;
     preview?: {
       images: Array<{
         source: {
@@ -88,18 +89,6 @@ function isValidMediaUrl(url: string): boolean {
   return mediaHosts.some(host => lowerUrl.includes(host));
 }
 
-function containsNsfwKeywords(text: string): boolean {
-  const nsfwKeywords = [
-    'nsfw', 'nude', 'naked', 'dick', 'cock', 'penis', 'pussy', 'vagina', 'ass', 'boobs', 'tits',
-    'sex', 'fuck', 'cum', 'orgasm', 'horny', 'slutty', 'daddy', 'kinky', 'bdsm', 'anal',
-    'blow', 'suck', 'stroke', 'masturbat', 'jerk', 'hard', 'wet', 'tight', 'deep', 'throat',
-    '18+', 'xxx', 'porn', 'sexual', 'erotic', 'explicit', 'adult', 'mature'
-  ];
-  
-  const lowerText = text.toLowerCase();
-  return nsfwKeywords.some(keyword => lowerText.includes(keyword));
-}
-
 function extractMediaUrl(post: RedditPost): string | null {
   const postData = post.data;
   
@@ -164,9 +153,9 @@ function extractMediaUrl(post: RedditPost): string | null {
   return null;
 }
 
-async function getFemboyMedia(includeNsfw: boolean = false): Promise<{ url: string; isNsfw: boolean; title: string } | null> {
+async function getFemboyMedia(): Promise<string | null> {
   try {
-    console.log(`[LoveFemboys] Fetching media, includeNsfw: ${includeNsfw}`);
+    console.log(`[LoveFemboys] Fetching random media`);
     
     const response = await fetch('https://reddit.com/r/femboys.json?limit=100&raw_json=1');
     if (!response.ok) {
@@ -187,35 +176,15 @@ async function getFemboyMedia(includeNsfw: boolean = false): Promise<{ url: stri
         continue;
       }
       
-      console.log(`[LoveFemboys] Checking post: "${postData.title}" (Reddit NSFW: ${postData.over_18})`);
-      
-      // Check for NSFW keywords in title/content
-      const hasNsfwKeywords = containsNsfwKeywords(postData.title + ' ' + postData.selftext);
-      const isNsfwContent = postData.over_18 || hasNsfwKeywords;
-      
-      console.log(`[LoveFemboys] NSFW analysis - Reddit flag: ${postData.over_18}, Keywords detected: ${hasNsfwKeywords}, Final NSFW: ${isNsfwContent}`);
-      
-      // Filter by NSFW preference
-      if (!includeNsfw && isNsfwContent) {
-        console.log(`[LoveFemboys] Skipping NSFW content: ${postData.title}`);
-        continue;
-      }
-      
       // Try to extract media URL
       const mediaUrl = extractMediaUrl(post);
       if (mediaUrl) {
         console.log(`[LoveFemboys] Found valid media: ${mediaUrl}`);
-        validPosts.push({
-          url: mediaUrl,
-          isNsfw: isNsfwContent,
-          title: postData.title
-        });
-      } else {
-        console.log(`[LoveFemboys] No valid media URL found for: ${postData.title}`);
+        validPosts.push(mediaUrl);
       }
     }
 
-    console.log(`[LoveFemboys] Found ${validPosts.length} valid media posts (includeNsfw: ${includeNsfw})`);
+    console.log(`[LoveFemboys] Found ${validPosts.length} valid media posts`);
 
     if (validPosts.length === 0) {
       console.log('[LoveFemboys] No suitable media found');
@@ -223,10 +192,10 @@ async function getFemboyMedia(includeNsfw: boolean = false): Promise<{ url: stri
     }
 
     // Get random media
-    const randomPost = validPosts[Math.floor(Math.random() * validPosts.length)];
-    console.log(`[LoveFemboys] Selected: ${randomPost.title} - ${randomPost.url}`);
+    const randomUrl = validPosts[Math.floor(Math.random() * validPosts.length)];
+    console.log(`[LoveFemboys] Selected: ${randomUrl}`);
     
-    return randomPost;
+    return randomUrl;
   } catch (error) {
     console.error('[LoveFemboys] Error fetching media:', error);
     return null;
@@ -240,14 +209,6 @@ export const lovefemboysCommand = {
   displayDescription: "Get random femboy content from r/femboys",
   options: [
     {
-      name: "nsfw",
-      displayName: "nsfw",
-      description: "Include NSFW content",
-      displayDescription: "Include NSFW content",
-      type: 5, // Boolean
-      required: false,
-    },
-    {
       name: "ephemeral",
       displayName: "ephemeral", 
       description: "Send as ephemeral message (only you can see)",
@@ -258,71 +219,53 @@ export const lovefemboysCommand = {
   ],
   execute: async (args: any, ctx: any) => {
     try {
-      const includeNsfw = args?.find?.((arg: any) => arg.name === "nsfw")?.value ?? false;
       const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
       
-      console.log(`[LoveFemboys] Command executed with nsfw: ${includeNsfw}, ephemeral: ${isEphemeral}`);
-      console.log(`[LoveFemboys] Args received:`, args);
+      console.log(`[LoveFemboys] Command executed with ephemeral: ${isEphemeral}`);
       
-      const result = await getFemboyMedia(includeNsfw);
+      // Show NSFW warning popup before proceeding
+      const shouldProceed = await new Promise<boolean>((resolve) => {
+        alerts.showConfirmationAlert({
+          title: "⚠️ NSFW Content Warning",
+          content: "This command will send potentially NSFW (Not Safe For Work) content from r/femboys. Are you sure you want to continue?",
+          confirmText: "Yes, Continue",
+          onConfirm: () => resolve(true),
+          cancelText: "Cancel",
+          onCancel: () => resolve(false),
+        });
+      });
 
-      if (!result) {
-        const errorMessage = includeNsfw 
-          ? "❌ No femboy content found. Reddit might be having issues."
-          : "❌ No SFW femboy content found. Try with `nsfw:true` or try again later.";
-        
-        if (isEphemeral) {
-          return {
-            type: 4,
-            data: {
-              content: errorMessage,
-              flags: 64, // Ephemeral flag
-            },
-          };
-        } else {
-          const fixNonce = Date.now().toString();
-          MessageActions.sendMessage(ctx.channel.id, { content: errorMessage }, void 0, {nonce: fixNonce});
-          return { type: 4 };
-        }
+      if (!shouldProceed) {
+        console.log(`[LoveFemboys] User cancelled the command`);
+        return { type: 4 }; // Just dismiss the command
       }
 
-      // Simple content without extra text
-      const content = result.url;
+      const mediaUrl = await getFemboyMedia();
+
+      if (!mediaUrl) {
+        showToast("❌ Failed to fetch femboy content", getAssetIDByName("CircleXIcon"));
+        return { type: 4 };
+      }
 
       if (isEphemeral) {
         console.log(`[LoveFemboys] Sending ephemeral response`);
         return {
           type: 4,
           data: {
-            content,
+            content: mediaUrl,
             flags: 64, // Ephemeral flag
           },
         };
       } else {
         console.log(`[LoveFemboys] Sending public message`);
         const fixNonce = Date.now().toString();
-        MessageActions.sendMessage(ctx.channel.id, { content }, void 0, {nonce: fixNonce});
+        MessageActions.sendMessage(ctx.channel.id, { content: mediaUrl }, void 0, {nonce: fixNonce});
         return { type: 4 };
       }
     } catch (error) {
       console.error('[LoveFemboys] Command error:', error);
-      const errorMessage = "❌ An error occurred while fetching femboy content.";
-      
-      const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
-      
-      if (isEphemeral) {
-        return {
-          type: 4,
-          data: {
-            content: errorMessage,
-            flags: 64, // Ephemeral flag
-          },
-        };
-      } else {
-        const fixNonce = Date.now().toString();
-        MessageActions.sendMessage(ctx.channel.id, { content: errorMessage }, void 0, {nonce: fixNonce});
-        return { type: 4 };
-      }
+      showToast("❌ An error occurred while fetching content", getAssetIDByName("CircleXIcon"));
+      return { type: 4 };
     }
   },
   applicationId: "-1",
