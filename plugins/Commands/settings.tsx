@@ -202,8 +202,10 @@ function FactsSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Gary API Settings Page
+// Gary API Settings Page - FIXED VERSION
 function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
+  useProxy(storage); // Add this to make the component reactive to storage changes
+  
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
@@ -253,15 +255,12 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
     optionTitle: {
       fontSize: 16,
       fontWeight: "600",
-      color: semanticColors.TEXT_NORMAL,
+      color: semanticColors.TEXT_NORMAL, // Fixed: always use TEXT_NORMAL
     },
     optionDesc: {
       fontSize: 14,
       color: semanticColors.TEXT_MUTED,
       marginTop: 2,
-    },
-    selectedText: {
-      color: semanticColors.BRAND_500,
     },
     infoText: {
       fontSize: 14,
@@ -339,8 +338,9 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
                 isSelected ? styles.selectedOption : styles.normalOption,
               ]}
               onPress={() => {
-                console.log(`[Settings] Changing Gary API to: ${option.value}`);
+                console.log(`[Settings] Changing Gary API from ${currentSource} to: ${option.value}`);
                 storage.garySettings.imageSource = option.value;
+                // Force immediate update
                 forceRerender();
               }}
             >
@@ -360,10 +360,7 @@ function GaryAPIPage({ forceRerender }: { forceRerender: () => void }) {
                 }}
               />
               <RN.View style={styles.textContainer}>
-                <RN.Text style={[
-                  styles.optionTitle,
-                  isSelected && styles.selectedText,
-                ]}>
+                <RN.Text style={styles.optionTitle}>
                   {option.title}
                 </RN.Text>
                 <RN.Text style={styles.optionDesc}>
@@ -508,8 +505,8 @@ function ImageSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   );
 }
 
-// Other Commands Settings Page
-function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+// NEW: Separate Spotify Commands Settings Page
+function SpotifySettingsPage({ forceRerender }: { forceRerender: () => void }) {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
@@ -520,34 +517,6 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
   return (
     <RN.View style={styles.container}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
-        <BetterTableRowGroup title="Message Commands" icon={getAssetIDByName("ChatIcon")}>
-          <FormSwitchRow
-            label="/firstmessage"
-            subLabel="Get the first message in a channel"
-            leading={<FormRow.Icon source={getAssetIDByName("ChatIcon")} />}
-            value={storage.enabledCommands?.firstmessage ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.firstmessage = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
-          />
-        </BetterTableRowGroup>
-
-        <BetterTableRowGroup title="System Commands" icon={getAssetIDByName("SettingsIcon")}>
-          <FormSwitchRow
-            label="/sysinfo"
-            subLabel="Display system information"
-            leading={<FormRow.Icon source={getAssetIDByName("SettingsIcon")} />}
-            value={storage.enabledCommands?.sysinfo ?? true}
-            onValueChange={(v) => {
-              storage.enabledCommands.sysinfo = v;
-              storage.pendingRestart = true;
-              forceRerender();
-            }}
-          />
-        </BetterTableRowGroup>
-
         <BetterTableRowGroup title="Spotify Commands" icon={getAssetIDByName("SpotifyIcon")}>
           <FormSwitchRow
             label="/spotify track"
@@ -589,6 +558,61 @@ function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
             value={storage.enabledCommands?.spotifyCover ?? true}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyCover = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="About Spotify Commands" icon={getAssetIDByName("InfoIcon")} padding={true}>
+          <RN.Text style={{
+            fontSize: 14,
+            color: semanticColors.TEXT_MUTED,
+            textAlign: "center",
+            lineHeight: 20,
+          }}>
+            These commands allow you to share your current Spotify activity in Discord. Make sure you have Spotify connected to Discord for these commands to work properly.
+          </RN.Text>
+        </BetterTableRowGroup>
+      </ScrollView>
+    </RN.View>
+  );
+}
+
+// Other Commands Settings Page - UPDATED (removed Spotify)
+function OtherSettingsPage({ forceRerender }: { forceRerender: () => void }) {
+  const styles = stylesheet.createThemedStyleSheet({
+    container: {
+      flex: 1,
+      backgroundColor: semanticColors.BACKGROUND_PRIMARY,
+    },
+  });
+
+  return (
+    <RN.View style={styles.container}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 16, paddingBottom: 38 }}>
+        <BetterTableRowGroup title="Message Commands" icon={getAssetIDByName("ChatIcon")}>
+          <FormSwitchRow
+            label="/firstmessage"
+            subLabel="Get the first message in a channel"
+            leading={<FormRow.Icon source={getAssetIDByName("ChatIcon")} />}
+            value={storage.enabledCommands?.firstmessage ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.firstmessage = v;
+              storage.pendingRestart = true;
+              forceRerender();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="System Commands" icon={getAssetIDByName("SettingsIcon")}>
+          <FormSwitchRow
+            label="/sysinfo"
+            subLabel="Display system information"
+            leading={<FormRow.Icon source={getAssetIDByName("SettingsIcon")} />}
+            value={storage.enabledCommands?.sysinfo ?? true}
+            onValueChange={(v) => {
+              storage.enabledCommands.sysinfo = v;
               storage.pendingRestart = true;
               forceRerender();
             }}
@@ -819,8 +843,15 @@ export default function Settings() {
             onPress={() => navigateToPage("Gary Commands", GaryAPIPage)}
           />
           <FormRow
+            label="Spotify Commands"
+            subLabel="Share your Spotify activity"
+            leading={<FormRow.Icon source={getAssetIDByName("SpotifyIcon")} />}
+            trailing={<FormRow.Arrow />}
+            onPress={() => navigateToPage("Spotify Commands", SpotifySettingsPage)}
+          />
+          <FormRow
             label="Other Commands"
-            subLabel="System info, Spotify, and miscellaneous"
+            subLabel="System info and miscellaneous"
             leading={<FormRow.Icon source={getAssetIDByName("MoreHorizontalIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigateToPage("Other Commands", OtherSettingsPage)}
