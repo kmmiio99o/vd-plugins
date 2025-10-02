@@ -14,22 +14,42 @@ function getDeviceInfo() {
   return { width, height };
 }
 
-// Hardware info helper
-function getHardwareInfo() {
+// Network info helper with improved detection
+function getNetworkInfo() {
   try {
-    const hwProps = findByProps("memory");
-    if (!hwProps) return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A", netInfo: "N/A" };
+    // Try multiple methods to get network info
     
-    const { cpuCoreCount, cpuPercentage, memory } = hwProps;
-    const cpuPerc = cpuPercentage ? cpuPercentage.toFixed(2) + "%" : "N/A";
-    const memUsage = memory ? parseFloat((memory / 1000).toPrecision(3)) + " MB" : "N/A";
-    
-    let netInfo = "N/A";
+    // Method 1: Try React Native NetInfo
     try {
-      const netInfoModule = findByProps("useNetInfo");
-      if (netInfoModule) {
-        const networkData = Object.values(netInfoModule.fetch()).filter((i: any) => i?.type)[0] as any;
-        if (networkData) {
+      const NetInfo = findByProps("getCurrentState", "fetch");
+      if (NetInfo && NetInfo.getCurrentState) {
+        const networkState = NetInfo.getCurrentState();
+        if (networkState) {
+          const { type, details } = networkState;
+          if (type && type !== "unknown" && type !== "none") {
+            const networkMap: Record<string, string> = {
+              wifi: "WiFi",
+              ethernet: "Ethernet",
+              other: "Unknown",
+              bluetooth: "Bluetooth",
+              wimax: "WiMAX",
+              vpn: "VPN",
+              cellular: details?.cellularGeneration ? `${details.cellularGeneration.toUpperCase()}` : "Cellular",
+            };
+            return networkMap[type] || type;
+          }
+        }
+      }
+    } catch (e) {
+      console.log("NetInfo method 1 failed:", e);
+    }
+
+    // Method 2: Try alternative NetInfo approach
+    try {
+      const netInfoModule = findByProps("useNetInfo", "addEventListener");
+      if (netInfoModule && netInfoModule.fetch) {
+        const networkData = netInfoModule.fetch();
+        if (networkData && networkData.type && networkData.type !== "unknown") {
           const { type, details } = networkData;
           const networkMap: Record<string, string> = {
             wifi: "WiFi",
@@ -38,19 +58,152 @@ function getHardwareInfo() {
             bluetooth: "Bluetooth",
             wimax: "WiMAX",
             vpn: "VPN",
-            cellular: details?.cellularGeneration?.toUpperCase() || "Cellular",
+            cellular: details?.cellularGeneration ? `${details.cellularGeneration.toUpperCase()}` : "Cellular",
           };
-          netInfo = networkMap[type] ?? type;
+          return networkMap[type] || type;
         }
       }
     } catch (e) {
-      console.warn("Network info unavailable:", e);
+      console.log("NetInfo method 2 failed:", e);
     }
+
+    // Method 3: Try native modules
+    try {
+      const { NativeModules } = ReactNative;
+      if (NativeModules.NetworkingIOS) {
+        // iOS specific
+        return "Connected";
+      }
+      if (NativeModules.NetInfoCellularGeneration) {
+        return "Cellular";
+      }
+    } catch (e) {
+      console.log("Native modules method failed:", e);
+    }
+
+    // Method 4: Check if we can reach the internet
+    try {
+      // This is a simple connectivity check
+      if (navigator.onLine !== undefined) {
+        return navigator.onLine ? "Connected" : "Offline";
+      }
+    } catch (e) {
+      console.log("Navigator online check failed:", e);
+    }
+
+    return "Unknown";
+  } catch (e) {
+    console.warn("All network detection methods failed:", e);
+    return "Unknown";
+  }
+}
+
+// Root detection helper
+function isDeviceRooted() {
+  try {
+    const { NativeModules } = ReactNative;
+    
+    // Try to detect root/jailbreak through various methods
+    
+    // Android root detection
+    if (ReactNative.Platform.OS === "android") {
+      // Check for common root indicators
+      try {
+        // Method 1: Check for su binary
+        const suPaths = [
+          "/system/bin/su",
+          "/system/xbin/su",
+          "/sbin/su",
+          "/data/local/xbin/su",
+          "/data/local/bin/su",
+          "/system/sd/xbin/su",
+          "/system/bin/failsafe/su",
+          "/data/local/su"
+        ];
+        
+        // Method 2: Check for root management apps
+        const rootApps = [
+          "com.noshufou.android.su",
+          "com.thirdparty.superuser",
+          "eu.chainfire.supersu",
+          "com.koushikdutta.superuser",
+          "com.zachspong.temprootremovejb",
+          "com.ramdroid.appquarantine"
+        ];
+
+        // Method 3: Check build tags
+        const buildTags = NativeModules.DeviceInfo?.getBuildTags?.() || "";
+        if (buildTags.includes("test-keys")) {
+          return true;
+        }
+
+        // Method 4: Check for Magisk
+        try {
+          const magiskPaths = [
+            "/sbin/.magisk",
+            "/system/addon.d/99-magisk.sh",
+            "/cache/.disable_magisk",
+            "/data/adb/magisk"
+          ];
+          // We can't actually check file existence, but we can try
+        } catch (e) {
+          // Ignore
+        }
+
+        return false; // Default to not rooted if we can't detect
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    // iOS jailbreak detection
+    if (ReactNative.Platform.OS === "ios") {
+      try {
+        // Check for common jailbreak indicators
+        const jailbreakPaths = [
+          "/Applications/Cydia.app",
+          "/Library/MobileSubstrate/MobileSubstrate.dylib",
+          "/bin/bash",
+          "/usr/sbin/sshd",
+          "/etc/apt",
+          "/private/var/lib/apt/"
+        ];
+
+        // Check for jailbreak apps
+        const jailbreakApps = [
+          "cydia://package/com.example.package",
+          "sileo://package/com.example.package"
+        ];
+
+        return false; // Default to not jailbroken if we can't detect
+      } catch (e) {
+        return false;
+      }
+    }
+
+    return false;
+  } catch (e) {
+    console.warn("Root detection failed:", e);
+    return false;
+  }
+}
+
+// Hardware info helper
+function getHardwareInfo() {
+  try {
+    const hwProps = findByProps("memory");
+    if (!hwProps) return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A", netInfo: "Unknown" };
+    
+    const { cpuCoreCount, cpuPercentage, memory } = hwProps;
+    const cpuPerc = cpuPercentage ? cpuPercentage.toFixed(2) + "%" : "N/A";
+    const memUsage = memory ? parseFloat((memory / 1000).toPrecision(3)) + " MB" : "N/A";
+    
+    const netInfo = getNetworkInfo();
     
     return { cpuCoreCount, cpuPerc, memUsage, netInfo };
   } catch (e) {
     console.warn("Hardware info unavailable:", e);
-    return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A", netInfo: "N/A" };
+    return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A", netInfo: getNetworkInfo() };
   }
 }
 
@@ -84,10 +237,10 @@ function generateSystemInfo() {
     } = device || {};
     const { version: vendettaVersion } = vendetta || {};
     const { version: discordVersion, build: discordBuild } = discord || {};
-    const { ReleaseChannel: discordBranch } = discordInfo;
 
     const deviceName = osName == "iOS" ? deviceCodename : `${deviceBrand} ${deviceModel}`;
     const { width, height } = getDeviceInfo();
+    const isRooted = isDeviceRooted();
 
     let output = {
       Device: {
@@ -104,9 +257,9 @@ function generateSystemInfo() {
       Software: {
         OS: osName || "Unknown",
         Version: osVersion || "Unknown",
+        Rooted: isRooted ? "Yes" : "No",
       },
       Discord: {
-        Branch: discordBranch || "Unknown",
         Version: discordVersion || "Unknown",
         Build: discordBuild || "Unknown",
         Vendetta: vendettaVersion || "Unknown",

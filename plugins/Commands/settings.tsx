@@ -883,7 +883,7 @@ function CreditsPage() {
         <BetterTableRowGroup title="About" icon={getAssetIDByName("InfoIcon")} padding={true}>
           <RN.Text style={styles.versionText}>
             Commands Plugin Collection{'\n'}
-            Version 1.0.1
+            Version 1.0.2
           </RN.Text>
         </BetterTableRowGroup>
       </RN.View>
