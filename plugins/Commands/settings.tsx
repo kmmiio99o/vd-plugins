@@ -47,10 +47,11 @@ storage.enabledCommands ??= {
 
 storage.pendingRestart ??= false;
 
-// Hidden settings storage
+// Hidden settings storage with NSFW bypass option
 storage.hiddenSettings ??= {
   enabled: false,
   visible: false,
+  konochanBypassNsfw: false, // New bypass option - disabled by default
 };
 
 // Better Table Row Group Component
@@ -206,7 +207,7 @@ function Header({ onHiddenUnlock }: { onHiddenUnlock?: () => void }) {
   );
 }
 
-// Hidden Commands Settings Page
+// Hidden Commands Settings Page with NSFW bypass option
 function HiddenSettingsPage() {
   useProxy(storage);
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
@@ -258,6 +259,35 @@ function HiddenSettingsPage() {
           />
         </BetterTableRowGroup>
 
+        <BetterTableRowGroup title="NSFW Bypass Options" icon={getAssetIDByName("WarningIcon")}>
+          <FormSwitchRow
+            label="KonoChan NSFW Bypass"
+            subLabel="Allow NSFW KonoChan content in non-NSFW channels (USE WITH CAUTION)"
+            leading={<FormRow.Icon source={getAssetIDByName("ShieldIcon")} />}
+            value={storage.hiddenSettings.konochanBypassNsfw}
+            onValueChange={(v) => {
+              if (v) {
+                alerts.showConfirmationAlert({
+                  title: "⚠️ NSFW Bypass Warning",
+                  content: "Enabling this allows NSFW content from KonoChan to be sent in any channel, including non-NSFW channels. This could violate server rules or Discord ToS. Use responsibly!",
+                  confirmText: "I Understand",
+                  cancelText: "Cancel",
+                  onConfirm: () => {
+                    storage.hiddenSettings.konochanBypassNsfw = true;
+                    forceUpdate();
+                  },
+                  onCancel: () => {
+                    // Do nothing - keep it disabled
+                  },
+                });
+              } else {
+                storage.hiddenSettings.konochanBypassNsfw = false;
+                forceUpdate();
+              }
+            }}
+          />
+        </BetterTableRowGroup>
+
         <BetterTableRowGroup title="Hidden Settings Control" icon={getAssetIDByName("SettingsIcon")}>
           <FormSwitchRow
             label="Keep Hidden Settings Visible"
@@ -280,6 +310,7 @@ function HiddenSettingsPage() {
                 onConfirm: () => {
                   storage.hiddenSettings.enabled = false;
                   storage.hiddenSettings.visible = false;
+                  storage.hiddenSettings.konochanBypassNsfw = false; // Reset bypass option
                   storage.enabledCommands.lovefemboys = false;
                   storage.pendingRestart = true;
                   showToast("Hidden settings reset", getAssetIDByName("CheckmarkIcon"));
@@ -587,7 +618,7 @@ function ImageSettingsPage() {
   );
 }
 
-// Spotify Settings Page - FIXED with proper text styling
+// Spotify Settings Page
 function SpotifySettingsPage() {
   useProxy(storage);
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
@@ -701,7 +732,7 @@ function OtherSettingsPage() {
   );
 }
 
-// Credits Page - UPDATED VERSION TO 1.0.1
+// Credits Page
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
