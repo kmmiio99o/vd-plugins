@@ -1,5 +1,4 @@
 import { findByProps } from "@vendetta/metro";
-import { alerts } from "@vendetta/ui";
 import { showToast } from "@vendetta/ui/toasts";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 
@@ -10,18 +9,31 @@ interface NekosLifeResult {
   url: string;
 }
 
-// Available categories as a simple array for validation
-const validCategories = [
-  // SFW categories
-  "neko", "waifu", "avatar", "cuddle", "kiss", "smug", "tickle", "wallpaper", 
-  "kemonomimi", "fox_girl", "classic", "gecg", "woof", "holo", "ngif", "spank",
-  
-  // NSFW categories  
-  "nsfw_neko_gif", "lewd", "ero", "yuri", "trap", "futanari", "hentai", 
-  "boobs", "anal", "blowjob", "bj", "cum", "cum_jpg", "pussy", "pussy_jpg",
-  "tits", "femdom", "feet", "feetg", "gasm", "kuni", "holoero", "hololewd",
-  "les", "lewdkemo", "lewdk", "eron", "eroyuri", "erofeet", "erokemo", "erok",
-  "nsfw_avatar", "pwankg", "Random_hentai_gif", "smallboobs", "solo", "solog"
+// Only SFW categories (exactly 16 - within Discord's 25 choice limit)
+const categoryChoices = [
+  { name: "Avatar", value: "avatar" },
+  { name: "Classic", value: "classic" },
+  { name: "Cuddle", value: "cuddle" },
+  { name: "Fox Girl", value: "fox_girl" },
+  { name: "Gecg", value: "gecg" },
+  { name: "Holo", value: "holo" },
+  { name: "Kemonomimi", value: "kemonomimi" },
+  { name: "Kiss", value: "kiss" },
+  { name: "Neko", value: "neko" },
+  { name: "Neko GIF", value: "ngif" },
+  { name: "Smug", value: "smug" },
+  { name: "Spank", value: "spank" },
+  { name: "Tickle", value: "tickle" },
+  { name: "Waifu", value: "waifu" },
+  { name: "Wallpaper", value: "wallpaper" },
+  { name: "Woof", value: "woof" }
+];
+
+const limitChoices = [
+  { name: "1", value: 1 },
+  { name: "2", value: 2 },
+  { name: "3", value: 3 },
+  { name: "5", value: 5 }
 ];
 
 async function fetchNekosLifeImages(category: string, count: number): Promise<string[]> {
@@ -52,52 +64,35 @@ async function fetchNekosLifeImages(category: string, count: number): Promise<st
   return urls;
 }
 
-function isNsfwCategory(category: string): boolean {
-  if (!category || typeof category !== 'string') return false;
-  
-  const nsfwCategories = [
-    "nsfw_neko_gif", "lewd", "ero", "yuri", "trap", "futanari", "hentai", 
-    "boobs", "anal", "cum", "pussy", "tits", "blowjob", "bj", "femdom",
-    "feet", "feetg", "gasm", "kuni", "holoero", "hololewd", "les",
-    "lewdkemo", "lewdk", "eron", "eroyuri", "erofeet", "erokemo", "erok",
-    "nsfw_avatar", "pussy_jpg", "pwankg", "Random_hentai_gif", "smallboobs",
-    "solo", "solog", "cum_jpg"
-  ];
-  return nsfwCategories.includes(category.toLowerCase());
-}
-
-function isValidCategory(category: string): boolean {
-  if (!category || typeof category !== 'string') return false;
-  return validCategories.includes(category.toLowerCase());
-}
-
 export const nekoslifeCommand = {
   name: "nekoslife",
   displayName: "nekoslife",
-  description: "Get images/gifs from nekos.life",
-  displayDescription: "Get images/gifs from nekos.life",
+  description: "Get SFW images/gifs from nekos.life",
+  displayDescription: "Get SFW images/gifs from nekos.life",
   options: [
     {
       name: "category",
       displayName: "category",
-      description: "Category: neko, waifu, hentai, lewd, etc. (type the name)",
-      displayDescription: "Category: neko, waifu, hentai, lewd, etc. (type the name)",
-      type: 3, // String - no choices, just free text input
+      description: "Category of SFW image/gif to get",
+      displayDescription: "Category of SFW image/gif to get",
+      type: 3, // String
       required: true,
+      choices: categoryChoices
     },
     {
       name: "limit",
       displayName: "limit",
-      description: "Number of images (1-5, default: 1)",
-      displayDescription: "Number of images (1-5, default: 1)",
-      type: 4, // Integer
+      description: "Number of images to get (default: 1)",
+      displayDescription: "Number of images to get (default: 1)",
+      type: 4, // Integer  
       required: false,
+      choices: limitChoices
     },
     {
       name: "send",
       displayName: "send",
-      description: "Send to chat (WARNING: Use NSFW channel for NSFW content)",
-      displayDescription: "Send to chat (WARNING: Use NSFW channel for NSFW content)",
+      description: "Send to chat",
+      displayDescription: "Send to chat",
       type: 5, // Boolean
       required: false,
     },
@@ -114,16 +109,16 @@ export const nekoslifeCommand = {
     try {
       console.log('[NekosLife] Command executed with args:', args);
       
-      // Parse arguments like other commands
+      // Parse arguments
       const category = args.find((arg: any) => arg.name === "category")?.value;
-      const limitValue = args.find((arg: any) => arg.name === "limit")?.value;
+      const limit = args.find((arg: any) => arg.name === "limit")?.value || 1;
       const shouldSend = args.find((arg: any) => arg.name === "send")?.value || false;
       const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
 
-      console.log('[NekosLife] Parsed values:', { category, limitValue, shouldSend, isEphemeral });
+      console.log('[NekosLife] Parsed values:', { category, limit, shouldSend, isEphemeral });
       
-      if (!category || typeof category !== 'string') {
-        const errorMsg = "❌ Category is required! Examples: neko, waifu, hentai, lewd";
+      if (!category) {
+        const errorMsg = "❌ Category is required!";
         console.error('[NekosLife] No category provided');
         
         if (isEphemeral) {
@@ -139,52 +134,14 @@ export const nekoslifeCommand = {
         return { type: 4 };
       }
 
-      // Validate category
-      const categoryLower = category.toLowerCase().trim();
-      if (!isValidCategory(categoryLower)) {
-        const errorMsg = `❌ Invalid category "${category}". Available: neko, waifu, hentai, lewd, yuri, etc.`;
-        
-        if (isEphemeral) {
-          return {
-            type: 4,
-            data: {
-              content: errorMsg,
-              flags: 64,
-            },
-          };
-        }
-        showToast(errorMsg, getAssetIDByName("CircleXIcon"));
-        return { type: 4 };
-      }
-
-      // Parse limit
-      let limit = 1;
-      if (limitValue !== undefined && limitValue !== null) {
-        limit = parseInt(String(limitValue)) || 1;
-        limit = Math.max(1, Math.min(5, limit)); // Clamp between 1-5
-      }
-
-      const isNsfw = isNsfwCategory(categoryLower);
-
-      console.log('[NekosLife] Processing request:', { category: categoryLower, limit, isNsfw, shouldSend, isEphemeral });
-
-      // Check if trying to send NSFW content in non-NSFW channel
-      if (shouldSend && !isEphemeral && isNsfw && !ctx.channel?.nsfw) {
-        alerts.showConfirmationAlert({
-          title: "⚠️ NSFW Content Warning",
-          content: "This category contains NSFW content and can only be sent in NSFW channels!",
-          confirmText: "Okay",
-          cancelText: null,
-        });
-        return { type: 4 };
-      }
+      console.log('[NekosLife] Processing SFW request:', { category, limit, shouldSend, isEphemeral });
 
       // Show loading toast
       if (!isEphemeral) {
-        showToast(`Fetching ${limit} image(s) from nekos.life...`, getAssetIDByName("DownloadIcon"));
+        showToast(`Fetching ${limit} SFW image(s) from nekos.life...`, getAssetIDByName("DownloadIcon"));
       }
 
-      const urls = await fetchNekosLifeImages(categoryLower, limit);
+      const urls = await fetchNekosLifeImages(category, limit);
 
       if (urls.length === 0) {
         const errorMsg = "❌ Failed to fetch images from nekos.life. Try again later!";

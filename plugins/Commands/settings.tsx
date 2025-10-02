@@ -209,7 +209,7 @@ function Header({ onHiddenUnlock }: { onHiddenUnlock?: () => void }) {
   );
 }
 
-// NekosLife Categories Reference Page
+// NekosLife Categories Reference Page - SFW ONLY
 function NekosLifeCategoriesPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -236,12 +236,6 @@ function NekosLifeCategoriesPage() {
       fontFamily: "monospace",
       marginRight: 8,
     },
-    nsfwBadge: {
-      backgroundColor: semanticColors.STATUS_DANGER,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 12,
-    },
     sfwBadge: {
       backgroundColor: semanticColors.STATUS_POSITIVE,
       paddingHorizontal: 8,
@@ -261,88 +255,41 @@ function NekosLifeCategoriesPage() {
     },
   });
 
-  // All nekos.life categories with their API values and NSFW status
-  const allCategories = [
-    { name: "Anal", value: "anal", nsfw: true },
-    { name: "Avatar", value: "avatar", nsfw: false },
-    { name: "Boobs", value: "boobs", nsfw: true },
-    { name: "Blowjob Image", value: "blowjob", nsfw: true },
-    { name: "Blowjob GIF", value: "bj", nsfw: true },
-    { name: "Classic", value: "classic", nsfw: false },
-    { name: "Cuddle", value: "cuddle", nsfw: false },
-    { name: "Cum", value: "cum", nsfw: true },
-    { name: "Cum JPG", value: "cum_jpg", nsfw: true },
-    { name: "Ero", value: "ero", nsfw: true },
-    { name: "Ero Feet", value: "erofeet", nsfw: true },
-    { name: "Ero Kemo", value: "erokemo", nsfw: true },
-    { name: "Ero Kitsune", value: "erok", nsfw: true },
-    { name: "Ero Neko", value: "eron", nsfw: true },
-    { name: "Ero Yuri", value: "eroyuri", nsfw: true },
-    { name: "Femdom", value: "femdom", nsfw: true },
-    { name: "Feet", value: "feet", nsfw: true },
-    { name: "Feet GIF", value: "feetg", nsfw: true },
-    { name: "Fox Girl", value: "fox_girl", nsfw: false },
-    { name: "Futanari", value: "futanari", nsfw: true },
-    { name: "Gasm", value: "gasm", nsfw: true },
-    { name: "Gecg", value: "gecg", nsfw: false },
-    { name: "Kemonomimi", value: "kemonomimi", nsfw: false },
-    { name: "Kiss", value: "kiss", nsfw: false },
-    { name: "Kuni", value: "kuni", nsfw: true },
-    { name: "Hentai", value: "hentai", nsfw: true },
-    { name: "Holo", value: "holo", nsfw: false },
-    { name: "Holo Ero", value: "holoero", nsfw: true },
-    { name: "Holo Lewd", value: "hololewd", nsfw: true },
-    { name: "Lesbian", value: "les", nsfw: true },
-    { name: "Lewd", value: "lewd", nsfw: true },
-    { name: "Lewd Kemo", value: "lewdkemo", nsfw: true },
-    { name: "Lewd Kitsune", value: "lewdk", nsfw: true },
-    { name: "Neko", value: "neko", nsfw: false },
-    { name: "Neko GIF", value: "ngif", nsfw: false },
-    { name: "NSFW Neko GIF", value: "nsfw_neko_gif", nsfw: true },
-    { name: "NSFW Avatar", value: "nsfw_avatar", nsfw: true },
-    { name: "Pussy", value: "pussy", nsfw: true },
-    { name: "Pussy JPG", value: "pussy_jpg", nsfw: true },
-    { name: "Pwank", value: "pwankg", nsfw: true },
-    { name: "Random Hentai GIF", value: "Random_hentai_gif", nsfw: true },
-    { name: "Small Boobs", value: "smallboobs", nsfw: true },
-    { name: "Smug", value: "smug", nsfw: false },
-    { name: "Solo", value: "solo", nsfw: true },
-    { name: "Solo GIF", value: "solog", nsfw: true },
-    { name: "Spank", value: "spank", nsfw: false },
-    { name: "Tits", value: "tits", nsfw: true },
-    { name: "Tickle", value: "tickle", nsfw: false },
-    { name: "Trap", value: "trap", nsfw: true },
-    { name: "Waifu", value: "waifu", nsfw: false },
-    { name: "Wallpaper", value: "wallpaper", nsfw: false },
-    { name: "Woof", value: "woof", nsfw: false },
-    { name: "Yuri", value: "yuri", nsfw: true }
+  // Only SFW nekos.life categories
+  const sfwCategories = [
+    { name: "Avatar", value: "avatar" },
+    { name: "Classic", value: "classic" },
+    { name: "Cuddle", value: "cuddle" },
+    { name: "Fox Girl", value: "fox_girl" },
+    { name: "Gecg", value: "gecg" },
+    { name: "Holo", value: "holo" },
+    { name: "Kemonomimi", value: "kemonomimi" },
+    { name: "Kiss", value: "kiss" },
+    { name: "Neko", value: "neko" },
+    { name: "Neko GIF", value: "ngif" },
+    { name: "Smug", value: "smug" },
+    { name: "Spank", value: "spank" },
+    { name: "Tickle", value: "tickle" },
+    { name: "Waifu", value: "waifu" },
+    { name: "Wallpaper", value: "wallpaper" },
+    { name: "Woof", value: "woof" }
   ];
 
-  // Sort categories: SFW first, then NSFW, then alphabetically within each group
-  const sortedCategories = allCategories.sort((a, b) => {
-    if (a.nsfw !== b.nsfw) {
-      return a.nsfw ? 1 : -1; // SFW first
-    }
-    return a.name.localeCompare(b.name);
-  });
-
-  const sfwCount = allCategories.filter(cat => !cat.nsfw).length;
-  const nsfwCount = allCategories.filter(cat => cat.nsfw).length;
+  // Sort categories alphabetically
+  const sortedCategories = sfwCategories.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <ScrollView style={styles.container}>
       <RN.View style={{ paddingVertical: 16 }}>
         <BetterTableRowGroup title="📊 Category Statistics" icon={getAssetIDByName("ChartIcon")} padding={true}>
           <RN.Text style={styles.infoText}>
-            Total Categories: {allCategories.length}{'\n'}
-            SFW Categories: {sfwCount}{'\n'}
-            NSFW Categories: {nsfwCount}{'\n\n'}
-            Use these category names with the /nekoslife command.
-            Green = SFW, Red = NSFW
+            Total SFW Categories: {sfwCategories.length}{'\n\n'}
+            Use these category names with the /nekoslife command.{'\n'}
+            All categories are Safe For Work (SFW).
           </RN.Text>
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="📋 All Categories" icon={getAssetIDByName("ListViewIcon")}>
+        <BetterTableRowGroup title="📋 SFW Categories" icon={getAssetIDByName("ListViewIcon")}>
           {sortedCategories.map((category, index) => (
             <RN.View key={index} style={styles.categoryItem}>
               <RN.Text style={styles.categoryName}>
@@ -351,9 +298,9 @@ function NekosLifeCategoriesPage() {
               <RN.Text style={styles.categoryValue}>
                 {category.value}
               </RN.Text>
-              <RN.View style={category.nsfw ? styles.nsfwBadge : styles.sfwBadge}>
+              <RN.View style={styles.sfwBadge}>
                 <RN.Text style={styles.badgeText}>
-                  {category.nsfw ? "NSFW" : "SFW"}
+                  SFW
                 </RN.Text>
               </RN.View>
             </RN.View>
@@ -364,7 +311,7 @@ function NekosLifeCategoriesPage() {
   );
 }
 
-// Hidden Commands Settings Page with NSFW bypass option and NekosLife
+// Hidden Commands Settings Page
 function HiddenSettingsPage() {
   useProxy(storage);
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
@@ -417,7 +364,7 @@ function HiddenSettingsPage() {
           />
           <FormSwitchRow
             label="/nekoslife"
-            subLabel="Get images/gifs from nekos.life (NSFW content available)"
+            subLabel="Get SFW images/gifs from nekos.life"
             leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
             value={storage.enabledCommands.nekoslife}
             onValueChange={(v) => {
@@ -430,8 +377,8 @@ function HiddenSettingsPage() {
 
         <BetterTableRowGroup title="NekosLife Reference" icon={getAssetIDByName("BookOpenIcon")}>
           <FormRow
-            label="View All Categories"
-            subLabel="See all 52 available nekos.life categories with SFW/NSFW status"
+            label="View SFW Categories"
+            subLabel="See all 16 available safe-for-work nekos.life categories"
             leading={<FormRow.Icon source={getAssetIDByName("ListViewIcon")} />}
             trailing={<FormRow.Arrow />}
             onPress={() => navigation.push("VendettaCustomPage", {
@@ -507,8 +454,6 @@ function HiddenSettingsPage() {
     </ScrollView>
   );
 }
-
-// ... [Keep all other existing functions: FactsSettingsPage, GaryAPIPage, ListSettingsPage, ImageSettingsPage, SpotifySettingsPage, OtherSettingsPage unchanged] ...
 
 // Facts Commands Settings Page
 function FactsSettingsPage() {
