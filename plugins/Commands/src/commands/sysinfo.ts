@@ -14,235 +14,21 @@ function getDeviceInfo() {
   return { width, height };
 }
 
-// Network info helper with comprehensive detection
-function getNetworkInfo() {
+// Get current UTC date and time
+function getCurrentUTCDateTime() {
   try {
-    // Method 1: Try @react-native-community/netinfo if available
-    try {
-      const NetInfo = findByProps("fetch", "addEventListener", "configure");
-      if (NetInfo && typeof NetInfo.fetch === "function") {
-        const networkState = NetInfo.fetch();
-        if (networkState && typeof networkState.then === "function") {
-          // It's a promise, we can't wait for it in this context
-          console.log("NetInfo.fetch returned a promise, trying sync approach");
-        } else if (networkState && networkState.type) {
-          const { type, details } = networkState;
-          if (type !== "unknown" && type !== "none") {
-            return formatNetworkType(type, details);
-          }
-        }
-      }
-    } catch (e) {
-      console.log("NetInfo method 1 failed:", e);
-    }
-
-    // Method 2: Try legacy NetInfo
-    try {
-      const LegacyNetInfo = findByProps("isConnected", "getConnectionInfo");
-      if (LegacyNetInfo) {
-        const connectionInfo = LegacyNetInfo.getConnectionInfo?.();
-        if (connectionInfo && connectionInfo.type) {
-          return formatNetworkType(connectionInfo.type, connectionInfo);
-        }
-      }
-    } catch (e) {
-      console.log("Legacy NetInfo failed:", e);
-    }
-
-    // Method 3: Try React Native's built-in NetInfo
-    try {
-      const RNNetInfo = ReactNative.NetInfo;
-      if (RNNetInfo) {
-        const info = RNNetInfo.fetch?.() || RNNetInfo.getConnectionInfo?.();
-        if (info && info.type) {
-          return formatNetworkType(info.type, info);
-        }
-      }
-    } catch (e) {
-      console.log("RN NetInfo failed:", e);
-    }
-
-    // Method 4: Check native modules for connectivity
-    try {
-      const { NativeModules } = ReactNative;
-      
-      // Check for Android connectivity
-      if (ReactNative.Platform.OS === "android") {
-        const connectivityModule = NativeModules.NetInfoCellularGeneration || 
-                                 NativeModules.ConnectivityModule ||
-                                 NativeModules.NetworkingAndroid;
-        if (connectivityModule) {
-          return "Cellular"; // Generic cellular if we can detect the module
-        }
-      }
-      
-      // Check for iOS connectivity
-      if (ReactNative.Platform.OS === "ios") {
-        const reachability = NativeModules.ReachabilityStateManager || 
-                           NativeModules.NetworkingIOS;
-        if (reachability) {
-          return "Connected"; // Generic connected for iOS
-        }
-      }
-    } catch (e) {
-      console.log("Native modules check failed:", e);
-    }
-
-    // Method 5: Use navigator.connection if available (for web-like environments)
-    try {
-      const connection = (navigator as any).connection || 
-                        (navigator as any).mozConnection || 
-                        (navigator as any).webkitConnection;
-      if (connection) {
-        const effectiveType = connection.effectiveType;
-        if (effectiveType) {
-          const typeMap: Record<string, string> = {
-            "slow-2g": "2G",
-            "2g": "2G", 
-            "3g": "3G",
-            "4g": "4G"
-          };
-          return typeMap[effectiveType] || "Cellular";
-        }
-        if (connection.type) {
-          return formatNetworkType(connection.type, connection);
-        }
-      }
-    } catch (e) {
-      console.log("Navigator.connection failed:", e);
-    }
-
-    // Method 6: Basic online/offline check
-    try {
-      if (typeof navigator !== "undefined" && navigator.onLine !== undefined) {
-        return navigator.onLine ? "Connected" : "Offline";
-      }
-    } catch (e) {
-      console.log("Navigator.onLine failed:", e);
-    }
-
-    return "Unknown";
+    const now = new Date();
+    const utc = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+    
+    const year = utc.getFullYear();
+    const month = String(utc.getMonth() + 1).padStart(2, '0');
+    const day = String(utc.getDate()).padStart(2, '0');
+    const hours = String(utc.getHours()).padStart(2, '0');
+    const minutes = String(utc.getMinutes()).padStart(2, '0');
+    const seconds = String(utc.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   } catch (e) {
-    console.warn("All network detection methods failed:", e);
-    return "Unknown";
-  }
-}
-
-function formatNetworkType(type: string, details?: any) {
-  const typeMap: Record<string, string> = {
-    wifi: "WiFi",
-    ethernet: "Ethernet",
-    cellular: details?.cellularGeneration ? `${details.cellularGeneration.toUpperCase()}` : "Cellular",
-    mobile: details?.subtype ? details.subtype.toUpperCase() : "Cellular",
-    bluetooth: "Bluetooth",
-    wimax: "WiMAX",
-    vpn: "VPN",
-    other: "Other",
-    none: "Offline",
-    unknown: "Unknown"
-  };
-  
-  return typeMap[type.toLowerCase()] || type;
-}
-
-// Root/Jailbreak detection helper
-function detectRootJailbreak() {
-  try {
-    const { NativeModules, Platform } = ReactNative;
-    
-    if (Platform.OS === "android") {
-      // Android root detection through available indicators
-      try {
-        // Check if we can access any root-related native modules or properties
-        const buildInfo = NativeModules.DeviceInfo || NativeModules.RNDeviceInfo;
-        if (buildInfo) {
-          // Check build tags
-          const buildTags = buildInfo.getBuildTags?.();
-          if (buildTags && buildTags.includes("test-keys")) {
-            return "Yes (test-keys)";
-          }
-          
-          // Check if bootloader is unlocked
-          const bootloader = buildInfo.getBootloader?.();
-          if (bootloader && bootloader.toLowerCase().includes("unlocked")) {
-            return "Yes (unlocked)";
-          }
-        }
-        
-        // Check for Magisk through system properties if accessible
-        const systemProps = NativeModules.SystemProperties;
-        if (systemProps) {
-          const magiskVersion = systemProps.get?.("ro.magisk.version");
-          if (magiskVersion) {
-            return `Yes (Magisk ${magiskVersion})`;
-          }
-        }
-        
-        // Check for SuperSU or other root managers through package manager
-        const packageManager = NativeModules.PackageManager;
-        if (packageManager) {
-          const rootApps = [
-            "com.topjohnwu.magisk",
-            "eu.chainfire.supersu",
-            "com.noshufou.android.su",
-            "com.koushikdutta.superuser",
-            "com.thirdparty.superuser"
-          ];
-          
-          for (const app of rootApps) {
-            const isInstalled = packageManager.isPackageInstalled?.(app);
-            if (isInstalled) {
-              return "Yes (root app detected)";
-            }
-          }
-        }
-        
-        return "Unknown";
-      } catch (e) {
-        return "Unknown";
-      }
-    }
-    
-    if (Platform.OS === "ios") {
-      // iOS jailbreak detection
-      try {
-        const fileManager = NativeModules.FileManager || NativeModules.NSFileManager;
-        if (fileManager) {
-          // Check for common jailbreak files
-          const jailbreakPaths = [
-            "/Applications/Cydia.app",
-            "/Applications/Sileo.app", 
-            "/usr/sbin/sshd",
-            "/bin/bash",
-            "/usr/bin/ssh"
-          ];
-          
-          for (const path of jailbreakPaths) {
-            const exists = fileManager.fileExistsAtPath?.(path);
-            if (exists) {
-              return "Yes (jailbreak detected)";
-            }
-          }
-        }
-        
-        // Check for jailbreak tweaks
-        const bundleManager = NativeModules.NSBundle;
-        if (bundleManager) {
-          const substrate = bundleManager.pathForResource?.("MobileSubstrate", "dylib");
-          if (substrate) {
-            return "Yes (Substrate detected)";
-          }
-        }
-        
-        return "Unknown";
-      } catch (e) {
-        return "Unknown";
-      }
-    }
-    
-    return "Unknown";
-  } catch (e) {
-    console.warn("Root/Jailbreak detection failed:", e);
     return "Unknown";
   }
 }
@@ -251,18 +37,16 @@ function detectRootJailbreak() {
 function getHardwareInfo() {
   try {
     const hwProps = findByProps("memory");
-    if (!hwProps) return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A", netInfo: "Unknown" };
+    if (!hwProps) return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A" };
     
     const { cpuCoreCount, cpuPercentage, memory } = hwProps;
     const cpuPerc = cpuPercentage ? cpuPercentage.toFixed(2) + "%" : "N/A";
     const memUsage = memory ? parseFloat((memory / 1000).toPrecision(3)) + " MB" : "N/A";
     
-    const netInfo = getNetworkInfo();
-    
-    return { cpuCoreCount, cpuPerc, memUsage, netInfo };
+    return { cpuCoreCount, cpuPerc, memUsage };
   } catch (e) {
     console.warn("Hardware info unavailable:", e);
-    return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A", netInfo: getNetworkInfo() };
+    return { cpuCoreCount: "N/A", cpuPerc: "N/A", memUsage: "N/A" };
   }
 }
 
@@ -281,9 +65,10 @@ function getDiscordInfo() {
 // Generate system info
 function generateSystemInfo() {
   try {
-    const { cpuCoreCount, cpuPerc, memUsage, netInfo } = getHardwareInfo();
+    const { cpuCoreCount, cpuPerc, memUsage } = getHardwareInfo();
     const discordInfo = getDiscordInfo();
     const { vendetta, discord, react, hermes, os, device } = getDebugInfo();
+    const utcDateTime = getCurrentUTCDateTime();
     
     const { version: HermesRelease, bytecodeVersion: HermesBytecode } = hermes || {};
     const { version: ReactVersion, nativeVersion: RNVersion } = react || {};
@@ -299,7 +84,6 @@ function generateSystemInfo() {
 
     const deviceName = osName == "iOS" ? deviceCodename : `${deviceBrand} ${deviceModel}`;
     const { width, height } = getDeviceInfo();
-    const rootStatus = detectRootJailbreak();
 
     let output = {
       Device: {
@@ -311,25 +95,26 @@ function generateSystemInfo() {
       },
       Hardware: {
         "CPU Cores": cpuCoreCount || "N/A",
-        Network: netInfo,
+        "CPU Usage": cpuPerc,
+        "Memory Usage": memUsage,
       },
       Software: {
         OS: osName || "Unknown",
         Version: osVersion || "Unknown",
-        Rooted: rootStatus,
       },
       Discord: {
         Version: discordVersion || "Unknown",
         Build: discordBuild || "Unknown",
         Vendetta: vendettaVersion || "Unknown",
-        "CPU Usage": cpuPerc,
-        "Memory Usage": memUsage,
       },
       React: {
         Version: ReactVersion || "Unknown",
         "Hermes Bytecode": HermesBytecode || "Unknown",
         Hermes: HermesRelease || "Unknown",
         Native: RNVersion || "Unknown",
+      },
+      Time: {
+        "UTC": utcDateTime,
       },
     };
 
@@ -352,7 +137,7 @@ function generateSystemInfo() {
 }
 
 // Initialize storage defaults
-const categories = ["device", "hardware", "software", "discord", "react", "ephemeral"];
+const categories = ["device", "hardware", "software", "discord", "react", "time", "ephemeral"];
 for (const cat of categories) {
   if (storage[cat] === undefined) storage[cat] = true;
 }
