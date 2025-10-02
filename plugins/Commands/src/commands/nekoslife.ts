@@ -10,41 +10,18 @@ interface NekosLifeResult {
   url: string;
 }
 
-// Simplified categories - only the most common ones to avoid choice overload
-const categories = [
-  { name: "neko", value: "neko" },
-  { name: "waifu", value: "waifu" },
-  { name: "avatar", value: "avatar" },
-  { name: "cuddle", value: "cuddle" },
-  { name: "kiss", value: "kiss" },
-  { name: "smug", value: "smug" },
-  { name: "tickle", value: "tickle" },
-  { name: "wallpaper", value: "wallpaper" },
-  { name: "kemonomimi", value: "kemonomimi" },
-  { name: "fox girl", value: "fox_girl" },
-  { name: "classic", value: "classic" },
-  { name: "gecg", value: "gecg" },
-  { name: "woof", value: "woof" },
-  { name: "holo", value: "holo" },
-  { name: "neko gif", value: "ngif" },
-  { name: "spank", value: "spank" },
-  // NSFW categories
-  { name: "neko nsfw", value: "nsfw_neko_gif" },
-  { name: "lewd", value: "lewd" },
-  { name: "ero", value: "ero" },
-  { name: "yuri", value: "yuri" },
-  { name: "trap", value: "trap" },
-  { name: "futanari", value: "futanari" },
-  { name: "hentai", value: "hentai" },
-  { name: "boobs", value: "boobs" },
-  { name: "anal", value: "anal" }
-];
-
-const limitOptions = [
-  { name: "1", value: "1" },
-  { name: "2", value: "2" },
-  { name: "3", value: "3" },
-  { name: "5", value: "5" }
+// Available categories as a simple array for validation
+const validCategories = [
+  // SFW categories
+  "neko", "waifu", "avatar", "cuddle", "kiss", "smug", "tickle", "wallpaper", 
+  "kemonomimi", "fox_girl", "classic", "gecg", "woof", "holo", "ngif", "spank",
+  
+  // NSFW categories  
+  "nsfw_neko_gif", "lewd", "ero", "yuri", "trap", "futanari", "hentai", 
+  "boobs", "anal", "blowjob", "bj", "cum", "cum_jpg", "pussy", "pussy_jpg",
+  "tits", "femdom", "feet", "feetg", "gasm", "kuni", "holoero", "hololewd",
+  "les", "lewdkemo", "lewdk", "eron", "eroyuri", "erofeet", "erokemo", "erok",
+  "nsfw_avatar", "pwankg", "Random_hentai_gif", "smallboobs", "solo", "solog"
 ];
 
 async function fetchNekosLifeImages(category: string, count: number): Promise<string[]> {
@@ -89,6 +66,11 @@ function isNsfwCategory(category: string): boolean {
   return nsfwCategories.includes(category.toLowerCase());
 }
 
+function isValidCategory(category: string): boolean {
+  if (!category || typeof category !== 'string') return false;
+  return validCategories.includes(category.toLowerCase());
+}
+
 export const nekoslifeCommand = {
   name: "nekoslife",
   displayName: "nekoslife",
@@ -98,20 +80,18 @@ export const nekoslifeCommand = {
     {
       name: "category",
       displayName: "category",
-      description: "Category of image/gif to get",
-      displayDescription: "Category of image/gif to get",
-      type: 3, // String
+      description: "Category: neko, waifu, hentai, lewd, etc. (type the name)",
+      displayDescription: "Category: neko, waifu, hentai, lewd, etc. (type the name)",
+      type: 3, // String - no choices, just free text input
       required: true,
-      choices: categories
     },
     {
       name: "limit",
       displayName: "limit",
-      description: "Number of images to get (default: 1)",
-      displayDescription: "Number of images to get (default: 1)",
-      type: 3, // String
+      description: "Number of images (1-5, default: 1)",
+      displayDescription: "Number of images (1-5, default: 1)",
+      type: 4, // Integer
       required: false,
-      choices: limitOptions
     },
     {
       name: "send",
@@ -134,16 +114,16 @@ export const nekoslifeCommand = {
     try {
       console.log('[NekosLife] Command executed with args:', args);
       
-      // Simple argument parsing like other commands
+      // Parse arguments like other commands
       const category = args.find((arg: any) => arg.name === "category")?.value;
-      const limitStr = args.find((arg: any) => arg.name === "limit")?.value || "1";
+      const limitValue = args.find((arg: any) => arg.name === "limit")?.value;
       const shouldSend = args.find((arg: any) => arg.name === "send")?.value || false;
       const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
 
-      console.log('[NekosLife] Parsed values:', { category, limitStr, shouldSend, isEphemeral });
+      console.log('[NekosLife] Parsed values:', { category, limitValue, shouldSend, isEphemeral });
       
-      if (!category) {
-        const errorMsg = "❌ Category is required!";
+      if (!category || typeof category !== 'string') {
+        const errorMsg = "❌ Category is required! Examples: neko, waifu, hentai, lewd";
         console.error('[NekosLife] No category provided');
         
         if (isEphemeral) {
@@ -159,10 +139,34 @@ export const nekoslifeCommand = {
         return { type: 4 };
       }
 
-      const limit = parseInt(limitStr) || 1;
-      const isNsfw = isNsfwCategory(category);
+      // Validate category
+      const categoryLower = category.toLowerCase().trim();
+      if (!isValidCategory(categoryLower)) {
+        const errorMsg = `❌ Invalid category "${category}". Available: neko, waifu, hentai, lewd, yuri, etc.`;
+        
+        if (isEphemeral) {
+          return {
+            type: 4,
+            data: {
+              content: errorMsg,
+              flags: 64,
+            },
+          };
+        }
+        showToast(errorMsg, getAssetIDByName("CircleXIcon"));
+        return { type: 4 };
+      }
 
-      console.log('[NekosLife] Processing request:', { category, limit, isNsfw, shouldSend, isEphemeral });
+      // Parse limit
+      let limit = 1;
+      if (limitValue !== undefined && limitValue !== null) {
+        limit = parseInt(String(limitValue)) || 1;
+        limit = Math.max(1, Math.min(5, limit)); // Clamp between 1-5
+      }
+
+      const isNsfw = isNsfwCategory(categoryLower);
+
+      console.log('[NekosLife] Processing request:', { category: categoryLower, limit, isNsfw, shouldSend, isEphemeral });
 
       // Check if trying to send NSFW content in non-NSFW channel
       if (shouldSend && !isEphemeral && isNsfw && !ctx.channel?.nsfw) {
@@ -180,7 +184,7 @@ export const nekoslifeCommand = {
         showToast(`Fetching ${limit} image(s) from nekos.life...`, getAssetIDByName("DownloadIcon"));
       }
 
-      const urls = await fetchNekosLifeImages(category, limit);
+      const urls = await fetchNekosLifeImages(categoryLower, limit);
 
       if (urls.length === 0) {
         const errorMsg = "❌ Failed to fetch images from nekos.life. Try again later!";
