@@ -14,29 +14,21 @@ function getDeviceInfo() {
   return { width, height };
 }
 
-// Network info helper with improved detection
+// Network info helper with comprehensive detection
 function getNetworkInfo() {
   try {
-    // Try multiple methods to get network info
-    
-    // Method 1: Try React Native NetInfo
+    // Method 1: Try @react-native-community/netinfo if available
     try {
-      const NetInfo = findByProps("getCurrentState", "fetch");
-      if (NetInfo && NetInfo.getCurrentState) {
-        const networkState = NetInfo.getCurrentState();
-        if (networkState) {
+      const NetInfo = findByProps("fetch", "addEventListener", "configure");
+      if (NetInfo && typeof NetInfo.fetch === "function") {
+        const networkState = NetInfo.fetch();
+        if (networkState && typeof networkState.then === "function") {
+          // It's a promise, we can't wait for it in this context
+          console.log("NetInfo.fetch returned a promise, trying sync approach");
+        } else if (networkState && networkState.type) {
           const { type, details } = networkState;
-          if (type && type !== "unknown" && type !== "none") {
-            const networkMap: Record<string, string> = {
-              wifi: "WiFi",
-              ethernet: "Ethernet",
-              other: "Unknown",
-              bluetooth: "Bluetooth",
-              wimax: "WiMAX",
-              vpn: "VPN",
-              cellular: details?.cellularGeneration ? `${details.cellularGeneration.toUpperCase()}` : "Cellular",
-            };
-            return networkMap[type] || type;
+          if (type !== "unknown" && type !== "none") {
+            return formatNetworkType(type, details);
           }
         }
       }
@@ -44,51 +36,89 @@ function getNetworkInfo() {
       console.log("NetInfo method 1 failed:", e);
     }
 
-    // Method 2: Try alternative NetInfo approach
+    // Method 2: Try legacy NetInfo
     try {
-      const netInfoModule = findByProps("useNetInfo", "addEventListener");
-      if (netInfoModule && netInfoModule.fetch) {
-        const networkData = netInfoModule.fetch();
-        if (networkData && networkData.type && networkData.type !== "unknown") {
-          const { type, details } = networkData;
-          const networkMap: Record<string, string> = {
-            wifi: "WiFi",
-            ethernet: "Ethernet",
-            other: "Unknown",
-            bluetooth: "Bluetooth",
-            wimax: "WiMAX",
-            vpn: "VPN",
-            cellular: details?.cellularGeneration ? `${details.cellularGeneration.toUpperCase()}` : "Cellular",
-          };
-          return networkMap[type] || type;
+      const LegacyNetInfo = findByProps("isConnected", "getConnectionInfo");
+      if (LegacyNetInfo) {
+        const connectionInfo = LegacyNetInfo.getConnectionInfo?.();
+        if (connectionInfo && connectionInfo.type) {
+          return formatNetworkType(connectionInfo.type, connectionInfo);
         }
       }
     } catch (e) {
-      console.log("NetInfo method 2 failed:", e);
+      console.log("Legacy NetInfo failed:", e);
     }
 
-    // Method 3: Try native modules
+    // Method 3: Try React Native's built-in NetInfo
     try {
-      const { NativeModules } = ReactNative;
-      if (NativeModules.NetworkingIOS) {
-        // iOS specific
-        return "Connected";
-      }
-      if (NativeModules.NetInfoCellularGeneration) {
-        return "Cellular";
+      const RNNetInfo = ReactNative.NetInfo;
+      if (RNNetInfo) {
+        const info = RNNetInfo.fetch?.() || RNNetInfo.getConnectionInfo?.();
+        if (info && info.type) {
+          return formatNetworkType(info.type, info);
+        }
       }
     } catch (e) {
-      console.log("Native modules method failed:", e);
+      console.log("RN NetInfo failed:", e);
     }
 
-    // Method 4: Check if we can reach the internet
+    // Method 4: Check native modules for connectivity
     try {
-      // This is a simple connectivity check
-      if (navigator.onLine !== undefined) {
+      const { NativeModules } = ReactNative;
+      
+      // Check for Android connectivity
+      if (ReactNative.Platform.OS === "android") {
+        const connectivityModule = NativeModules.NetInfoCellularGeneration || 
+                                 NativeModules.ConnectivityModule ||
+                                 NativeModules.NetworkingAndroid;
+        if (connectivityModule) {
+          return "Cellular"; // Generic cellular if we can detect the module
+        }
+      }
+      
+      // Check for iOS connectivity
+      if (ReactNative.Platform.OS === "ios") {
+        const reachability = NativeModules.ReachabilityStateManager || 
+                           NativeModules.NetworkingIOS;
+        if (reachability) {
+          return "Connected"; // Generic connected for iOS
+        }
+      }
+    } catch (e) {
+      console.log("Native modules check failed:", e);
+    }
+
+    // Method 5: Use navigator.connection if available (for web-like environments)
+    try {
+      const connection = (navigator as any).connection || 
+                        (navigator as any).mozConnection || 
+                        (navigator as any).webkitConnection;
+      if (connection) {
+        const effectiveType = connection.effectiveType;
+        if (effectiveType) {
+          const typeMap: Record<string, string> = {
+            "slow-2g": "2G",
+            "2g": "2G", 
+            "3g": "3G",
+            "4g": "4G"
+          };
+          return typeMap[effectiveType] || "Cellular";
+        }
+        if (connection.type) {
+          return formatNetworkType(connection.type, connection);
+        }
+      }
+    } catch (e) {
+      console.log("Navigator.connection failed:", e);
+    }
+
+    // Method 6: Basic online/offline check
+    try {
+      if (typeof navigator !== "undefined" && navigator.onLine !== undefined) {
         return navigator.onLine ? "Connected" : "Offline";
       }
     } catch (e) {
-      console.log("Navigator online check failed:", e);
+      console.log("Navigator.onLine failed:", e);
     }
 
     return "Unknown";
@@ -98,93 +128,122 @@ function getNetworkInfo() {
   }
 }
 
-// Root detection helper
-function isDeviceRooted() {
+function formatNetworkType(type: string, details?: any) {
+  const typeMap: Record<string, string> = {
+    wifi: "WiFi",
+    ethernet: "Ethernet",
+    cellular: details?.cellularGeneration ? `${details.cellularGeneration.toUpperCase()}` : "Cellular",
+    mobile: details?.subtype ? details.subtype.toUpperCase() : "Cellular",
+    bluetooth: "Bluetooth",
+    wimax: "WiMAX",
+    vpn: "VPN",
+    other: "Other",
+    none: "Offline",
+    unknown: "Unknown"
+  };
+  
+  return typeMap[type.toLowerCase()] || type;
+}
+
+// Root/Jailbreak detection helper
+function detectRootJailbreak() {
   try {
-    const { NativeModules } = ReactNative;
+    const { NativeModules, Platform } = ReactNative;
     
-    // Try to detect root/jailbreak through various methods
-    
-    // Android root detection
-    if (ReactNative.Platform.OS === "android") {
-      // Check for common root indicators
+    if (Platform.OS === "android") {
+      // Android root detection through available indicators
       try {
-        // Method 1: Check for su binary
-        const suPaths = [
-          "/system/bin/su",
-          "/system/xbin/su",
-          "/sbin/su",
-          "/data/local/xbin/su",
-          "/data/local/bin/su",
-          "/system/sd/xbin/su",
-          "/system/bin/failsafe/su",
-          "/data/local/su"
-        ];
+        // Check if we can access any root-related native modules or properties
+        const buildInfo = NativeModules.DeviceInfo || NativeModules.RNDeviceInfo;
+        if (buildInfo) {
+          // Check build tags
+          const buildTags = buildInfo.getBuildTags?.();
+          if (buildTags && buildTags.includes("test-keys")) {
+            return "Yes (test-keys)";
+          }
+          
+          // Check if bootloader is unlocked
+          const bootloader = buildInfo.getBootloader?.();
+          if (bootloader && bootloader.toLowerCase().includes("unlocked")) {
+            return "Yes (unlocked)";
+          }
+        }
         
-        // Method 2: Check for root management apps
-        const rootApps = [
-          "com.noshufou.android.su",
-          "com.thirdparty.superuser",
-          "eu.chainfire.supersu",
-          "com.koushikdutta.superuser",
-          "com.zachspong.temprootremovejb",
-          "com.ramdroid.appquarantine"
-        ];
-
-        // Method 3: Check build tags
-        const buildTags = NativeModules.DeviceInfo?.getBuildTags?.() || "";
-        if (buildTags.includes("test-keys")) {
-          return true;
+        // Check for Magisk through system properties if accessible
+        const systemProps = NativeModules.SystemProperties;
+        if (systemProps) {
+          const magiskVersion = systemProps.get?.("ro.magisk.version");
+          if (magiskVersion) {
+            return `Yes (Magisk ${magiskVersion})`;
+          }
         }
-
-        // Method 4: Check for Magisk
-        try {
-          const magiskPaths = [
-            "/sbin/.magisk",
-            "/system/addon.d/99-magisk.sh",
-            "/cache/.disable_magisk",
-            "/data/adb/magisk"
+        
+        // Check for SuperSU or other root managers through package manager
+        const packageManager = NativeModules.PackageManager;
+        if (packageManager) {
+          const rootApps = [
+            "com.topjohnwu.magisk",
+            "eu.chainfire.supersu",
+            "com.noshufou.android.su",
+            "com.koushikdutta.superuser",
+            "com.thirdparty.superuser"
           ];
-          // We can't actually check file existence, but we can try
-        } catch (e) {
-          // Ignore
+          
+          for (const app of rootApps) {
+            const isInstalled = packageManager.isPackageInstalled?.(app);
+            if (isInstalled) {
+              return "Yes (root app detected)";
+            }
+          }
         }
-
-        return false; // Default to not rooted if we can't detect
+        
+        return "Unknown";
       } catch (e) {
-        return false;
+        return "Unknown";
       }
     }
     
-    // iOS jailbreak detection
-    if (ReactNative.Platform.OS === "ios") {
+    if (Platform.OS === "ios") {
+      // iOS jailbreak detection
       try {
-        // Check for common jailbreak indicators
-        const jailbreakPaths = [
-          "/Applications/Cydia.app",
-          "/Library/MobileSubstrate/MobileSubstrate.dylib",
-          "/bin/bash",
-          "/usr/sbin/sshd",
-          "/etc/apt",
-          "/private/var/lib/apt/"
-        ];
-
-        // Check for jailbreak apps
-        const jailbreakApps = [
-          "cydia://package/com.example.package",
-          "sileo://package/com.example.package"
-        ];
-
-        return false; // Default to not jailbroken if we can't detect
+        const fileManager = NativeModules.FileManager || NativeModules.NSFileManager;
+        if (fileManager) {
+          // Check for common jailbreak files
+          const jailbreakPaths = [
+            "/Applications/Cydia.app",
+            "/Applications/Sileo.app", 
+            "/usr/sbin/sshd",
+            "/bin/bash",
+            "/usr/bin/ssh"
+          ];
+          
+          for (const path of jailbreakPaths) {
+            const exists = fileManager.fileExistsAtPath?.(path);
+            if (exists) {
+              return "Yes (jailbreak detected)";
+            }
+          }
+        }
+        
+        // Check for jailbreak tweaks
+        const bundleManager = NativeModules.NSBundle;
+        if (bundleManager) {
+          const substrate = bundleManager.pathForResource?.("MobileSubstrate", "dylib");
+          if (substrate) {
+            return "Yes (Substrate detected)";
+          }
+        }
+        
+        return "Unknown";
       } catch (e) {
-        return false;
+        return "Unknown";
       }
     }
-
-    return false;
+    
+    return "Unknown";
   } catch (e) {
-    console.warn("Root detection failed:", e);
-    return false;
+    console.warn("Root/Jailbreak detection failed:", e);
+    return "Unknown";
   }
 }
 
@@ -240,7 +299,7 @@ function generateSystemInfo() {
 
     const deviceName = osName == "iOS" ? deviceCodename : `${deviceBrand} ${deviceModel}`;
     const { width, height } = getDeviceInfo();
-    const isRooted = isDeviceRooted();
+    const rootStatus = detectRootJailbreak();
 
     let output = {
       Device: {
@@ -257,7 +316,7 @@ function generateSystemInfo() {
       Software: {
         OS: osName || "Unknown",
         Version: osVersion || "Unknown",
-        Rooted: isRooted ? "Yes" : "No",
+        Rooted: rootStatus,
       },
       Discord: {
         Version: discordVersion || "Unknown",
