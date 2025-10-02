@@ -992,8 +992,8 @@ function CreditsPage() {
     { 
       command: "IP & NekosLife Commands", 
       author: "scruzism", 
-      avatar: "https://github.com/scruzism.png",
-      github: "https://github.com/scruzism"
+      avatar: "https://github.com/scrazzz.png",
+      github: "https://github.com/scrazzz"
     },
   ];
 
