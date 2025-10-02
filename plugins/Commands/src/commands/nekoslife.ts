@@ -1,49 +1,154 @@
 import { findByProps } from "@vendetta/metro";
+import { alerts } from "@vendetta/ui";
 import { showToast } from "@vendetta/ui/toasts";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 
 const MessageActions = findByProps("sendMessage");
 const messageUtil = findByProps("sendBotMessage", "sendMessage", "receiveMessage");
 
-interface IpWhoisResponse {
-  success: boolean;
-  ip: string;
-  type: string;
-  as: string;
-  org: string;
-  isp: string;
-  continent: string;
-  country: string;
-  country_capital: string;
-  city: string;
-  region: string;
-  country_phone: string;
-  latitude: number;
-  longitude: number;
-  timezone: string;
-  currency: string;
-  completed_requests: number;
+interface NekosLifeResult {
+  url: string;
 }
 
-export const ipCommand = {
-  name: "ip",
-  displayName: "ip",
-  description: "IP address and domain lookup",
-  displayDescription: "IP address and domain lookup",
+const categories = [
+  { name: "anal", value: "anal" },
+  { name: "avatar", value: "avatar" },
+  { name: "boobs", value: "boobs" },
+  { name: "blowjob image", value: "blowjob" },
+  { name: "blowjob gif", value: "bj" },
+  { name: "classic", value: "classic" },
+  { name: "cuddle", value: "cuddle" },
+  { name: "cum", value: "cum" },
+  { name: "cum jpg", value: "cum_jpg" },
+  { name: "ero", value: "ero" },
+  { name: "ero feet", value: "erofeet" },
+  { name: "ero kemo", value: "erokemo" },
+  { name: "ero kitsune", value: "erok" },
+  { name: "ero neko", value: "eron" },
+  { name: "ero yuri", value: "eroyuri" },
+  { name: "femdom", value: "femdom" },
+  { name: "feet", value: "feet" },
+  { name: "feet gif", value: "feetg" },
+  { name: "fox girl", value: "fox_girl" },
+  { name: "futanari", value: "futanari" },
+  { name: "gasm", value: "gasm" },
+  { name: "gecg", value: "gecg" },
+  { name: "kemonomimi", value: "kemonomimi" },
+  { name: "kiss", value: "kiss" },
+  { name: "kuni", value: "kuni" },
+  { name: "hentai", value: "hentai" },
+  { name: "holo", value: "holo" },
+  { name: "holo ero", value: "holoero" },
+  { name: "holo lewd", value: "hololewd" },
+  { name: "lesbian", value: "les" },
+  { name: "lewd", value: "lewd" },
+  { name: "lewd kemo", value: "lewdkemo" },
+  { name: "lewd kitsune", value: "lewdk" },
+  { name: "neko", value: "neko" },
+  { name: "neko gif", value: "ngif" },
+  { name: "neko gif nsfw", value: "nsfw_neko_gif" },
+  { name: "nsfw avatar", value: "nsfw_avatar" },
+  { name: "pussy", value: "pussy" },
+  { name: "pussy jpg", value: "pussy_jpg" },
+  { name: "pwank", value: "pwankg" },
+  { name: "random hentai gif", value: "Random_hentai_gif" },
+  { name: "small boobs", value: "smallboobs" },
+  { name: "smug", value: "smug" },
+  { name: "solo", value: "solo" },
+  { name: "solo gif", value: "solog" },
+  { name: "spank", value: "spank" },
+  { name: "tits", value: "tits" },
+  { name: "tickle", value: "tickle" },
+  { name: "trap", value: "trap" },
+  { name: "waifu", value: "waifu" },
+  { name: "wallpaper", value: "wallpaper" },
+  { name: "woof", value: "woof" },
+  { name: "yuri", value: "yuri" }
+];
+
+const limitOptions = [
+  { name: "1", value: "1" },
+  { name: "2", value: "2" },
+  { name: "5", value: "5" },
+  { name: "8", value: "8" },
+  { name: "10", value: "10" }
+];
+
+async function fetchNekosLifeImages(category: string, count: number): Promise<string[]> {
+  const urls: string[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    try {
+      // Add delay between requests to avoid rate limiting
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      const response = await fetch(`https://nekos.life/api/v2/img/${category}`);
+      if (!response.ok) {
+        console.error(`[NekosLife] API request failed: ${response.status}`);
+        continue;
+      }
+      
+      const data: NekosLifeResult = await response.json();
+      if (data.url) {
+        urls.push(data.url);
+      }
+    } catch (error) {
+      console.error(`[NekosLife] Error fetching image ${i + 1}:`, error);
+    }
+  }
+  
+  return urls;
+}
+
+function isNsfwCategory(category: string): boolean {
+  const nsfwCategories = [
+    "anal", "boobs", "blowjob", "bj", "cum", "cum_jpg", "ero", "erofeet", 
+    "erokemo", "erok", "eron", "eroyuri", "femdom", "feet", "feetg", 
+    "futanari", "gasm", "kuni", "hentai", "holoero", "hololewd", "les", 
+    "lewd", "lewdkemo", "lewdk", "nsfw_neko_gif", "nsfw_avatar", "pussy", 
+    "pussy_jpg", "pwankg", "Random_hentai_gif", "smallboobs", "solo", 
+    "solog", "tits", "trap", "yuri"
+  ];
+  return nsfwCategories.includes(category);
+}
+
+export const nekoslifeCommand = {
+  name: "nekoslife",
+  displayName: "nekoslife",
+  description: "Get images/gifs from nekos.life",
+  displayDescription: "Get images/gifs from nekos.life",
   options: [
     {
-      name: "query",
-      displayName: "query",
-      description: "Enter IPv4/IPv6 address or domain name",
-      displayDescription: "Enter IPv4/IPv6 address or domain name",
+      name: "category",
+      displayName: "category",
+      description: "Category of image/gif to get",
+      displayDescription: "Category of image/gif to get",
       type: 3, // String
       required: true,
+      choices: categories.map(cat => ({
+        name: cat.name,
+        value: cat.value
+      }))
+    },
+    {
+      name: "limit",
+      displayName: "limit",
+      description: "Number of images to get (default: 1)",
+      displayDescription: "Number of images to get (default: 1)",
+      type: 3, // String
+      required: false,
+      choices: limitOptions.map(opt => ({
+        name: opt.name,
+        value: opt.value
+      }))
     },
     {
       name: "send",
       displayName: "send",
-      description: "Send to chat",
-      displayDescription: "Send to chat",
+      description: "Send to chat (WARNING: Use NSFW channel for NSFW content)",
+      displayDescription: "Send to chat (WARNING: Use NSFW channel for NSFW content)",
       type: 5, // Boolean
       required: false,
     },
@@ -58,12 +163,13 @@ export const ipCommand = {
   ],
   execute: async (args: any, ctx: any) => {
     try {
-      const query = args.find((arg: any) => arg.name === "query")?.value;
+      const category = args.find((arg: any) => arg.name === "category")?.value;
+      const limitStr = args.find((arg: any) => arg.name === "limit")?.value || "1";
       const shouldSend = args.find((arg: any) => arg.name === "send")?.value || false;
       const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
-
-      if (!query) {
-        const errorMsg = "❌ Query parameter is required!";
+      
+      if (!category) {
+        const errorMsg = "❌ Category is required!";
         if (isEphemeral) {
           return {
             type: 4,
@@ -74,29 +180,32 @@ export const ipCommand = {
           };
         }
         showToast(errorMsg, getAssetIDByName("CircleXIcon"));
+        return { type: 4 };
+      }
+
+      const limit = parseInt(limitStr);
+      const isNsfw = isNsfwCategory(category);
+
+      // Check if trying to send NSFW content in non-NSFW channel
+      if (shouldSend && !isEphemeral && isNsfw && !ctx.channel.nsfw) {
+        alerts.showConfirmationAlert({
+          title: "⚠️ NSFW Content Warning",
+          content: "This category contains NSFW content and can only be sent in NSFW channels!",
+          confirmText: "Okay",
+          cancelText: null,
+        });
         return { type: 4 };
       }
 
       // Show loading toast
-      if (!isEphemeral && !shouldSend) {
-        showToast(`Looking up IP information for ${query}...`, getAssetIDByName("DownloadIcon"));
+      if (!isEphemeral) {
+        showToast(`Fetching ${limit} image(s) from nekos.life...`, getAssetIDByName("DownloadIcon"));
       }
 
-      // Build API URL with all requested fields
-      const url = `http://ipwhois.app/json/${encodeURIComponent(query)}?objects=` +
-                  `success,ip,type,as,org,isp,continent,country,country_capital,city,region,` +
-                  `country_phone,latitude,longitude,timezone,currency,completed_requests`;
+      const urls = await fetchNekosLifeImages(category, limit);
 
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data: IpWhoisResponse = await response.json();
-
-      if (!data.success) {
-        const errorMsg = `❌ Failed to lookup IP information for: ${query}`;
+      if (urls.length === 0) {
+        const errorMsg = "❌ Failed to fetch images from nekos.life. Try again later!";
         if (isEphemeral) {
           return {
             type: 4,
@@ -110,9 +219,7 @@ export const ipCommand = {
         return { type: 4 };
       }
 
-      // Format the response as code block
-      const formattedData = JSON.stringify(data, null, 4);
-      const content = `\`\`\`json\n${formattedData}\n\`\`\``;
+      const content = urls.join("\n");
 
       if (isEphemeral) {
         return {
@@ -132,8 +239,8 @@ export const ipCommand = {
         return { type: 4 };
       }
     } catch (error) {
-      console.error('[IP] Command error:', error);
-      const errorMessage = `❌ An error occurred while looking up IP information: ${error.message || 'Unknown error'}`;
+      console.error('[NekosLife] Command error:', error);
+      const errorMessage = "❌ An error occurred while fetching images.";
       
       const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
       
