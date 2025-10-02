@@ -9,31 +9,11 @@ interface NekosLifeResult {
   url: string;
 }
 
-// Only SFW categories (exactly 16 - within Discord's 25 choice limit)
-const categoryChoices = [
-  { name: "Avatar", value: "avatar" },
-  { name: "Classic", value: "classic" },
-  { name: "Cuddle", value: "cuddle" },
-  { name: "Fox Girl", value: "fox_girl" },
-  { name: "Gecg", value: "gecg" },
-  { name: "Holo", value: "holo" },
-  { name: "Kemonomimi", value: "kemonomimi" },
-  { name: "Kiss", value: "kiss" },
-  { name: "Neko", value: "neko" },
-  { name: "Neko GIF", value: "ngif" },
-  { name: "Smug", value: "smug" },
-  { name: "Spank", value: "spank" },
-  { name: "Tickle", value: "tickle" },
-  { name: "Waifu", value: "waifu" },
-  { name: "Wallpaper", value: "wallpaper" },
-  { name: "Woof", value: "woof" }
-];
-
-const limitChoices = [
-  { name: "1", value: 1 },
-  { name: "2", value: 2 },
-  { name: "3", value: 3 },
-  { name: "5", value: 5 }
+// Valid SFW categories for validation
+const validSfwCategories = [
+  "avatar", "classic", "cuddle", "fox_girl", "gecg", "holo", 
+  "kemonomimi", "kiss", "neko", "ngif", "smug", "spank", 
+  "tickle", "waifu", "wallpaper", "woof"
 ];
 
 async function fetchNekosLifeImages(category: string, count: number): Promise<string[]> {
@@ -64,6 +44,11 @@ async function fetchNekosLifeImages(category: string, count: number): Promise<st
   return urls;
 }
 
+function isValidSfwCategory(category: string): boolean {
+  if (!category || typeof category !== 'string') return false;
+  return validSfwCategories.includes(category.toLowerCase().trim());
+}
+
 export const nekoslifeCommand = {
   name: "nekoslife",
   displayName: "nekoslife",
@@ -73,20 +58,18 @@ export const nekoslifeCommand = {
     {
       name: "category",
       displayName: "category",
-      description: "Category of SFW image/gif to get",
-      displayDescription: "Category of SFW image/gif to get",
-      type: 3, // String
+      description: "Category name (e.g. neko, waifu, cuddle, etc.)",
+      displayDescription: "Category name (e.g. neko, waifu, cuddle, etc.)",
+      type: 3, // String - free text input
       required: true,
-      choices: categoryChoices
     },
     {
       name: "limit",
       displayName: "limit",
-      description: "Number of images to get (default: 1)",
-      displayDescription: "Number of images to get (default: 1)",
-      type: 4, // Integer  
+      description: "Number of images (1-5, default: 1)",
+      displayDescription: "Number of images (1-5, default: 1)",
+      type: 4, // Integer
       required: false,
-      choices: limitChoices
     },
     {
       name: "send",
@@ -110,15 +93,15 @@ export const nekoslifeCommand = {
       console.log('[NekosLife] Command executed with args:', args);
       
       // Parse arguments
-      const category = args.find((arg: any) => arg.name === "category")?.value;
-      const limit = args.find((arg: any) => arg.name === "limit")?.value || 1;
+      const categoryInput = args.find((arg: any) => arg.name === "category")?.value;
+      const limitInput = args.find((arg: any) => arg.name === "limit")?.value;
       const shouldSend = args.find((arg: any) => arg.name === "send")?.value || false;
       const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
 
-      console.log('[NekosLife] Parsed values:', { category, limit, shouldSend, isEphemeral });
+      console.log('[NekosLife] Parsed values:', { categoryInput, limitInput, shouldSend, isEphemeral });
       
-      if (!category) {
-        const errorMsg = "❌ Category is required!";
+      if (!categoryInput || typeof categoryInput !== 'string') {
+        const errorMsg = "❌ Category is required! Examples: neko, waifu, cuddle, kiss";
         console.error('[NekosLife] No category provided');
         
         if (isEphemeral) {
@@ -132,6 +115,32 @@ export const nekoslifeCommand = {
         }
         showToast(errorMsg, getAssetIDByName("CircleXIcon"));
         return { type: 4 };
+      }
+
+      // Clean and validate category
+      const category = categoryInput.toLowerCase().trim();
+      
+      if (!isValidSfwCategory(category)) {
+        const errorMsg = `❌ Invalid SFW category "${categoryInput}". Valid: neko, waifu, cuddle, kiss, holo, etc.`;
+        
+        if (isEphemeral) {
+          return {
+            type: 4,
+            data: {
+              content: errorMsg,
+              flags: 64,
+            },
+          };
+        }
+        showToast(errorMsg, getAssetIDByName("CircleXIcon"));
+        return { type: 4 };
+      }
+
+      // Parse and validate limit
+      let limit = 1;
+      if (limitInput !== undefined && limitInput !== null) {
+        limit = parseInt(String(limitInput)) || 1;
+        limit = Math.max(1, Math.min(5, limit)); // Clamp between 1-5
       }
 
       console.log('[NekosLife] Processing SFW request:', { category, limit, shouldSend, isEphemeral });
