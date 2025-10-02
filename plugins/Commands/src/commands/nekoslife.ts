@@ -103,6 +103,8 @@ async function fetchNekosLifeImages(category: string, count: number): Promise<st
 }
 
 function isNsfwCategory(category: string): boolean {
+  if (!category || typeof category !== 'string') return false;
+  
   const nsfwCategories = [
     "anal", "boobs", "blowjob", "bj", "cum", "cum_jpg", "ero", "erofeet", 
     "erokemo", "erok", "eron", "eroyuri", "femdom", "feet", "feetg", 
@@ -111,7 +113,7 @@ function isNsfwCategory(category: string): boolean {
     "pussy_jpg", "pwankg", "Random_hentai_gif", "smallboobs", "solo", 
     "solog", "tits", "trap", "yuri"
   ];
-  return nsfwCategories.includes(category);
+  return nsfwCategories.includes(category.toLowerCase());
 }
 
 export const nekoslifeCommand = {
@@ -163,13 +165,33 @@ export const nekoslifeCommand = {
   ],
   execute: async (args: any, ctx: any) => {
     try {
-      const category = args.find((arg: any) => arg.name === "category")?.value;
-      const limitStr = args.find((arg: any) => arg.name === "limit")?.value || "1";
-      const shouldSend = args.find((arg: any) => arg.name === "send")?.value || false;
-      const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
+      console.log('[NekosLife] Command executed with args:', args);
       
-      if (!category) {
-        const errorMsg = "❌ Category is required!";
+      // Better argument parsing with fallbacks
+      let category: string | undefined;
+      let limitStr: string = "1";
+      let shouldSend: boolean = false;
+      let isEphemeral: boolean = false;
+
+      // Handle different argument formats
+      if (Array.isArray(args)) {
+        category = args.find((arg: any) => arg?.name === "category")?.value;
+        limitStr = args.find((arg: any) => arg?.name === "limit")?.value || "1";
+        shouldSend = args.find((arg: any) => arg?.name === "send")?.value || false;
+        isEphemeral = args.find((arg: any) => arg?.name === "ephemeral")?.value || false;
+      } else if (args && typeof args === 'object') {
+        category = args.category?.value || args.category;
+        limitStr = args.limit?.value || args.limit || "1";
+        shouldSend = args.send?.value || args.send || false;
+        isEphemeral = args.ephemeral?.value || args.ephemeral || false;
+      }
+
+      console.log('[NekosLife] Parsed values:', { category, limitStr, shouldSend, isEphemeral });
+      
+      if (!category || typeof category !== 'string') {
+        const errorMsg = "❌ Category is required and must be a valid string!";
+        console.error('[NekosLife] Invalid category:', category);
+        
         if (isEphemeral) {
           return {
             type: 4,
@@ -183,11 +205,13 @@ export const nekoslifeCommand = {
         return { type: 4 };
       }
 
-      const limit = parseInt(limitStr);
+      const limit = parseInt(limitStr) || 1;
       const isNsfw = isNsfwCategory(category);
 
+      console.log('[NekosLife] Processing request:', { category, limit, isNsfw, shouldSend, isEphemeral });
+
       // Check if trying to send NSFW content in non-NSFW channel
-      if (shouldSend && !isEphemeral && isNsfw && !ctx.channel.nsfw) {
+      if (shouldSend && !isEphemeral && isNsfw && !ctx.channel?.nsfw) {
         alerts.showConfirmationAlert({
           title: "⚠️ NSFW Content Warning",
           content: "This category contains NSFW content and can only be sent in NSFW channels!",
@@ -222,6 +246,7 @@ export const nekoslifeCommand = {
       const content = urls.join("\n");
 
       if (isEphemeral) {
+        console.log('[NekosLife] Sending ephemeral response');
         return {
           type: 4,
           data: {
@@ -230,10 +255,12 @@ export const nekoslifeCommand = {
           },
         };
       } else if (shouldSend) {
+        console.log('[NekosLife] Sending to chat');
         const fixNonce = Date.now().toString();
         MessageActions.sendMessage(ctx.channel.id, { content }, void 0, { nonce: fixNonce });
         return { type: 4 };
       } else {
+        console.log('[NekosLife] Sending as bot message');
         // Send as bot message (ephemeral-like)
         messageUtil.sendBotMessage(ctx.channel.id, content);
         return { type: 4 };
@@ -242,7 +269,9 @@ export const nekoslifeCommand = {
       console.error('[NekosLife] Command error:', error);
       const errorMessage = "❌ An error occurred while fetching images.";
       
-      const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
+      const isEphemeral = Array.isArray(args) 
+        ? args?.find?.((arg: any) => arg?.name === "ephemeral")?.value ?? false
+        : args?.ephemeral?.value || args?.ephemeral || false;
       
       if (isEphemeral) {
         return {
