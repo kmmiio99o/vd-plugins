@@ -42,7 +42,9 @@ storage.enabledCommands ??= {
   spotifyArtists: true,
   spotifyCover: true,
   gary: true,
+  ip: true, // IP command - enabled by default
   lovefemboys: false, // Hidden command - disabled by default
+  nekoslife: false, // Hidden command - disabled by default
 };
 
 storage.pendingRestart ??= false;
@@ -207,7 +209,7 @@ function Header({ onHiddenUnlock }: { onHiddenUnlock?: () => void }) {
   );
 }
 
-// Hidden Commands Settings Page with NSFW bypass option
+// Hidden Commands Settings Page with NSFW bypass option and NekosLife
 function HiddenSettingsPage() {
   useProxy(storage);
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
@@ -253,6 +255,17 @@ function HiddenSettingsPage() {
             value={storage.enabledCommands.lovefemboys}
             onValueChange={(v) => {
               storage.enabledCommands.lovefemboys = v;
+              storage.pendingRestart = true;
+              forceUpdate();
+            }}
+          />
+          <FormSwitchRow
+            label="/nekoslife"
+            subLabel="Get images/gifs from nekos.life (NSFW content available)"
+            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
+            value={storage.enabledCommands.nekoslife}
+            onValueChange={(v) => {
+              storage.enabledCommands.nekoslife = v;
               storage.pendingRestart = true;
               forceUpdate();
             }}
@@ -310,8 +323,9 @@ function HiddenSettingsPage() {
                 onConfirm: () => {
                   storage.hiddenSettings.enabled = false;
                   storage.hiddenSettings.visible = false;
-                  storage.hiddenSettings.konochanBypassNsfw = false; // Reset bypass option
+                  storage.hiddenSettings.konochanBypassNsfw = false;
                   storage.enabledCommands.lovefemboys = false;
+                  storage.enabledCommands.nekoslife = false; // Reset nekoslife too
                   storage.pendingRestart = true;
                   showToast("Hidden settings reset", getAssetIDByName("CheckmarkIcon"));
                 },
@@ -692,7 +706,7 @@ function SpotifySettingsPage() {
   );
 }
 
-// Other Settings Page
+// Other Settings Page - Updated with IP command
 function OtherSettingsPage() {
   useProxy(storage);
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
@@ -722,6 +736,20 @@ function OtherSettingsPage() {
             value={storage.enabledCommands.sysinfo}
             onValueChange={(v) => {
               storage.enabledCommands.sysinfo = v;
+              storage.pendingRestart = true;
+              forceUpdate();
+            }}
+          />
+        </BetterTableRowGroup>
+
+        <BetterTableRowGroup title="Network Commands" icon={getAssetIDByName("GlobeEarthIcon")}>
+          <FormSwitchRow
+            label="/ip"
+            subLabel="IP address and domain lookup"
+            leading={<FormRow.Icon source={getAssetIDByName("GlobeEarthIcon")} />}
+            value={storage.enabledCommands.ip}
+            onValueChange={(v) => {
+              storage.enabledCommands.ip = v;
               storage.pendingRestart = true;
               forceUpdate();
             }}
@@ -845,6 +873,12 @@ function CreditsPage() {
       avatar: "https://github.com/Zach11111.png",
       github: "https://github.com/Zach11111"
     },
+    { 
+      command: "IP & NekosLife Commands", 
+      author: "scruzism", 
+      avatar: "https://github.com/scruzism.png",
+      github: "https://github.com/scruzism"
+    },
   ];
 
   const handleProfilePress = (githubUrl: string) => {
@@ -883,7 +917,7 @@ function CreditsPage() {
         <BetterTableRowGroup title="About" icon={getAssetIDByName("InfoIcon")} padding={true}>
           <RN.Text style={styles.versionText}>
             Commands Plugin Collection{'\n'}
-            Version 1.0.2
+            Version 1.1.0
           </RN.Text>
         </BetterTableRowGroup>
       </RN.View>
@@ -972,7 +1006,7 @@ export default function Settings() {
         />
         <FormRow
           label="Other Commands"
-          subLabel="System info and miscellaneous"
+          subLabel="System info, network tools, and miscellaneous"
           leading={<FormRow.Icon source={getAssetIDByName("MoreHorizontalIcon")} />}
           trailing={<FormRow.Arrow />}
           onPress={() => navigation.push("VendettaCustomPage", {

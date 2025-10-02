@@ -18,6 +18,8 @@ import {
 } from "./src/commands/spotify";
 import { garyCommand } from "./src/commands/gary";
 import { lovefemboysCommand } from "./src/commands/lovefemboys";
+import { ipCommand } from "./src/commands/ip";
+import { nekoslifeCommand } from "./src/commands/nekoslife";
 import settings from "./settings";
 
 // Initialize storage with default values
@@ -58,7 +60,9 @@ if (!storage.enabledCommands) {
     spotifyArtists: true,
     spotifyCover: true,
     gary: true,
+    ip: true, // IP command - enabled by default
     lovefemboys: false, // Hidden command - disabled by default
+    nekoslife: false, // Hidden command - disabled by default
   };
 }
 
@@ -67,6 +71,7 @@ if (!storage.hiddenSettings) {
   storage.hiddenSettings = {
     enabled: false,
     visible: false,
+    konochanBypassNsfw: false, // NSFW bypass option
   };
 }
 
@@ -87,7 +92,9 @@ const commandMap = {
   spotifyArtists: spotifyArtistsCommand,
   spotifyCover: spotifyCoverCommand,
   gary: garyCommand,
+  ip: ipCommand, // Add IP command
   lovefemboys: lovefemboysCommand, // Add hidden command to map
+  nekoslife: nekoslifeCommand, // Add NekosLife command
 };
 
 // Store registered commands for cleanup
