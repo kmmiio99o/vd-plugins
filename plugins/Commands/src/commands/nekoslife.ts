@@ -10,68 +10,41 @@ interface NekosLifeResult {
   url: string;
 }
 
+// Simplified categories - only the most common ones to avoid choice overload
 const categories = [
-  { name: "anal", value: "anal" },
-  { name: "avatar", value: "avatar" },
-  { name: "boobs", value: "boobs" },
-  { name: "blowjob image", value: "blowjob" },
-  { name: "blowjob gif", value: "bj" },
-  { name: "classic", value: "classic" },
-  { name: "cuddle", value: "cuddle" },
-  { name: "cum", value: "cum" },
-  { name: "cum jpg", value: "cum_jpg" },
-  { name: "ero", value: "ero" },
-  { name: "ero feet", value: "erofeet" },
-  { name: "ero kemo", value: "erokemo" },
-  { name: "ero kitsune", value: "erok" },
-  { name: "ero neko", value: "eron" },
-  { name: "ero yuri", value: "eroyuri" },
-  { name: "femdom", value: "femdom" },
-  { name: "feet", value: "feet" },
-  { name: "feet gif", value: "feetg" },
-  { name: "fox girl", value: "fox_girl" },
-  { name: "futanari", value: "futanari" },
-  { name: "gasm", value: "gasm" },
-  { name: "gecg", value: "gecg" },
-  { name: "kemonomimi", value: "kemonomimi" },
-  { name: "kiss", value: "kiss" },
-  { name: "kuni", value: "kuni" },
-  { name: "hentai", value: "hentai" },
-  { name: "holo", value: "holo" },
-  { name: "holo ero", value: "holoero" },
-  { name: "holo lewd", value: "hololewd" },
-  { name: "lesbian", value: "les" },
-  { name: "lewd", value: "lewd" },
-  { name: "lewd kemo", value: "lewdkemo" },
-  { name: "lewd kitsune", value: "lewdk" },
   { name: "neko", value: "neko" },
-  { name: "neko gif", value: "ngif" },
-  { name: "neko gif nsfw", value: "nsfw_neko_gif" },
-  { name: "nsfw avatar", value: "nsfw_avatar" },
-  { name: "pussy", value: "pussy" },
-  { name: "pussy jpg", value: "pussy_jpg" },
-  { name: "pwank", value: "pwankg" },
-  { name: "random hentai gif", value: "Random_hentai_gif" },
-  { name: "small boobs", value: "smallboobs" },
-  { name: "smug", value: "smug" },
-  { name: "solo", value: "solo" },
-  { name: "solo gif", value: "solog" },
-  { name: "spank", value: "spank" },
-  { name: "tits", value: "tits" },
-  { name: "tickle", value: "tickle" },
-  { name: "trap", value: "trap" },
   { name: "waifu", value: "waifu" },
+  { name: "avatar", value: "avatar" },
+  { name: "cuddle", value: "cuddle" },
+  { name: "kiss", value: "kiss" },
+  { name: "smug", value: "smug" },
+  { name: "tickle", value: "tickle" },
   { name: "wallpaper", value: "wallpaper" },
+  { name: "kemonomimi", value: "kemonomimi" },
+  { name: "fox girl", value: "fox_girl" },
+  { name: "classic", value: "classic" },
+  { name: "gecg", value: "gecg" },
   { name: "woof", value: "woof" },
-  { name: "yuri", value: "yuri" }
+  { name: "holo", value: "holo" },
+  { name: "neko gif", value: "ngif" },
+  { name: "spank", value: "spank" },
+  // NSFW categories
+  { name: "neko nsfw", value: "nsfw_neko_gif" },
+  { name: "lewd", value: "lewd" },
+  { name: "ero", value: "ero" },
+  { name: "yuri", value: "yuri" },
+  { name: "trap", value: "trap" },
+  { name: "futanari", value: "futanari" },
+  { name: "hentai", value: "hentai" },
+  { name: "boobs", value: "boobs" },
+  { name: "anal", value: "anal" }
 ];
 
 const limitOptions = [
   { name: "1", value: "1" },
   { name: "2", value: "2" },
-  { name: "5", value: "5" },
-  { name: "8", value: "8" },
-  { name: "10", value: "10" }
+  { name: "3", value: "3" },
+  { name: "5", value: "5" }
 ];
 
 async function fetchNekosLifeImages(category: string, count: number): Promise<string[]> {
@@ -106,12 +79,12 @@ function isNsfwCategory(category: string): boolean {
   if (!category || typeof category !== 'string') return false;
   
   const nsfwCategories = [
-    "anal", "boobs", "blowjob", "bj", "cum", "cum_jpg", "ero", "erofeet", 
-    "erokemo", "erok", "eron", "eroyuri", "femdom", "feet", "feetg", 
-    "futanari", "gasm", "kuni", "hentai", "holoero", "hololewd", "les", 
-    "lewd", "lewdkemo", "lewdk", "nsfw_neko_gif", "nsfw_avatar", "pussy", 
-    "pussy_jpg", "pwankg", "Random_hentai_gif", "smallboobs", "solo", 
-    "solog", "tits", "trap", "yuri"
+    "nsfw_neko_gif", "lewd", "ero", "yuri", "trap", "futanari", "hentai", 
+    "boobs", "anal", "cum", "pussy", "tits", "blowjob", "bj", "femdom",
+    "feet", "feetg", "gasm", "kuni", "holoero", "hololewd", "les",
+    "lewdkemo", "lewdk", "eron", "eroyuri", "erofeet", "erokemo", "erok",
+    "nsfw_avatar", "pussy_jpg", "pwankg", "Random_hentai_gif", "smallboobs",
+    "solo", "solog", "cum_jpg"
   ];
   return nsfwCategories.includes(category.toLowerCase());
 }
@@ -129,10 +102,7 @@ export const nekoslifeCommand = {
       displayDescription: "Category of image/gif to get",
       type: 3, // String
       required: true,
-      choices: categories.map(cat => ({
-        name: cat.name,
-        value: cat.value
-      }))
+      choices: categories
     },
     {
       name: "limit",
@@ -141,10 +111,7 @@ export const nekoslifeCommand = {
       displayDescription: "Number of images to get (default: 1)",
       type: 3, // String
       required: false,
-      choices: limitOptions.map(opt => ({
-        name: opt.name,
-        value: opt.value
-      }))
+      choices: limitOptions
     },
     {
       name: "send",
@@ -167,30 +134,17 @@ export const nekoslifeCommand = {
     try {
       console.log('[NekosLife] Command executed with args:', args);
       
-      // Better argument parsing with fallbacks
-      let category: string | undefined;
-      let limitStr: string = "1";
-      let shouldSend: boolean = false;
-      let isEphemeral: boolean = false;
-
-      // Handle different argument formats
-      if (Array.isArray(args)) {
-        category = args.find((arg: any) => arg?.name === "category")?.value;
-        limitStr = args.find((arg: any) => arg?.name === "limit")?.value || "1";
-        shouldSend = args.find((arg: any) => arg?.name === "send")?.value || false;
-        isEphemeral = args.find((arg: any) => arg?.name === "ephemeral")?.value || false;
-      } else if (args && typeof args === 'object') {
-        category = args.category?.value || args.category;
-        limitStr = args.limit?.value || args.limit || "1";
-        shouldSend = args.send?.value || args.send || false;
-        isEphemeral = args.ephemeral?.value || args.ephemeral || false;
-      }
+      // Simple argument parsing like other commands
+      const category = args.find((arg: any) => arg.name === "category")?.value;
+      const limitStr = args.find((arg: any) => arg.name === "limit")?.value || "1";
+      const shouldSend = args.find((arg: any) => arg.name === "send")?.value || false;
+      const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
 
       console.log('[NekosLife] Parsed values:', { category, limitStr, shouldSend, isEphemeral });
       
-      if (!category || typeof category !== 'string') {
-        const errorMsg = "❌ Category is required and must be a valid string!";
-        console.error('[NekosLife] Invalid category:', category);
+      if (!category) {
+        const errorMsg = "❌ Category is required!";
+        console.error('[NekosLife] No category provided');
         
         if (isEphemeral) {
           return {
@@ -261,7 +215,6 @@ export const nekoslifeCommand = {
         return { type: 4 };
       } else {
         console.log('[NekosLife] Sending as bot message');
-        // Send as bot message (ephemeral-like)
         messageUtil.sendBotMessage(ctx.channel.id, content);
         return { type: 4 };
       }
@@ -269,9 +222,7 @@ export const nekoslifeCommand = {
       console.error('[NekosLife] Command error:', error);
       const errorMessage = "❌ An error occurred while fetching images.";
       
-      const isEphemeral = Array.isArray(args) 
-        ? args?.find?.((arg: any) => arg?.name === "ephemeral")?.value ?? false
-        : args?.ephemeral?.value || args?.ephemeral || false;
+      const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
       
       if (isEphemeral) {
         return {
