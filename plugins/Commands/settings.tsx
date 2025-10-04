@@ -102,15 +102,9 @@ function BetterTableRowGroup({
       {title && (
         <RN.View style={styles.titleContainer}>
           {icon && (
-            <RN.Image
-              style={styles.icon}
-              source={icon}
-              resizeMode="cover"
-            />
+            <RN.Image style={styles.icon} source={icon} resizeMode="cover" />
           )}
-          <RN.Text style={styles.titleText}>
-            {title.toUpperCase()}
-          </RN.Text>
+          <RN.Text style={styles.titleText}>{title.toUpperCase()}</RN.Text>
         </RN.View>
       )}
       <RN.View style={styles.main}>
@@ -118,7 +112,9 @@ function BetterTableRowGroup({
           <RN.View style={{ paddingHorizontal: 16, paddingVertical: 16 }}>
             {children}
           </RN.View>
-        ) : children}
+        ) : (
+          children
+        )}
       </RN.View>
     </RN.View>
   );
@@ -127,8 +123,10 @@ function BetterTableRowGroup({
 // Header Component with secret unlock
 function Header({ onHiddenUnlock }: { onHiddenUnlock?: () => void }) {
   const [clickCounter, setClickCounter] = React.useState(0);
-  const [clickTimeout, setClickTimeout] = React.useState<NodeJS.Timeout | null>(null);
-  
+  const [clickTimeout, setClickTimeout] = React.useState<NodeJS.Timeout | null>(
+    null,
+  );
+
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flexDirection: "column",
@@ -165,7 +163,7 @@ function Header({ onHiddenUnlock }: { onHiddenUnlock?: () => void }) {
       storage.hiddenSettings.visible = !storage.hiddenSettings.visible;
       showToast(
         `Hidden settings ${storage.hiddenSettings.visible ? "visible" : "hidden"}`,
-        getAssetIDByName("SettingsIcon")
+        getAssetIDByName("SettingsIcon"),
       );
       onHiddenUnlock?.();
       return;
@@ -187,11 +185,14 @@ function Header({ onHiddenUnlock }: { onHiddenUnlock?: () => void }) {
       return;
     }
 
-    showToast("🔓 Hidden settings unlocked!", getAssetIDByName("CheckmarkIcon"));
+    showToast(
+      "🔓 Hidden settings unlocked!",
+      getAssetIDByName("CheckmarkIcon"),
+    );
     storage.hiddenSettings.enabled = true;
     storage.hiddenSettings.visible = true;
     setClickCounter(0);
-    
+
     onHiddenUnlock?.();
   };
 
@@ -216,6 +217,32 @@ function NekosLifeCategoriesPage() {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
+    tableHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      backgroundColor: semanticColors.BACKGROUND_MODIFIER_ACCENT,
+      borderBottomWidth: 2,
+      borderBottomColor: semanticColors.BORDER_STRONG,
+    },
+    headerText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: semanticColors.TEXT_NORMAL,
+      textTransform: "uppercase",
+    },
+    nameHeader: {
+      flex: 2,
+    },
+    codeHeader: {
+      flex: 2,
+      textAlign: "center",
+    },
+    badgeHeader: {
+      flex: 1,
+      textAlign: "center",
+    },
     categoryItem: {
       flexDirection: "row",
       alignItems: "center",
@@ -228,13 +255,18 @@ function NekosLifeCategoriesPage() {
       fontSize: 16,
       fontWeight: "500",
       color: semanticColors.TEXT_NORMAL,
-      flex: 1,
+      flex: 2,
     },
     categoryValue: {
       fontSize: 14,
       color: semanticColors.TEXT_MUTED,
       fontFamily: "monospace",
-      marginRight: 8,
+      flex: 2,
+      textAlign: "center",
+    },
+    sfwBadgeContainer: {
+      flex: 1,
+      alignItems: "center",
     },
     sfwBadge: {
       backgroundColor: semanticColors.STATUS_POSITIVE,
@@ -272,36 +304,56 @@ function NekosLifeCategoriesPage() {
     { name: "Tickle", value: "tickle" },
     { name: "Waifu", value: "waifu" },
     { name: "Wallpaper", value: "wallpaper" },
-    { name: "Woof", value: "woof" }
+    { name: "Woof", value: "woof" },
   ];
 
   // Sort categories alphabetically
-  const sortedCategories = sfwCategories.sort((a, b) => a.name.localeCompare(b.name));
+  const sortedCategories = sfwCategories.sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
 
   return (
     <ScrollView style={styles.container}>
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="📊 Category Statistics" icon={getAssetIDByName("ChartIcon")} padding={true}>
+        <BetterTableRowGroup
+          title="📊 Category Statistics"
+          icon={getAssetIDByName("ChartIcon")}
+          padding={true}
+        >
           <RN.Text style={styles.infoText}>
-            Total SFW Categories: {sfwCategories.length}{'\n\n'}
-            Use these category names with the /nekoslife command.{'\n'}
+            Total SFW Categories: {sfwCategories.length}
+            {"\n\n"}
+            Use these category names with the /nekoslife command.{"\n"}
             All categories are Safe For Work (SFW).
           </RN.Text>
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="📋 SFW Categories" icon={getAssetIDByName("ListViewIcon")}>
+        <BetterTableRowGroup
+          title="📋 SFW Categories"
+          icon={getAssetIDByName("ListViewIcon")}
+        >
+          {/* Table Header */}
+          <RN.View style={styles.tableHeader}>
+            <RN.Text style={[styles.headerText, styles.nameHeader]}>
+              Category Name
+            </RN.Text>
+            <RN.Text style={[styles.headerText, styles.codeHeader]}>
+              Command Code
+            </RN.Text>
+            <RN.Text style={[styles.headerText, styles.badgeHeader]}>
+              Type
+            </RN.Text>
+          </RN.View>
+
+          {/* Table Rows */}
           {sortedCategories.map((category, index) => (
             <RN.View key={index} style={styles.categoryItem}>
-              <RN.Text style={styles.categoryName}>
-                {category.name}
-              </RN.Text>
-              <RN.Text style={styles.categoryValue}>
-                {category.value}
-              </RN.Text>
-              <RN.View style={styles.sfwBadge}>
-                <RN.Text style={styles.badgeText}>
-                  SFW
-                </RN.Text>
+              <RN.Text style={styles.categoryName}>{category.name}</RN.Text>
+              <RN.Text style={styles.categoryValue}>{category.value}</RN.Text>
+              <RN.View style={styles.sfwBadgeContainer}>
+                <RN.View style={styles.sfwBadge}>
+                  <RN.Text style={styles.badgeText}>SFW</RN.Text>
+                </RN.View>
               </RN.View>
             </RN.View>
           ))}
@@ -341,16 +393,25 @@ function HiddenSettingsPage() {
   return (
     <ScrollView style={styles.container}>
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="⚠️ Warning" icon={getAssetIDByName("WarningIcon")} padding={true}>
+        <BetterTableRowGroup
+          title="⚠️ Warning"
+          icon={getAssetIDByName("WarningIcon")}
+          padding={true}
+        >
           <RN.Text style={styles.warningText}>
-            These are hidden commands that may contain mature content or experimental features.
+            These are hidden commands that may contain mature content or
+            experimental features.
           </RN.Text>
           <RN.Text style={styles.infoText}>
-            Use at your own discretion. Commands in this section are disabled by default.
+            Use at your own discretion. Commands in this section are disabled by
+            default.
           </RN.Text>
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Hidden Commands" icon={getAssetIDByName("EyeIcon")}>
+        <BetterTableRowGroup
+          title="Hidden Commands"
+          icon={getAssetIDByName("EyeIcon")}
+        >
           <FormSwitchRow
             label="/lovefemboys"
             subLabel="Get random femboy images from r/femboys (NSFW content available)"
@@ -362,33 +423,12 @@ function HiddenSettingsPage() {
               forceUpdate();
             }}
           />
-          <FormSwitchRow
-            label="/nekoslife"
-            subLabel="Get SFW images/gifs from nekos.life"
-            leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
-            value={storage.enabledCommands.nekoslife}
-            onValueChange={(v) => {
-              storage.enabledCommands.nekoslife = v;
-              storage.pendingRestart = true;
-              forceUpdate();
-            }}
-          />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="NekosLife Reference" icon={getAssetIDByName("BookOpenIcon")}>
-          <FormRow
-            label="View SFW Categories"
-            subLabel="See all 16 available safe-for-work nekos.life categories"
-            leading={<FormRow.Icon source={getAssetIDByName("ListViewIcon")} />}
-            trailing={<FormRow.Arrow />}
-            onPress={() => navigation.push("VendettaCustomPage", {
-              title: "NekosLife Categories",
-              render: NekosLifeCategoriesPage,
-            })}
-          />
-        </BetterTableRowGroup>
-
-        <BetterTableRowGroup title="NSFW Bypass Options" icon={getAssetIDByName("WarningIcon")}>
+        <BetterTableRowGroup
+          title="NSFW Bypass Options"
+          icon={getAssetIDByName("WarningIcon")}
+        >
           <FormSwitchRow
             label="KonoChan NSFW Bypass"
             subLabel="Allow NSFW KonoChan content in non-NSFW channels (USE WITH CAUTION)"
@@ -398,7 +438,8 @@ function HiddenSettingsPage() {
               if (v) {
                 alerts.showConfirmationAlert({
                   title: "⚠️ NSFW Bypass Warning",
-                  content: "Enabling this allows NSFW content from KonoChan to be sent in any channel, including non-NSFW channels. This could violate server rules or Discord ToS. Use responsibly!",
+                  content:
+                    "Enabling this allows NSFW content from KonoChan to be sent in any channel, including non-NSFW channels. This could violate server rules or Discord ToS. Use responsibly!",
                   confirmText: "I Understand",
                   cancelText: "Cancel",
                   onConfirm: () => {
@@ -417,7 +458,10 @@ function HiddenSettingsPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Hidden Settings Control" icon={getAssetIDByName("SettingsIcon")}>
+        <BetterTableRowGroup
+          title="Hidden Settings Control"
+          icon={getAssetIDByName("SettingsIcon")}
+        >
           <FormSwitchRow
             label="Keep Hidden Settings Visible"
             subLabel="Keep this section visible even when navigating away"
@@ -434,16 +478,20 @@ function HiddenSettingsPage() {
             onPress={() => {
               alerts.showConfirmationAlert({
                 title: "Reset Hidden Settings",
-                content: "This will hide the hidden settings section and disable all hidden commands. Are you sure?",
+                content:
+                  "This will hide the hidden settings section and disable all hidden commands. Are you sure?",
                 confirmText: "Reset",
                 onConfirm: () => {
                   storage.hiddenSettings.enabled = false;
                   storage.hiddenSettings.visible = false;
                   storage.hiddenSettings.konochanBypassNsfw = false;
                   storage.enabledCommands.lovefemboys = false;
-                  storage.enabledCommands.nekoslife = false; // Reset nekoslife too
+
                   storage.pendingRestart = true;
-                  showToast("Hidden settings reset", getAssetIDByName("CheckmarkIcon"));
+                  showToast(
+                    "Hidden settings reset",
+                    getAssetIDByName("CheckmarkIcon"),
+                  );
                 },
                 cancelText: "Cancel",
               });
@@ -461,13 +509,20 @@ function FactsSettingsPage() {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}
+    >
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="Fact Display Settings" icon={getAssetIDByName("SettingsIcon")}>
+        <BetterTableRowGroup
+          title="Fact Display Settings"
+          icon={getAssetIDByName("SettingsIcon")}
+        >
           <FormSwitchRow
             label="Send as Reply"
             subLabel="Send facts as a reply to the command message"
-            leading={<FormRow.Icon source={getAssetIDByName("ArrowAngleLeftUpIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("ArrowAngleLeftUpIcon")} />
+            }
             value={storage.factSettings.sendAsReply}
             onValueChange={(v) => {
               storage.factSettings.sendAsReply = v;
@@ -484,11 +539,16 @@ function FactsSettingsPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Available Fact Commands" icon={getAssetIDByName("BookmarkIcon")}>
+        <BetterTableRowGroup
+          title="Available Fact Commands"
+          icon={getAssetIDByName("BookmarkIcon")}
+        >
           <FormSwitchRow
             label="/catfact"
             subLabel="Get random cat facts"
-            leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />
+            }
             value={storage.enabledCommands.catfact}
             onValueChange={(v) => {
               storage.enabledCommands.catfact = v;
@@ -499,7 +559,9 @@ function FactsSettingsPage() {
           <FormSwitchRow
             label="/dogfact"
             subLabel="Get random dog facts"
-            leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />
+            }
             value={storage.enabledCommands.dogfact}
             onValueChange={(v) => {
               storage.enabledCommands.dogfact = v;
@@ -510,7 +572,9 @@ function FactsSettingsPage() {
           <FormSwitchRow
             label="/useless"
             subLabel="Get random useless facts"
-            leading={<FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("BookCheckIcon")} />
+            }
             value={storage.enabledCommands.useless}
             onValueChange={(v) => {
               storage.enabledCommands.useless = v;
@@ -528,7 +592,7 @@ function FactsSettingsPage() {
 function GaryAPIPage() {
   useProxy(storage);
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
-  
+
   const styles = stylesheet.createThemedStyleSheet({
     container: {
       flex: 1,
@@ -553,11 +617,16 @@ function GaryAPIPage() {
   return (
     <ScrollView style={styles.container}>
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="Gary Command Settings" icon={getAssetIDByName("SettingsIcon")}>
+        <BetterTableRowGroup
+          title="Gary Command Settings"
+          icon={getAssetIDByName("SettingsIcon")}
+        >
           <FormSwitchRow
             label="/gary"
             subLabel="Send random Gary images to channel"
-            leading={<FormRow.Icon source={getAssetIDByName("AttachmentIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("AttachmentIcon")} />
+            }
             value={storage.enabledCommands.gary}
             onValueChange={(v) => {
               storage.enabledCommands.gary = v;
@@ -567,13 +636,20 @@ function GaryAPIPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Image Source Selection" icon={getAssetIDByName("DownloadIcon")} padding={true}>
+        <BetterTableRowGroup
+          title="Image Source Selection"
+          icon={getAssetIDByName("DownloadIcon")}
+          padding={true}
+        >
           <RN.Text style={styles.infoText}>
             Choose which API the /gary command should use to fetch images.
           </RN.Text>
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="API Options" icon={getAssetIDByName("CloudIcon")}>
+        <BetterTableRowGroup
+          title="API Options"
+          icon={getAssetIDByName("CloudIcon")}
+        >
           <FormSwitchRow
             label="Gary API"
             subLabel="Original Gary the cat images from api.garythe.cat"
@@ -624,14 +700,22 @@ function GaryAPIPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Current Selection" icon={getAssetIDByName("CheckmarkIcon")} padding={true}>
+        <BetterTableRowGroup
+          title="Current Selection"
+          icon={getAssetIDByName("CheckmarkIcon")}
+          padding={true}
+        >
           <RN.Text style={styles.currentText}>
-            Currently using: {
-              currentSource === "gary" ? "Gary API" :
-              currentSource === "catapi" ? "Cat API" :
-              currentSource === "minker" ? "Minker API" :
-              currentSource === "goober" ? "Goober API" : "Gary API"
-            }
+            Currently using:{" "}
+            {currentSource === "gary"
+              ? "Gary API"
+              : currentSource === "catapi"
+                ? "Cat API"
+                : currentSource === "minker"
+                  ? "Minker API"
+                  : currentSource === "goober"
+                    ? "Goober API"
+                    : "Gary API"}
           </RN.Text>
         </BetterTableRowGroup>
       </RN.View>
@@ -645,13 +729,20 @@ function ListSettingsPage() {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}
+    >
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="List Display Settings" icon={getAssetIDByName("SettingsIcon")}>
+        <BetterTableRowGroup
+          title="List Display Settings"
+          icon={getAssetIDByName("SettingsIcon")}
+        >
           <FormSwitchRow
             label="Always Send Detailed Plugin List"
             subLabel="Always use detailed mode when listing plugins"
-            leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />
+            }
             value={storage.listSettings.pluginListAlwaysDetailed}
             onValueChange={(v) => {
               storage.listSettings.pluginListAlwaysDetailed = v;
@@ -660,7 +751,9 @@ function ListSettingsPage() {
           <FormSwitchRow
             label="Always Send Detailed Theme List"
             subLabel="Always use detailed mode when listing themes"
-            leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />
+            }
             value={storage.listSettings.themeListAlwaysDetailed}
             onValueChange={(v) => {
               storage.listSettings.themeListAlwaysDetailed = v;
@@ -668,11 +761,16 @@ function ListSettingsPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="Available List Commands" icon={getAssetIDByName("ListViewIcon")}>
+        <BetterTableRowGroup
+          title="Available List Commands"
+          icon={getAssetIDByName("ListViewIcon")}
+        >
           <FormSwitchRow
             label="/plugin-list"
             subLabel="List all installed plugins"
-            leading={<FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("PuzzlePieceIcon")} />
+            }
             value={storage.enabledCommands.pluginList}
             onValueChange={(v) => {
               storage.enabledCommands.pluginList = v;
@@ -683,7 +781,9 @@ function ListSettingsPage() {
           <FormSwitchRow
             label="/theme-list"
             subLabel="List all installed themes"
-            leading={<FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("PaintPaletteIcon")} />
+            }
             value={storage.enabledCommands.themeList}
             onValueChange={(v) => {
               storage.enabledCommands.themeList = v;
@@ -703,13 +803,20 @@ function ImageSettingsPage() {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}
+    >
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="Image Commands" icon={getAssetIDByName("ImageIcon")}>
+        <BetterTableRowGroup
+          title="Image Commands"
+          icon={getAssetIDByName("ImageIcon")}
+        >
           <FormSwitchRow
             label="/petpet"
             subLabel="Create pet-pet GIF of a user"
-            leading={<FormRow.Icon source={getAssetIDByName("HandRequestSpeakIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("HandRequestSpeakIcon")} />
+            }
             value={storage.enabledCommands.petpet}
             onValueChange={(v) => {
               storage.enabledCommands.petpet = v;
@@ -719,7 +826,10 @@ function ImageSettingsPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="KonoChan Commands" icon={getAssetIDByName("ImageIcon")}>
+        <BetterTableRowGroup
+          title="KonoChan Commands"
+          icon={getAssetIDByName("ImageIcon")}
+        >
           <FormSwitchRow
             label="/konoself"
             subLabel="Get random image from KonoChan (private)"
@@ -763,13 +873,20 @@ function SpotifySettingsPage() {
   });
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}
+    >
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="Spotify Commands" icon={getAssetIDByName("SpotifyNeutralIcon")}>
+        <BetterTableRowGroup
+          title="Spotify Commands"
+          icon={getAssetIDByName("SpotifyNeutralIcon")}
+        >
           <FormSwitchRow
             label="/spotify track"
             subLabel="Share your current Spotify track"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />
+            }
             value={storage.enabledCommands.spotifyTrack}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyTrack = v;
@@ -780,7 +897,9 @@ function SpotifySettingsPage() {
           <FormSwitchRow
             label="/spotify album"
             subLabel="Share your current track's album"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />
+            }
             value={storage.enabledCommands.spotifyAlbum}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyAlbum = v;
@@ -791,7 +910,9 @@ function SpotifySettingsPage() {
           <FormSwitchRow
             label="/spotify artists"
             subLabel="Share your current track's artists"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />
+            }
             value={storage.enabledCommands.spotifyArtists}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyArtists = v;
@@ -802,7 +923,9 @@ function SpotifySettingsPage() {
           <FormSwitchRow
             label="/spotify cover"
             subLabel="Share your current track's cover"
-            leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
+            leading={
+              <FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />
+            }
             value={storage.enabledCommands.spotifyCover}
             onValueChange={(v) => {
               storage.enabledCommands.spotifyCover = v;
@@ -812,9 +935,15 @@ function SpotifySettingsPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="About Spotify Commands" icon={getAssetIDByName("InfoIcon")} padding={true}>
+        <BetterTableRowGroup
+          title="About Spotify Commands"
+          icon={getAssetIDByName("InfoIcon")}
+          padding={true}
+        >
           <RN.Text style={styles.infoText}>
-            These commands allow you to share your current Spotify activity in Discord. Make sure you have Spotify connected to Discord for these commands to work properly.
+            These commands allow you to share your current Spotify activity in
+            Discord. Make sure you have Spotify connected to Discord for these
+            commands to work properly.
           </RN.Text>
         </BetterTableRowGroup>
       </RN.View>
@@ -828,9 +957,14 @@ function OtherSettingsPage() {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}
+    >
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="Message Commands" icon={getAssetIDByName("ChatIcon")}>
+        <BetterTableRowGroup
+          title="Message Commands"
+          icon={getAssetIDByName("ChatIcon")}
+        >
           <FormSwitchRow
             label="/firstmessage"
             subLabel="Get the first message in a channel"
@@ -844,7 +978,10 @@ function OtherSettingsPage() {
           />
         </BetterTableRowGroup>
 
-        <BetterTableRowGroup title="System Commands" icon={getAssetIDByName("SettingsIcon")}>
+        <BetterTableRowGroup
+          title="System Commands"
+          icon={getAssetIDByName("SettingsIcon")}
+        >
           <FormSwitchRow
             label="/sysinfo"
             subLabel="Display system information"
@@ -857,26 +994,72 @@ function OtherSettingsPage() {
             }}
           />
         </BetterTableRowGroup>
-
-        <BetterTableRowGroup title="Network Commands" icon={getAssetIDByName("GlobeEarthIcon")}>
-          <FormSwitchRow
-            label="/ip"
-            subLabel="IP address and domain lookup"
-            leading={<FormRow.Icon source={getAssetIDByName("GlobeEarthIcon")} />}
-            value={storage.enabledCommands.ip}
-            onValueChange={(v) => {
-              storage.enabledCommands.ip = v;
-              storage.pendingRestart = true;
-              forceUpdate();
-            }}
-          />
-        </BetterTableRowGroup>
       </RN.View>
     </ScrollView>
   );
 }
 
 // Credits Page
+function AliucordPage() {
+  useProxy(storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+  const navigation = NavigationNative.useNavigation();
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}
+    >
+      <BetterTableRowGroup
+        title="IP Commands"
+        icon={getAssetIDByName("GlobeEarthIcon")}
+      >
+        <FormSwitchRow
+          label="/ip"
+          subLabel="Get your current IP address"
+          leading={<FormRow.Icon source={getAssetIDByName("GlobeEarthIcon")} />}
+          value={storage.enabledCommands.ip}
+          onValueChange={(v) => {
+            storage.enabledCommands.ip = v;
+            storage.pendingRestart = true;
+            forceUpdate();
+          }}
+        />
+      </BetterTableRowGroup>
+
+      <BetterTableRowGroup
+        title="NekosLife Commands"
+        icon={getAssetIDByName("ImageIcon")}
+      >
+        <FormSwitchRow
+          label="/nekoslife"
+          subLabel="Get images/gifs from nekos.life"
+          leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
+          value={storage.enabledCommands.nekoslife}
+          onValueChange={(v) => {
+            storage.enabledCommands.nekoslife = v;
+            storage.pendingRestart = true;
+            forceUpdate();
+          }}
+        />
+        <FormRow
+          label="View Categories"
+          subLabel="See all 16 available categories"
+          leading={<FormRow.Icon source={getAssetIDByName("BookOpenIcon")} />}
+          trailing={<FormRow.Arrow />}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "NekosLife Categories",
+              render: NekosLifeCategoriesPage,
+            })
+          }
+        />
+      </BetterTableRowGroup>
+
+      <RN.View style={{ height: 32 }} />
+    </ScrollView>
+  );
+}
+
 function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
     container: {
@@ -941,59 +1124,59 @@ function CreditsPage() {
   });
 
   const credits = [
-    { 
-      command: "Facts Commands", 
-      author: "jdev082", 
+    {
+      command: "Facts Commands",
+      author: "jdev082",
       avatar: "https://github.com/jdev082.png",
-      github: "https://github.com/jdev082"
+      github: "https://github.com/jdev082",
     },
-    { 
-      command: "List Commands", 
-      author: "Kitomanari", 
+    {
+      command: "List Commands",
+      author: "Kitomanari",
       avatar: "https://github.com/Kitosight.png",
-      github: "https://github.com/Kitosight"
+      github: "https://github.com/Kitosight",
     },
-    { 
-      command: "PetPet", 
-      author: "wolfieeee", 
+    {
+      command: "PetPet",
+      author: "wolfieeee",
       avatar: "https://github.com/WolfPlugs.png",
-      github: "https://github.com/WolfPlugs"
+      github: "https://github.com/WolfPlugs",
     },
-    { 
-      command: "KonoChan Commands", 
-      author: "btmc727 & Rico040", 
+    {
+      command: "KonoChan Commands",
+      author: "btmc727 & Rico040",
       avatar: "https://github.com/OTKUSteyler.png",
-      github: "https://github.com/OTKUSteyler"
+      github: "https://github.com/OTKUSteyler",
     },
-    { 
-      command: "FirstMessage Command", 
-      author: "sapphire", 
+    {
+      command: "FirstMessage Command",
+      author: "sapphire",
       avatar: "https://github.com/aeongdesu.png",
-      github: "https://github.com/aeongdesu"
+      github: "https://github.com/aeongdesu",
     },
-    { 
-      command: "Sysinfo Command", 
-      author: "mugman", 
+    {
+      command: "Sysinfo Command",
+      author: "mugman",
       avatar: "https://github.com/mugman174.png",
-      github: "https://github.com/mugman174"
+      github: "https://github.com/mugman174",
     },
-    { 
-      command: "Spotify Commands", 
-      author: "Kitomanari", 
+    {
+      command: "Spotify Commands",
+      author: "Kitomanari",
       avatar: "https://github.com/Kitosight.png",
-      github: "https://github.com/Kitosight"
+      github: "https://github.com/Kitosight",
     },
-    { 
-      command: "Gary Command", 
-      author: "Zach Orange", 
-      avatar: "https://github.com/Zach11111.png",
-      github: "https://github.com/Zach11111"
+    {
+      command: "Gary Command",
+      author: "Zach Orange",
+      avatar: "https://github.com/IAmGaryTheCat.png",
+      github: "https://github.com/IAmGaryTheCat",
     },
-    { 
-      command: "IP & NekosLife Commands", 
-      author: "scruzism", 
+    {
+      command: "IP & NekosLife Commands",
+      author: "scruzism",
       avatar: "https://github.com/scrazzz.png",
-      github: "https://github.com/scrazzz"
+      github: "https://github.com/scrazzz",
     },
   ];
 
@@ -1004,9 +1187,13 @@ function CreditsPage() {
   return (
     <ScrollView style={styles.container}>
       <RN.View style={{ paddingVertical: 16 }}>
-        <BetterTableRowGroup title="Plugin Authors" icon={getAssetIDByName("HeartIcon")} padding={true}>
+        <BetterTableRowGroup
+          title="Plugin Authors"
+          icon={getAssetIDByName("HeartIcon")}
+          padding={true}
+        >
           <RN.Text style={styles.infoText}>
-            Thanks to this developers for creating such a nice plugins!{'\n'}
+            Thanks to this developers for creating such a nice plugins!{"\n"}
             Tap on any developer to visit their GitHub profile.
           </RN.Text>
         </BetterTableRowGroup>
@@ -1016,24 +1203,30 @@ function CreditsPage() {
             key={index}
             style={styles.creditItem}
             onPress={() => handleProfilePress(credit.github)}
-            android_ripple={{ color: semanticColors.ANDROID_RIPPLE, radius: 200 }}
+            android_ripple={{
+              color: semanticColors.ANDROID_RIPPLE,
+              radius: 200,
+            }}
           >
-            <RN.Image
-              source={{ uri: credit.avatar }}
-              style={styles.avatar}
-            />
+            <RN.Image source={{ uri: credit.avatar }} style={styles.avatar} />
             <RN.View style={styles.textContainer}>
               <RN.Text style={styles.commandText}>{credit.command}</RN.Text>
               <RN.Text style={styles.authorText}>by {credit.author}</RN.Text>
-              <RN.Text style={styles.linkText}>{credit.github.replace('https://github.com/', '@')}</RN.Text>
+              <RN.Text style={styles.linkText}>
+                {credit.github.replace("https://github.com/", "@")}
+              </RN.Text>
             </RN.View>
           </RN.Pressable>
         ))}
 
-        <BetterTableRowGroup title="About" icon={getAssetIDByName("InfoIcon")} padding={true}>
+        <BetterTableRowGroup
+          title="About"
+          icon={getAssetIDByName("InfoIcon")}
+          padding={true}
+        >
           <RN.Text style={styles.versionText}>
-            Commands Plugin Collection{'\n'}
-            Version 1.1.0
+            Commands Plugin Collection{"\n"}
+            Version 1.2.0
           </RN.Text>
         </BetterTableRowGroup>
       </RN.View>
@@ -1063,100 +1256,154 @@ export default function Settings() {
   }, []);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: semanticColors.BACKGROUND_PRIMARY }}
+    >
       <Header onHiddenUnlock={forceUpdate} />
 
-      <BetterTableRowGroup title="Command Categories" icon={getAssetIDByName("ChannelListIcon")}>
+      <BetterTableRowGroup
+        title="Command Categories"
+        icon={getAssetIDByName("ChannelListIcon")}
+      >
         <FormRow
           label="Facts Commands"
           subLabel="Cat facts, dog facts, and useless facts"
           leading={<FormRow.Icon source={getAssetIDByName("BookmarkIcon")} />}
           trailing={<FormRow.Arrow />}
-          onPress={() => navigation.push("VendettaCustomPage", {
-            title: "Facts Commands",
-            render: FactsSettingsPage,
-          })}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "Facts Commands",
+              render: FactsSettingsPage,
+            })
+          }
         />
         <FormRow
           label="List Commands"
           subLabel="Plugin lists and theme lists"
           leading={<FormRow.Icon source={getAssetIDByName("ListViewIcon")} />}
           trailing={<FormRow.Arrow />}
-          onPress={() => navigation.push("VendettaCustomPage", {
-            title: "List Commands",
-            render: ListSettingsPage,
-          })}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "List Commands",
+              render: ListSettingsPage,
+            })
+          }
         />
         <FormRow
           label="Image Commands"
           subLabel="PetPet, KonoChan, and image utilities"
           leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
           trailing={<FormRow.Arrow />}
-          onPress={() => navigation.push("VendettaCustomPage", {
-            title: "Image Commands",
-            render: ImageSettingsPage,
-          })}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "Image Commands",
+              render: ImageSettingsPage,
+            })
+          }
         />
         <FormRow
           label="Gary Commands"
-          subLabel={`Gary images - Current: ${storage.garySettings.imageSource === "gary" ? "Gary API" : 
-            storage.garySettings.imageSource === "catapi" ? "Cat API" : 
-            storage.garySettings.imageSource === "minker" ? "Minker API" : 
-            storage.garySettings.imageSource === "goober" ? "Goober API" : "Gary API"}`}
+          subLabel={`Gary images - Current: ${
+            storage.garySettings.imageSource === "gary"
+              ? "Gary API"
+              : storage.garySettings.imageSource === "catapi"
+                ? "Cat API"
+                : storage.garySettings.imageSource === "minker"
+                  ? "Minker API"
+                  : storage.garySettings.imageSource === "goober"
+                    ? "Goober API"
+                    : "Gary API"
+          }`}
           leading={<FormRow.Icon source={getAssetIDByName("CameraIcon")} />}
           trailing={<FormRow.Arrow />}
-          onPress={() => navigation.push("VendettaCustomPage", {
-            title: "Gary Commands",
-            render: GaryAPIPage,
-          })}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "Gary Commands",
+              render: GaryAPIPage,
+            })
+          }
         />
         <FormRow
           label="Spotify Commands"
           subLabel="Share your Spotify activity"
-          leading={<FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />}
+          leading={
+            <FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />
+          }
           trailing={<FormRow.Arrow />}
-          onPress={() => navigation.push("VendettaCustomPage", {
-            title: "Spotify Commands",
-            render: SpotifySettingsPage,
-          })}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "Spotify Commands",
+              render: SpotifySettingsPage,
+            })
+          }
+        />
+        <FormRow
+          label="Aliucord Commands"
+          subLabel="Commands from Aliucord"
+          leading={
+            <FormRow.Icon
+              source={{
+                uri: "https://avatars.githubusercontent.com/u/78881422?s=200&v=4",
+              }}
+            />
+          }
+          trailing={<FormRow.Arrow />}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "Aliucord",
+              render: AliucordPage,
+            })
+          }
         />
         <FormRow
           label="Other Commands"
-          subLabel="System info, network tools, and miscellaneous"
-          leading={<FormRow.Icon source={getAssetIDByName("MoreHorizontalIcon")} />}
+          subLabel="Utility and system commands"
+          leading={<FormRow.Icon source={getAssetIDByName("WrenchIcon")} />}
           trailing={<FormRow.Arrow />}
-          onPress={() => navigation.push("VendettaCustomPage", {
-            title: "Other Commands",
-            render: OtherSettingsPage,
-          })}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "Other Commands",
+              render: OtherSettingsPage,
+            })
+          }
         />
       </BetterTableRowGroup>
 
-      {storage.hiddenSettings?.enabled && storage.hiddenSettings?.visible && (
-        <BetterTableRowGroup title="🔓 Hidden Settings" icon={getAssetIDByName("EyeIcon")}>
+      {storage.hiddenSettings?.visible && (
+        <BetterTableRowGroup
+          title="🔓 Hidden Settings"
+          icon={getAssetIDByName("EyeIcon")}
+        >
           <FormRow
             label="Hidden Commands"
-            subLabel="Experimental and mature content commands"
-            leading={<FormRow.Icon source={getAssetIDByName("WarningIcon")} />}
+            subLabel="Access to experimental and NSFW commands"
+            leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
             trailing={<FormRow.Arrow />}
-            onPress={() => navigation.push("VendettaCustomPage", {
-              title: "Hidden Settings",
-              render: HiddenSettingsPage,
-            })}
+            onPress={() =>
+              navigation.push("VendettaCustomPage", {
+                title: "Hidden Settings",
+                render: HiddenSettingsPage,
+              })
+            }
           />
         </BetterTableRowGroup>
       )}
 
-      <BetterTableRowGroup title="More Options" icon={getAssetIDByName("SettingsIcon")}>
+      <BetterTableRowGroup
+        title="🏷️ Other"
+        icon={getAssetIDByName("InformationIcon")}
+      >
         <FormRow
           label="Credits"
           subLabel="View original authors of the plugins"
           leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
           trailing={<FormRow.Arrow />}
-          onPress={() => navigation.push("VendettaCustomPage", {
-            title: "Credits",
-            render: CreditsPage,
-          })}
+          onPress={() =>
+            navigation.push("VendettaCustomPage", {
+              title: "Credits",
+              render: CreditsPage,
+            })
+          }
         />
       </BetterTableRowGroup>
 

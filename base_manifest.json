@@ -1,13 +1,12 @@
 {
   "authors": [
     {
-      "name": "pylix",
-      "id": "492949202121261067"
-    },
-    {
       "name": "kmmiio99o",
       "id": "879393496627306587"
     }
   ],
-  "main": "src/index.ts"
+  "main": "index.js",
+  "vendetta": {
+    "icon": "ic_application_command_24px"
+  }
 }

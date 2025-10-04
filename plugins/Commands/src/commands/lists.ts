@@ -38,16 +38,16 @@ const STATUS = {
     NOT_SELECTED: "❌"
 };
 
-const MessageActions = findByProps('sendMessage', 'receiveMessage');
-const Clyde = findByProps('sendBotMessage');
+const MessageActions = findByProps("sendMessage", "receiveMessage");
+const Clyde = findByProps("sendBotMessage");
 
 const maxMessageLength = (() => {
     try {
-        return findByStoreName('UserStore')
+        return findByStoreName("UserStore")
             .getCurrentUser()
             ?.premiumType === 2
-                ? 4000
-                : 2000;
+            ? 4000
+            : 2000;
     } catch (e) {
         return 2000; // fallback
     }
@@ -75,8 +75,8 @@ const addonAuthors = (authors: any) => {
     if (authors.length === 0) return "Unknown";
     
     return authors
-        .filter(author => author && (typeof author === 'string' || (typeof author === 'object' && author.name)))
-        .map(author => typeof author === 'string' ? author : (author.name || "Unknown"))
+        .filter(author => author && (typeof author === "string" || (typeof author === "object" && author.name)))
+        .map(author => typeof author === "string" ? author : (author.name || "Unknown"))
         .join(JOINERS.SEMICOL) || "Unknown";
 };
 
@@ -94,7 +94,7 @@ const sendList = async (channelID: string, list: string[]) => {
     }, void 0, { nonce: fixNonce });
 };
 
-const baseListHeader = (type: 'Plugin' | 'Theme', length: number) => [
+const baseListHeader = (type: "Plugin" | "Theme", length: number) => [
     `**My ${type} List | ${length} ${type}s**`,
     EMPTY
 ];
@@ -105,7 +105,7 @@ export async function themeList(args: any[], ctx: any) {
         const alwaysDetailed = storage.themeListAlwaysDetailed ?? false;
 
         // Ensure themes is valid
-        if (!themes || typeof themes !== 'object') {
+        if (!themes || typeof themes !== "object") {
             const channelID: string = ctx.channel.id;
             Clyde.sendBotMessage(channelID, "No themes found or themes not loaded yet.");
             return { type: 4 };
@@ -115,11 +115,11 @@ export async function themeList(args: any[], ctx: any) {
         
         const channelID: string = ctx.channel.id;
 
-        const themeList = baseListHeader('Theme', Object.keys(themes).length);
+        const themeList = baseListHeader("Theme", Object.keys(themes).length);
 
         if (objectValues.length) {
             for (const theme of objectValues) {
-                if (!theme || typeof theme !== 'object') continue;
+                if (!theme || typeof theme !== "object") continue;
                 
                 const { selected, data, id } = theme;
                 
@@ -161,7 +161,7 @@ export async function themeList(args: any[], ctx: any) {
             await sendList(channelID, themeList);
         }
     } catch (error) {
-        console.error('[ThemeList] Error:', error);
+        console.error("[ThemeList] Error:", error);
         return { type: 4 };
     }
 }
@@ -174,15 +174,15 @@ export async function pluginList(args: any[], ctx: any) {
         const channelID: string = ctx.channel.id;
 
         // Ensure plugins is valid
-        if (!plugins || typeof plugins !== 'object') {
+        if (!plugins || typeof plugins !== "object") {
             Clyde.sendBotMessage(channelID, "No plugins found or plugins not loaded yet.");
             return { type: 4 };
         }
 
-        const pluginList = baseListHeader('Plugin', Object.keys(plugins).length);
+        const pluginList = baseListHeader("Plugin", Object.keys(plugins).length);
 
         for (const plugin of Object.values(plugins)) {
-            if (!plugin || typeof plugin !== 'object') continue;
+            if (!plugin || typeof plugin !== "object") continue;
             
             const { enabled, manifest, id } = plugin;
             
@@ -222,50 +222,50 @@ export async function pluginList(args: any[], ctx: any) {
             await sendList(channelID, pluginList);
         }
     } catch (error) {
-        console.error('[PluginList] Error:', error);
+        console.error("[PluginList] Error:", error);
         return { type: 4 };
     }
 }
 
 // Export commands for your existing structure
 export const pluginListCommand = {
-  name: "plugin-list",
-  displayName: "plugin list", 
-  description: "Send your plugin list to the current channel",
-  displayDescription: "Send your plugin list to the current channel",
-  options: [
-    {
-      name: "detailed",
-      description: "Whether to send a list with detailed information.",
-      type: 5,
-      required: false,
-      displayName: "detailed",
-      displayDescription: "Whether to send a list with detailed information.",
-    },
-  ],
-  execute: pluginList,
-  applicationId: "-1",
-  inputType: 1,
-  type: 1,
+    name: "plugin-list",
+    displayName: "plugin list", 
+    description: "Send your plugin list to the current channel",
+    displayDescription: "Send your plugin list to the current channel",
+    options: [
+        {
+            name: "detailed",
+            description: "Whether to send a list with detailed information.",
+            type: 5,
+            required: false,
+            displayName: "detailed",
+            displayDescription: "Whether to send a list with detailed information.",
+        },
+    ],
+    execute: pluginList,
+    applicationId: "-1",
+    inputType: 1,
+    type: 1,
 };
 
 export const themeListCommand = {
-  name: "theme-list",
-  displayName: "theme list",
-  description: "Send your theme list to the current channel", 
-  displayDescription: "Send your theme list to the current channel",
-  options: [
-    {
-      name: "detailed",
-      description: "Whether to send a list with detailed information.",
-      type: 5,
-      required: false,
-      displayName: "detailed",
-      displayDescription: "Whether to send a list with detailed information.",
-    },
-  ],
-  execute: themeList,
-  applicationId: "-1", 
-  inputType: 1,
-  type: 1,
+    name: "theme-list",
+    displayName: "theme list",
+    description: "Send your theme list to the current channel", 
+    displayDescription: "Send your theme list to the current channel",
+    options: [
+        {
+            name: "detailed",
+            description: "Whether to send a list with detailed information.",
+            type: 5,
+            required: false,
+            displayName: "detailed",
+            displayDescription: "Whether to send a list with detailed information.",
+        },
+    ],
+    execute: themeList,
+    applicationId: "-1", 
+    inputType: 1,
+    type: 1,
 };

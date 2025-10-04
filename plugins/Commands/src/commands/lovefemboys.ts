@@ -1,274 +1,173 @@
 import { findByProps } from "@vendetta/metro";
-import { showToast } from "@vendetta/ui/toasts";
-import { getAssetIDByName } from "@vendetta/ui/assets";
+import { storage } from "@vendetta/plugin";
 import { alerts } from "@vendetta/ui";
 
-const MessageActions = findByProps("sendMessage");
+const MessageActions = findByProps("sendMessage", "receiveMessage");
+const Channels = findByProps("getLastSelectedChannelId");
+const BotMessage = findByProps("createBotMessage");
+const Avatars = findByProps("BOT_AVATARS");
 
-interface RedditPost {
-  kind: string;
-  data: {
-    title: string;
-    url: string;
-    is_video: boolean;
-    over_18: boolean;
-    thumbnail: string;
-    preview?: {
-      images: Array<{
-        source: {
-          url: string;
-          width: number;
-          height: number;
-        };
-        resolutions: Array<{
-          url: string;
-          width: number;
-          height: number;
-        }>;
-      }>;
-    };
-    secure_media?: {
-      oembed?: {
-        thumbnail_url: string;
-        type: string;
-      };
-      reddit_video?: {
-        fallback_url: string;
-        width: number;
-        height: number;
-      };
-    };
-    media?: {
-      reddit_video?: {
-        fallback_url: string;
-        width: number;
-        height: number;
-      };
-    };
-    media_embed?: {
-      content: string;
-    };
-    url_overridden_by_dest?: string;
-    domain: string;
-    post_hint?: string;
-    selftext: string;
-  };
-}
-
-interface RedditResponse {
-  kind: string;
-  data: {
-    children: RedditPost[];
-    after: string;
-    dist: number;
-  };
-}
-
-function isValidMediaUrl(url: string): boolean {
-  if (!url) return false;
-  
-  const lowerUrl = url.toLowerCase();
-  
-  // Check for image/video/gif extensions
-  const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.webm', '.mov'];
-  if (mediaExtensions.some(ext => lowerUrl.includes(ext))) {
-    return true;
+function sendReply(channelID, content, embed) {
+  const channel = channelID ?? Channels?.getChannelId?.();
+  const msg = BotMessage.createBotMessage({
+    channelId: channel,
+    content: "",
+    embeds: embed,
+  });
+  msg.author.username = "Astolfo";
+  msg.author.avatar = "Astolfo";
+  Avatars.BOT_AVATARS.Astolfo =
+    "https://i.pinimg.com/736x/50/77/1f/50771f45b1c015cfbb8b0853ba7b8521.jpg";
+  if (typeof content === "string") {
+    msg.content = content;
+  } else {
+    Object.assign(msg, content);
   }
-  
-  // Known media hosting domains (including video/gif hosts)
-  const mediaHosts = [
-    'i.redd.it',
-    'i.imgur.com',
-    'preview.redd.it',
-    'v.redd.it',
-    'redgifs.com',
-    'gfycat.com',
-    'imgur.com'
-  ];
-  
-  return mediaHosts.some(host => lowerUrl.includes(host));
-}
-
-function extractMediaUrl(post: RedditPost): string | null {
-  const postData = post.data;
-  
-  // Try Reddit video first
-  if (postData.secure_media?.reddit_video?.fallback_url) {
-    return postData.secure_media.reddit_video.fallback_url;
-  }
-  
-  if (postData.media?.reddit_video?.fallback_url) {
-    return postData.media.reddit_video.fallback_url;
-  }
-  
-  // Try the main URL
-  const mainUrl = postData.url;
-  if (isValidMediaUrl(mainUrl)) {
-    return mainUrl;
-  }
-  
-  // Try preview images
-  if (postData.preview?.images?.[0]) {
-    const previewImage = postData.preview.images[0];
-    
-    // Try source image first (highest quality)
-    if (previewImage.source?.url) {
-      const sourceUrl = previewImage.source.url.replace(/&amp;/g, '&');
-      if (isValidMediaUrl(sourceUrl)) {
-        return sourceUrl;
-      }
-    }
-    
-    // Try highest resolution preview
-    if (previewImage.resolutions?.length > 0) {
-      const highestRes = previewImage.resolutions[previewImage.resolutions.length - 1];
-      if (highestRes?.url) {
-        const resUrl = highestRes.url.replace(/&amp;/g, '&');
-        if (isValidMediaUrl(resUrl)) {
-          return resUrl;
-        }
-      }
-    }
-  }
-  
-  // Try secure_media oembed thumbnail
-  if (postData.secure_media?.oembed?.thumbnail_url) {
-    const thumbUrl = postData.secure_media.oembed.thumbnail_url;
-    if (isValidMediaUrl(thumbUrl)) {
-      return thumbUrl;
-    }
-  }
-  
-  // Try regular thumbnail as last resort
-  if (postData.thumbnail && 
-      postData.thumbnail !== 'self' && 
-      postData.thumbnail !== 'default' && 
-      postData.thumbnail !== 'nsfw' &&
-      postData.thumbnail.startsWith('http')) {
-    if (isValidMediaUrl(postData.thumbnail)) {
-      return postData.thumbnail;
-    }
-  }
-  
-  return null;
-}
-
-async function getFemboyMedia(): Promise<string | null> {
-  try {
-    console.log(`[LoveFemboys] Fetching random media`);
-    
-    const response = await fetch('https://reddit.com/r/femboys.json?limit=100&raw_json=1');
-    if (!response.ok) {
-      console.log('[LoveFemboys] Failed to fetch from Reddit API:', response.status, response.statusText);
-      return null;
-    }
-
-    const data: RedditResponse = await response.json();
-    console.log(`[LoveFemboys] Fetched ${data.data.children.length} posts`);
-    
-    const validPosts = [];
-    
-    for (const post of data.data.children) {
-      const postData = post.data;
-      
-      // Skip text-only posts
-      if (postData.selftext && !postData.url) {
-        continue;
-      }
-      
-      // Try to extract media URL
-      const mediaUrl = extractMediaUrl(post);
-      if (mediaUrl) {
-        console.log(`[LoveFemboys] Found valid media: ${mediaUrl}`);
-        validPosts.push(mediaUrl);
-      }
-    }
-
-    console.log(`[LoveFemboys] Found ${validPosts.length} valid media posts`);
-
-    if (validPosts.length === 0) {
-      console.log('[LoveFemboys] No suitable media found');
-      return null;
-    }
-
-    // Get random media
-    const randomUrl = validPosts[Math.floor(Math.random() * validPosts.length)];
-    console.log(`[LoveFemboys] Selected: ${randomUrl}`);
-    
-    return randomUrl;
-  } catch (error) {
-    console.error('[LoveFemboys] Error fetching media:', error);
-    return null;
-  }
+  MessageActions.receiveMessage(channel, msg);
 }
 
 export const lovefemboysCommand = {
   name: "lovefemboys",
   displayName: "lovefemboys",
-  description: "Get random femboy content from r/femboys",
-  displayDescription: "Get random femboy content from r/femboys",
+  description: "Get an image of a femboy",
+  displayDescription: "Get an image of a femboy",
   options: [
     {
-      name: "ephemeral",
-      displayName: "ephemeral", 
-      description: "Send as ephemeral message (only you can see)",
-      displayDescription: "Send as ephemeral message (only you can see)",
-      type: 5, // Boolean
+      name: "nsfw",
+      displayName: "nsfw",
+      description: "Get the result from r/femboys instead of r/femboy (NSFW)",
+      displayDescription:
+        "Get the result from r/femboys instead of r/femboy (NSFW)",
       required: false,
-    }
+      type: 5,
+    },
+    {
+      name: "sort",
+      displayName: "sort",
+      description: "Changes the way reddit sorts.",
+      displayDescription: "Changes the way reddit sorts",
+      required: false,
+      type: 3,
+    },
+    {
+      name: "silent",
+      displayName: "silent",
+      description: "Makes it so only you can see the message.",
+      displayDescription: "Makes it so only you can see the message.",
+      required: false,
+      type: 5,
+    },
   ],
-  execute: async (args: any, ctx: any) => {
-    try {
-      const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
-      
-      console.log(`[LoveFemboys] Command executed with ephemeral: ${isEphemeral}`);
-      
-      // Show NSFW warning popup before proceeding
-      const shouldProceed = await new Promise<boolean>((resolve) => {
-        alerts.showConfirmationAlert({
-          title: "⚠️ NSFW Content Warning",
-          content: "This command will send potentially NSFW (Not Safe For Work) content from r/femboys. Are you sure you want to continue?",
-          confirmText: "Yes, Continue",
-          onConfirm: () => resolve(true),
-          cancelText: "Cancel",
-          onCancel: () => resolve(false),
-        });
-      });
-
-      if (!shouldProceed) {
-        console.log(`[LoveFemboys] User cancelled the command`);
-        return { type: 4 }; // Just dismiss the command
-      }
-
-      const mediaUrl = await getFemboyMedia();
-
-      if (!mediaUrl) {
-        showToast("❌ Failed to fetch femboy content", getAssetIDByName("CircleXIcon"));
-        return { type: 4 };
-      }
-
-      if (isEphemeral) {
-        console.log(`[LoveFemboys] Sending ephemeral response`);
-        return {
-          type: 4,
-          data: {
-            content: mediaUrl,
-            flags: 64, // Ephemeral flag
-          },
-        };
-      } else {
-        console.log(`[LoveFemboys] Sending public message`);
-        const fixNonce = Date.now().toString();
-        MessageActions.sendMessage(ctx.channel.id, { content: mediaUrl }, void 0, {nonce: fixNonce});
-        return { type: 4 };
-      }
-    } catch (error) {
-      console.error('[LoveFemboys] Command error:', error);
-      showToast("❌ An error occurred while fetching content", getAssetIDByName("CircleXIcon"));
-      return { type: 4 };
-    }
-  },
   applicationId: "-1",
   inputType: 1,
   type: 1,
+  execute: async (args, ctx) => {
+    try {
+      // Some code taken from enmity gotfemboys plugin by spinfal & was modified with the help of meqativ
+      let nsfw = args.find((arg) => arg.name === "nsfw")?.value;
+      let sort = args.find((arg) => arg.name === "sort")?.value;
+      let silent = args.find((arg) => arg.name === "silent")?.value;
+
+      if (typeof sort === "undefined") sort = storage.sortdefs;
+      if (
+        !["best", "hot", "new", "rising", "top", "controversial"].includes(sort)
+      ) {
+        sendReply(
+          ctx.channel.id,
+          "Incorrect sorting type. Valid options are\n`best`, `hot`, `new`, `rising`, `top`, `controversial`.",
+          [],
+        );
+        return;
+      }
+
+      // Show NSFW warning popup only when nsfw option is selected
+      if (nsfw) {
+        const shouldProceed = await new Promise((resolve) => {
+          alerts.showConfirmationAlert({
+            title: "⚠️ NSFW Content Warning",
+            content:
+              "This command will send NSFW (Not Safe For Work) content from r/femboys. Are you sure you want to continue?",
+            confirmText: "Yes, Continue",
+            onConfirm: () => resolve(true),
+            cancelText: "Cancel",
+            onCancel: () => resolve(false),
+          });
+        });
+
+        if (!shouldProceed) {
+          return { type: 4 };
+        }
+      }
+
+      let response = await fetch(
+        `https://www.reddit.com/r/femboy/${sort}.json?limit=100`,
+      ).then((res) => res.json());
+
+      if (!ctx.channel.nsfw_ && nsfw && storage.nsfwwarn && !(silent ?? true)) {
+        sendReply(
+          ctx.channel.id,
+          "This channel is not marked as NSFW\n(You can disable this check in plugin settings)",
+          [],
+        );
+        return;
+      }
+
+      if (nsfw) {
+        response = await fetch(
+          `https://www.reddit.com/r/femboys/${sort}.json?limit=100`,
+        ).then((res) => res.json());
+      }
+
+      response =
+        response.data?.children?.[
+          Math.floor(Math.random() * response.data?.children?.length)
+        ]?.data;
+      let author = await fetch(
+        `https://www.reddit.com/u/${response?.author}/about.json`,
+      ).then((res) => res.json());
+
+      if (silent ?? true) {
+        sendReply(ctx.channel.id, "", [
+          {
+            type: "rich",
+            title: response?.title,
+            url: `https://reddit.com${response?.permalink}`,
+            author: {
+              name: `u/${response?.author} • r/${response?.subreddit}`,
+              proxy_icon_url: author?.data.icon_img.split("?")[0],
+              icon_url: author?.data.icon_img.split("?")[0],
+            },
+            image: {
+              proxy_url:
+                response?.url_overridden_by_dest?.replace(/.gifv$/g, ".gif") ??
+                response?.url.replace(/.gifv$/g, ".gif"),
+              url:
+                response?.url_overridden_by_dest?.replace(/.gifv$/g, ".gif") ??
+                response?.url?.replace(/.gifv$/g, ".gif"),
+              width: response?.preview?.images?.[0]?.source?.width,
+              height: response?.preview?.images?.[0]?.source?.height,
+            },
+            color: "0xf4b8e4",
+          },
+        ]);
+      } else {
+        const fixNonce = Date.now().toString();
+        MessageActions.sendMessage(
+          ctx.channel.id,
+          {
+            content: response?.url_overridden_by_dest ?? response?.url,
+          },
+          void 0,
+          { nonce: fixNonce },
+        );
+      }
+    } catch (err) {
+      console.error("[LoveFemboys] Error:", err);
+      sendReply(
+        ctx.channel.id,
+        "ERROR !!!!!!!!!!!! 😭😭😭 Check debug logs!! 🥺🥺🥺",
+        [],
+      );
+    }
+  },
 };
