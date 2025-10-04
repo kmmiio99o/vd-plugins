@@ -44,161 +44,161 @@ interface LastFMTrack {
 }
 
 class LastFMClient {
-  private static instance: LastFMClient;
-  private retryCount: number = 0;
-  private lastError: number = 0;
+    private static instance: LastFMClient;
+    private retryCount = 0;
+    private lastError = 0;
 
-  private constructor() {}
+    private constructor() {}
 
-  public static getInstance(): LastFMClient {
-    if (!LastFMClient.instance) {
-      LastFMClient.instance = new LastFMClient();
-    }
-    return LastFMClient.instance;
-  }
-
-  private validateSettings(): void {
-    if (!currentSettings.username) {
-      throw new Error("Last.fm username is not set");
-    }
-    if (!currentSettings.apiKey) {
-      throw new Error("Last.fm API key is not set");
-    }
-  }
-
-  private async handleError(error: LastFMError): Promise<never> {
-    this.lastError = error.error;
-
-    const errorMessages: { [key: number]: string } = {
-      2: "Invalid API key",
-      11: "Service temporarily unavailable",
-      16: "Service temporarily unavailable",
-      29: "Rate limit exceeded",
-    };
-
-    const message =
-      errorMessages[error.error] || error.message || "Unknown error";
-    showToast(`Last.fm Error: ${message}`, getAssetIDByName("Small"));
-
-    throw new Error(`Last.fm API Error ${error.error}: ${message}`);
-  }
-
-  private async makeRequest(
-    params: Record<string, string>,
-  ): Promise<LastFMResponse> {
-    const queryParams = new URLSearchParams({
-      ...params,
-      api_key: currentSettings.apiKey,
-      format: "json",
-    }).toString();
-
-    const response = await fetch(
-      `${Constants.LFM_API_BASE_URL}?${queryParams}`,
-    );
-    const data: LastFMResponse = await response.json();
-
-    if (!response.ok || data.error) {
-      await this.handleError(data as LastFMError);
-    }
-
-    return data;
-  }
-
-  public async fetchLatestScrobble(): Promise<
-    Track & { from: number; to: number | null }
-  > {
-    try {
-      this.validateSettings();
-
-      const data = await this.makeRequest({
-        method: "user.getrecenttracks",
-        user: currentSettings.username,
-        limit: "1",
-        extended: "1",
-      });
-
-      const lastTrack = data?.recenttracks?.track?.[0];
-      setDebugInfo("lastAPIResponse", lastTrack);
-
-      if (!lastTrack) {
-        throw new Error("No tracks found");
-      }
-
-      // Reset retry count on successful request
-      this.retryCount = 0;
-
-      const isNowPlaying = Boolean(lastTrack["@attr"]?.nowplaying);
-      const from = isNowPlaying
-        ? Math.floor(Date.now() / 1000)
-        : parseInt(lastTrack?.date?.uts);
-
-      let to: number | null = null;
-      try {
-        const trackInfo = await this.makeRequest({
-          method: "track.getInfo",
-          track: lastTrack.name,
-          artist: lastTrack.artist.name,
-          username: currentSettings.username,
-        });
-
-        const duration = parseInt(trackInfo?.track?.duration);
-        if (duration > 0) {
-          to = from + Math.floor(duration / 1000);
+    public static getInstance(): LastFMClient {
+        if (!LastFMClient.instance) {
+            LastFMClient.instance = new LastFMClient();
         }
-      } catch (err) {
-        console.warn("Failed to fetch track duration", err);
-      }
+        return LastFMClient.instance;
+    }
 
-      return {
-        name: lastTrack.name,
-        artist: lastTrack.artist.name,
-        album: lastTrack.album["#text"],
-        albumArt: await this.handleAlbumCover(
-          lastTrack.image?.find((x) => x.size === "large")?.["#text"],
-        ),
-        url: lastTrack.url,
-        date: lastTrack.date?.["#text"] ?? "now",
-        nowPlaying: isNowPlaying,
-        loved: lastTrack.loved === "1",
-        from,
-        to,
-      };
-    } catch (error) {
-      // Increment retry count and throw if we've exceeded max retries
-      this.retryCount++;
-      if (this.retryCount > Constants.MAX_RETRY_ATTEMPTS) {
+    private validateSettings(): void {
+        if (!currentSettings.username) {
+            throw new Error("Last.fm username is not set");
+        }
+        if (!currentSettings.apiKey) {
+            throw new Error("Last.fm API key is not set");
+        }
+    }
+
+    private async handleError(error: LastFMError): Promise<never> {
+        this.lastError = error.error;
+
+        const errorMessages: { [key: number]: string } = {
+            2: "Invalid API key",
+            11: "Service temporarily unavailable",
+            16: "Service temporarily unavailable",
+            29: "Rate limit exceeded",
+        };
+
+        const message =
+      errorMessages[error.error] || error.message || "Unknown error";
+        showToast(`Last.fm Error: ${message}`, getAssetIDByName("Small"));
+
+        throw new Error(`Last.fm API Error ${error.error}: ${message}`);
+    }
+
+    private async makeRequest(
+        params: Record<string, string>,
+    ): Promise<LastFMResponse> {
+        const queryParams = new URLSearchParams({
+            ...params,
+            api_key: currentSettings.apiKey,
+            format: "json",
+        }).toString();
+
+        const response = await fetch(
+            `${Constants.LFM_API_BASE_URL}?${queryParams}`,
+        );
+        const data: LastFMResponse = await response.json();
+
+        if (!response.ok || data.error) {
+            await this.handleError(data as LastFMError);
+        }
+
+        return data;
+    }
+
+    public async fetchLatestScrobble(): Promise<
+    Track & { from: number; to: number | null }
+    > {
+        try {
+            this.validateSettings();
+
+            const data = await this.makeRequest({
+                method: "user.getrecenttracks",
+                user: currentSettings.username,
+                limit: "1",
+                extended: "1",
+            });
+
+            const lastTrack = data?.recenttracks?.track?.[0];
+            setDebugInfo("lastAPIResponse", lastTrack);
+
+            if (!lastTrack) {
+                throw new Error("No tracks found");
+            }
+
+            // Reset retry count on successful request
+            this.retryCount = 0;
+
+            const isNowPlaying = Boolean(lastTrack["@attr"]?.nowplaying);
+            const from = isNowPlaying
+                ? Math.floor(Date.now() / 1000)
+                : parseInt(lastTrack?.date?.uts);
+
+            let to: number | null = null;
+            try {
+                const trackInfo = await this.makeRequest({
+                    method: "track.getInfo",
+                    track: lastTrack.name,
+                    artist: lastTrack.artist.name,
+                    username: currentSettings.username,
+                });
+
+                const duration = parseInt(trackInfo?.track?.duration);
+                if (duration > 0) {
+                    to = from + Math.floor(duration / 1000);
+                }
+            } catch (err) {
+                console.warn("Failed to fetch track duration", err);
+            }
+
+            return {
+                name: lastTrack.name,
+                artist: lastTrack.artist.name,
+                album: lastTrack.album["#text"],
+                albumArt: await this.handleAlbumCover(
+                    lastTrack.image?.find((x) => x.size === "large")?.["#text"],
+                ),
+                url: lastTrack.url,
+                date: lastTrack.date?.["#text"] ?? "now",
+                nowPlaying: isNowPlaying,
+                loved: lastTrack.loved === "1",
+                from,
+                to,
+            };
+        } catch (error) {
+            // Increment retry count and throw if we've exceeded max retries
+            this.retryCount++;
+            if (this.retryCount > Constants.MAX_RETRY_ATTEMPTS) {
+                this.retryCount = 0;
+                throw error;
+            }
+
+            // Wait before retrying
+            await new Promise((resolve) =>
+                setTimeout(resolve, Constants.RETRY_DELAY),
+            );
+            return this.fetchLatestScrobble();
+        }
+    }
+
+    private async handleAlbumCover(cover?: string): Promise<string | null> {
+        if (!cover) return null;
+
+        // If the cover is a default one, return null
+        if (
+            Constants.LFM_DEFAULT_COVER_HASHES.some((hash) => cover.includes(hash))
+        ) {
+            return null;
+        }
+
+        return cover;
+    }
+
+    public getLastError(): number {
+        return this.lastError;
+    }
+
+    public resetRetryCount(): void {
         this.retryCount = 0;
-        throw error;
-      }
-
-      // Wait before retrying
-      await new Promise((resolve) =>
-        setTimeout(resolve, Constants.RETRY_DELAY),
-      );
-      return this.fetchLatestScrobble();
     }
-  }
-
-  private async handleAlbumCover(cover?: string): Promise<string | null> {
-    if (!cover) return null;
-
-    // If the cover is a default one, return null
-    if (
-      Constants.LFM_DEFAULT_COVER_HASHES.some((hash) => cover.includes(hash))
-    ) {
-      return null;
-    }
-
-    return cover;
-  }
-
-  public getLastError(): number {
-    return this.lastError;
-  }
-
-  public resetRetryCount(): void {
-    this.retryCount = 0;
-  }
 }
 
 // Export a singleton instance
@@ -207,8 +207,8 @@ export const lastfmClient = LastFMClient.getInstance();
 /** Fetches the latest user's scrobble */
 export async function fetchLatestScrobble(): Promise<
   Track & { from: number; to: number | null }
-> {
-  return lastfmClient.fetchLatestScrobble();
+  > {
+    return lastfmClient.fetchLatestScrobble();
 }
 
 /**
@@ -216,5 +216,5 @@ export async function fetchLatestScrobble(): Promise<
  * @param cover The album cover given by Last.fm
  */
 export async function handleAlbumCover(cover: string): Promise<string> {
-  return lastfmClient.handleAlbumCover(cover);
+    return lastfmClient.handleAlbumCover(cover);
 }
