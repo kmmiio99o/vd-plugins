@@ -1,0 +1,14 @@
+{
+  "name": "Multi Scrobbler",
+  "description": "Show off your music status from Last.fm, Libre.fm, or ListenBrainz on your Discord profile with comprehensive console logging.",
+  "authors": [
+    {
+      "name": "kmmiio99o",
+      "id": "879393496627306587"
+    }
+  ],
+  "main": "src/index.tsx",
+  "vendetta": {
+    "icon": "ic_stage_music"
+  }
+}
