@@ -38,7 +38,7 @@ export type LFMSettings = {
   listeningTo: boolean;
   ignoreSpotify: boolean;
   verboseLogging: boolean;
-  service: ServiceType;
+  service: ServiceType | undefined;
   // Service-specific settings
   librefmUsername?: string;
   librefmApiKey?: string;

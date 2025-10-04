@@ -74,10 +74,16 @@ async function tryInitialize() {
 }
 
 async function validateAndInitialize() {
+  // Check if user has selected a service first
+  if (!currentSettings.service) {
+    log("No service selected. Please configure a service in plugin settings.");
+    return;
+  }
+
   const serviceName = serviceFactory.getCurrentService().getServiceName();
 
   // Make sure we have credentials for whatever service is selected
-  const service = currentSettings.service || "lastfm";
+  const service = currentSettings.service;
   let hasCredentials = false;
 
   switch (service) {
@@ -86,14 +92,11 @@ async function validateAndInitialize() {
       break;
     case "librefm":
       hasCredentials = !!(
-        (currentSettings.librefmUsername || currentSettings.username) &&
-        (currentSettings.librefmApiKey || currentSettings.apiKey)
+        currentSettings.librefmUsername && currentSettings.librefmApiKey
       );
       break;
     case "listenbrainz":
-      hasCredentials = !!(
-        currentSettings.listenbrainzUsername || currentSettings.username
-      );
+      hasCredentials = !!currentSettings.listenbrainzUsername;
       break;
   }
 
@@ -128,11 +131,16 @@ export default {
     log("Plugin loading...");
     pluginState.pluginStopped = false;
 
-    // Show what we're starting with
-    const serviceName = serviceFactory.getCurrentService().getServiceName();
-    log(
-      `Configuration: Service=${serviceName}, Update Interval=${currentSettings.timeInterval}s, Verbose=${currentSettings.verboseLogging}`,
-    );
+    // Check if service is configured
+    if (!currentSettings.service) {
+      log("No service configured. Please select a service in plugin settings.");
+    } else {
+      // Show what we're starting with
+      const serviceName = serviceFactory.getCurrentService().getServiceName();
+      log(
+        `Configuration: Service=${serviceName}, Update Interval=${currentSettings.timeInterval}s, Verbose=${currentSettings.verboseLogging}`,
+      );
+    }
 
     // Add to sidebar if user wants it
     try {
@@ -200,12 +208,16 @@ export default {
 
     // Switch services if needed
     if (oldService !== newService && newService) {
-      log(`Service changed from ${oldService} to ${newService}`);
+      log(`Service changed from ${oldService || "none"} to ${newService}`);
       await switchService(newService);
-    } else if (!pluginState.pluginStopped) {
-      // Just restart with the updated settings
+    } else if (!pluginState.pluginStopped && currentSettings.service) {
+      // Just restart with the updated settings (only if service is selected)
       log("Restarting with updated settings...");
       await tryInitialize();
+    } else if (!currentSettings.service) {
+      // Service was unselected, stop the plugin
+      log("Service unselected, stopping plugin...");
+      stop();
     }
   },
 

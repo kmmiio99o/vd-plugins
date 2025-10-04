@@ -50,7 +50,7 @@ const Constants = {
     listeningTo: true,
     ignoreSpotify: true,
     verboseLogging: false,
-    service: "lastfm" as ServiceType,
+    service: undefined as ServiceType | undefined,
     librefmUsername: "",
     librefmApiKey: "",
     listenbrainzUsername: "",

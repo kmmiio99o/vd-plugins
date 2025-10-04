@@ -35,7 +35,7 @@ plugin.storage.listenbrainzUsername ??= "";
 plugin.storage.listenbrainzToken ??= "";
 plugin.storage.addToSidebar ??= true;
 
-const get = (k: string, fallback: any = "") => plugin.storage[k] ?? fallback;
+const get = (k: string, fallback?: any) => plugin.storage[k] ?? fallback;
 const set = (k: string, v: any) => (plugin.storage[k] = v);
 
 // Last.fm Settings Page
@@ -145,7 +145,7 @@ function LibreFmSettingsPage() {
         <TableRowGroup title="Credentials">
           <Stack spacing={4}>
             <TextInput
-              placeholder="Libre.fm Username (optional, uses Last.fm if empty)"
+              placeholder="Libre.fm Username"
               value={get("librefmUsername")}
               onChange={(v: string) => {
                 set("librefmUsername", v);
@@ -154,7 +154,7 @@ function LibreFmSettingsPage() {
               isClearable
             />
             <TextInput
-              placeholder="Libre.fm API Key (optional, uses Last.fm if empty)"
+              placeholder="Libre.fm API Key"
               value={get("librefmApiKey")}
               onChange={(v: string) => {
                 set("librefmApiKey", v);
@@ -422,7 +422,7 @@ export default function Settings() {
   const navigation = NavigationNative.useNavigation();
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
-  const currentService = get("service", "lastfm") as ServiceType;
+  const currentService = get("service") as ServiceType;
 
   const getCredentialStatus = (service: ServiceType) => {
     switch (service) {
@@ -432,15 +432,14 @@ export default function Settings() {
           : "❌ Missing credentials";
       }
       case "librefm": {
-        const librefmUser = get("librefmUsername") || get("username");
-        const librefmKey = get("librefmApiKey") || get("apiKey");
-        return librefmUser && librefmKey
+        return get("librefmUsername") && get("librefmApiKey")
           ? "✅ Configured"
           : "❌ Missing credentials";
       }
       case "listenbrainz": {
-        const lbUser = get("listenbrainzUsername") || get("username");
-        return lbUser ? "✅ Configured" : "❌ Missing username";
+        return get("listenbrainzUsername")
+          ? "✅ Configured"
+          : "❌ Missing username";
       }
       default:
         return "❓ Unknown";
@@ -454,7 +453,11 @@ export default function Settings() {
         <TableRowGroup title="Active Service">
           <TableRow
             label="Current Service"
-            subLabel={`Using: ${serviceFactory.getServiceDisplayName(currentService)}`}
+            subLabel={
+              currentService
+                ? `Using: ${serviceFactory.getServiceDisplayName(currentService)}`
+                : "No service selected"
+            }
           />
           {(["lastfm", "librefm", "listenbrainz"] as ServiceType[]).map(
             (service) => (

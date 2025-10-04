@@ -26,7 +26,13 @@ export class ServiceFactory {
       this.serviceInstances = new Map();
     }
 
-    const type = serviceType || currentSettings.service || "lastfm";
+    const type = serviceType || currentSettings.service;
+
+    if (!type) {
+      throw new Error(
+        "[ServiceFactory] No service type specified and no default service configured",
+      );
+    }
 
     if (!this.serviceInstances.has(type)) {
       this.serviceInstances.set(type, this.createService(type));
@@ -48,10 +54,9 @@ export class ServiceFactory {
       case "listenbrainz":
         return new ListenBrainzService();
       default:
-        console.warn(
-          `[ServiceFactory] Unknown service type: ${serviceType}, falling back to Last.fm`,
+        throw new Error(
+          `[ServiceFactory] Unknown service type: ${serviceType}`,
         );
-        return new LastFmService();
     }
   }
 
