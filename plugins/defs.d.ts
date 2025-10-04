@@ -37,6 +37,7 @@ export type LFMSettings = {
   timeInterval: number | string;
   listeningTo: boolean;
   ignoreSpotify: boolean;
+  ignoreYouTubeMusic: boolean;
   verboseLogging: boolean;
   service: ServiceType | undefined;
   // Service-specific settings
