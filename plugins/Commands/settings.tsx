@@ -42,9 +42,12 @@ storage.enabledCommands ??= {
     spotifyArtists: true,
     spotifyCover: true,
     gary: true,
-    ip: true, // IP command - enabled by default
-    lovefemboys: false, // Hidden command - disabled by default
-    nekoslife: false, // Hidden command - disabled by default
+    ip: true,
+    lovefemboys: false,
+    nekoslife: false,
+    friendInviteCreate: true,
+    friendInviteView: true,
+    friendInviteRevoke: true,
 };
 
 storage.pendingRestart ??= false;
@@ -53,7 +56,7 @@ storage.pendingRestart ??= false;
 storage.hiddenSettings ??= {
     enabled: false,
     visible: false,
-    konochanBypassNsfw: false, // New bypass option - disabled by default
+    konochanBypassNsfw: false,
 };
 
 // Better Table Row Group Component
@@ -287,7 +290,7 @@ function NekosLifeCategoriesPage() {
         },
     });
 
-    // Only SFW nekos.life categories
+    // nekos.life categories
     const sfwCategories = [
         { name: "Avatar", value: "avatar" },
         { name: "Classic", value: "classic" },
@@ -447,7 +450,6 @@ function HiddenSettingsPage() {
                                         forceUpdate();
                                     },
                                     onCancel: () => {
-                                        // Do nothing - keep it disabled
                                     },
                                 });
                             } else {
@@ -951,7 +953,7 @@ function SpotifySettingsPage() {
     );
 }
 
-// Other Settings Page - Updated with IP command
+// Other Settings Page - Updated with friend invite commands
 function OtherSettingsPage() {
     useProxy(storage);
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
@@ -989,6 +991,42 @@ function OtherSettingsPage() {
                         value={storage.enabledCommands.sysinfo}
                         onValueChange={(v) => {
                             storage.enabledCommands.sysinfo = v;
+                            storage.pendingRestart = true;
+                            forceUpdate();
+                        }}
+                    />
+                </BetterTableRowGroup>
+
+                <BetterTableRowGroup
+                    title="Friend Invites"
+                    icon={getAssetIDByName("UserAddIcon")}
+                >
+                    <FormSwitchRow
+                        label="/invite create"
+                        subLabel="Generate a friend invite link"
+                        value={storage.enabledCommands.friendInviteCreate}
+                        onValueChange={v => {
+                            storage.enabledCommands.friendInviteCreate = v;
+                            storage.pendingRestart = true;
+                            forceUpdate();
+                        }}
+                    />
+                    <FormSwitchRow
+                        label="/view invites"
+                        subLabel="View your current friend invites"
+                        value={storage.enabledCommands.friendInviteView}
+                        onValueChange={v => {
+                            storage.enabledCommands.friendInviteView = v;
+                            storage.pendingRestart = true;
+                            forceUpdate();
+                        }}
+                    />
+                    <FormSwitchRow
+                        label="/revoke invites"
+                        subLabel="Revoke all your friend invites"
+                        value={storage.enabledCommands.friendInviteRevoke}
+                        onValueChange={v => {
+                            storage.enabledCommands.friendInviteRevoke = v;
                             storage.pendingRestart = true;
                             forceUpdate();
                         }}
