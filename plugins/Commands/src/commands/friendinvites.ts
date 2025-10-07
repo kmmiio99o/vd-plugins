@@ -1,10 +1,10 @@
 import { findByProps } from "@vendetta/metro";
+import { showToast } from "@vendetta/ui/toasts";
 
 const ClydeUtils = findByProps("sendBotMessage", "sendMessage");
 const inviteModule = findByProps("getAllFriendInvites", "createFriendInvite", "revokeFriendInvites");
 const api = findByProps("get", "post");
 const getCurrentUser = findByProps("getCurrentUser")?.getCurrentUser;
-const uuidv4 = findByProps("v4")?.v4;
 
 function send(ctx, content) {
   const fixNonce = Date.now().toString();
@@ -22,80 +22,32 @@ export const friendInviteCreateCommand = {
   execute: async (_, ctx) => {
     try {
       if (!getCurrentUser?.().phone) {
-        send(ctx, "You need to have a phone number connected to your account to create a friend invite!");
+        showToast("You need a phone number connected to your account!", getAssetIDByName("Small"));
         return { type: 4 };
       }
 
-      // Try the primary method first
-      try {
-        const uuid = uuidv4();
-        const res = await api.post({
-          url: "/friend-finder/find-friends",
-          body: { modified_contacts: { [uuid]: [1, "", ""] }, phone_contact_methods_count: 1 },
-        });
+      // Main method: Create friend invite directly
+      const createInvite = await inviteModule.createFriendInvite({
+        code: null,
+        recipient_phone_number_or_email: null,
+        contact_visibility: 0,
+        filter_visibilities: [],
+        filtered_invite_suggestions_index: 0,
+      });
 
-        // Check if the Find Friends feature is available
-        if (res.status === 503 || res.body?.code === 40077) {
-          throw new Error("Find Friends temporarily unavailable");
-        }
-
-        const code = res.body?.invite_suggestions?.[0]?.[3];
-        if (!code) {
-          throw new Error("No invite code generated");
-        }
-
-        const createInvite = await inviteModule.createFriendInvite({
-          code,
-          recipient_phone_number_or_email: uuid,
-          contact_visibility: 1,
-          filter_visibilities: [],
-          filtered_invite_suggestions_index: 1,
-        });
-
+      if (createInvite?.code) {
         const expires = Math.floor(new Date(createInvite.expires_at).getTime() / 1000);
         const message = `https://discord.gg/${createInvite.code} · Expires: <t:${expires}:R>`;
         send(ctx, message);
-        
-      } catch (primaryError) {
-        console.error("[FriendInvite] Primary method failed:", primaryError);
-        
-        // Fallback method: Try to create invite directly without Find Friends
-        send(ctx, "⚠️ Find Friends is temporarily unavailable. Trying alternative method...");
-        
-        try {
-          // Alternative: Create a friend invite using a different endpoint
-          const fallbackInvite = await inviteModule.createFriendInvite({
-            code: null, // Let Discord generate the code
-            recipient_phone_number_or_email: null,
-            contact_visibility: 0,
-            filter_visibilities: [],
-            filtered_invite_suggestions_index: 0,
-          });
-
-          if (fallbackInvite?.code) {
-            const expires = Math.floor(new Date(fallbackInvite.expires_at).getTime() / 1000);
-            const message = `https://discord.gg/${fallbackInvite.code} · Expires: <t:${expires}:R>`;
-            send(ctx, `✅ Fallback method successful!\n${message}`);
-          } else {
-            throw new Error("Fallback method also failed");
-          }
-          
-        } catch (fallbackError) {
-          console.error("[FriendInvite] Fallback method failed:", fallbackError);
-          send(ctx, "❌ Both methods failed. The Find Friends feature is currently unavailable. Please try again later or use Discord's built-in friend invite system.");
-        }
+        showToast("Friend invite created!", getAssetIDByName("Check"));
+      } else {
+        throw new Error("No invite code generated");
       }
 
       return { type: 4 };
     } catch (e) {
       console.error("[FriendInvite] Create error:", e);
-      
-      if (e?.body?.code === 40077 || e?.message?.includes("temporarily unavailable")) {
-        send(ctx, "❌ The Find Friends feature is temporarily unavailable. Please try again later or use Discord's built-in friend invite system.");
-      } else {
-        send(ctx, "❌ Error creating friend invite. Please try again later.");
-      }
-      
+      showToast("Error creating friend invite", getAssetIDByName("Small"));
       return { type: 4 };
     }
   },
@@ -112,7 +64,7 @@ export const friendInviteViewCommand = {
     try {
       const invites = await inviteModule.getAllFriendInvites();
       if (!invites?.length) {
-        send(ctx, "You have no active friend invites!");
+        showToast("No active friend invites found", getAssetIDByName("Info"));
         return { type: 4 };
       }
       
@@ -125,7 +77,7 @@ export const friendInviteViewCommand = {
       return { type: 4 };
     } catch (e) {
       console.error("[FriendInvite] View error:", e);
-      send(ctx, "❌ Error viewing your friend invites. Please try again later.");
+      showToast("Error viewing friend invites", getAssetIDByName("Small"));
       return { type: 4 };
     }
   },
@@ -144,7 +96,7 @@ export const friendInviteRevokeCommand = {
       const invitesBefore = await inviteModule.getAllFriendInvites();
       
       if (!invitesBefore?.length) {
-        send(ctx, "You have no active friend invites to revoke!");
+        showToast("No active friend invites to revoke", getAssetIDByName("Info"));
         return { type: 4 };
       }
       
@@ -155,14 +107,16 @@ export const friendInviteRevokeCommand = {
       
       if (invitesAfter.length === 0) {
         send(ctx, `✅ Successfully revoked all ${invitesBefore.length} friend invite(s)!`);
+        showToast(`Revoked ${invitesBefore.length} invite(s)`, getAssetIDByName("Check"));
       } else {
         send(ctx, `⚠️ Partially revoked invites. ${invitesAfter.length} invite(s) remain active.`);
+        showToast("Partial revocation", getAssetIDByName("Warning"));
       }
       
       return { type: 4 };
     } catch (e) {
       console.error("[FriendInvite] Revoke error:", e);
-      send(ctx, "❌ Error revoking friend invites. Please try again later.");
+      showToast("Error revoking friend invites", getAssetIDByName("Small"));
       return { type: 4 };
     }
   },
