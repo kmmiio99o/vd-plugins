@@ -230,7 +230,7 @@ function ListenBrainzSettingsPage() {
         <TableRowGroup title="Credentials">
           <Stack spacing={4}>
             <TextInput
-              placeholder="ListenBrainz Username (optional, uses Last.fm if empty)"
+              placeholder="ListenBrainz Username"
               value={get("listenbrainzUsername")}
               onChange={(v: string) => {
                 set("listenbrainzUsername", v);
@@ -239,7 +239,7 @@ function ListenBrainzSettingsPage() {
               isClearable
             />
             <TextInput
-              placeholder="ListenBrainz Token (optional, for private profiles)"
+              placeholder="ListenBrainz Token (for private profiles)"
               value={get("listenbrainzToken")}
               onChange={(v: string) => {
                 set("listenbrainzToken", v);
@@ -568,7 +568,7 @@ export default function Settings() {
             subLabel="Show off your music status from multiple services"
           />
           <TableRow label="Author" subLabel="kmmiio99o" />
-          <TableRow label="Version" subLabel="1.1.0" />
+          <TableRow label="Version" subLabel="1.1.1" />
         </TableRowGroup>
       </Stack>
       <RN.View style={{ height: 64 }} />
