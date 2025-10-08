@@ -2,7 +2,8 @@
 
 Currently available plugins:
 - Commands
-- Last.fm
+- Last.fm (Suppresed by Multi Scrobbler)
+- Multi Scrobbler
 
 # How to install?
 Paste a plugin URL into the Plugins page of Vendetta, following a basic format of:
