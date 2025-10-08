@@ -1216,6 +1216,12 @@ function CreditsPage() {
             avatar: "https://github.com/scrazzz.png",
             github: "https://github.com/scrazzz",
         },
+	{
+	    command: "FriendInvites",
+	    author: "nikosszzz",
+            avatar: "https://github.com/nikosszzz.png",
+	    github: "https://github.com/nikosszzz",
+	},
     ];
 
     const handleProfilePress = (githubUrl: string) => {
@@ -1264,7 +1270,7 @@ function CreditsPage() {
                 >
                     <RN.Text style={styles.versionText}>
             Commands Plugin Collection{"\n"}
-            Version 1.2.0
+            Version 1.2.1
                     </RN.Text>
                 </BetterTableRowGroup>
             </RN.View>
