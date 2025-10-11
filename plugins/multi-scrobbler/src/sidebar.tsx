@@ -150,7 +150,7 @@ function patchTabsUI(tabs, patches) {
         ).props;
 
         const section = sections?.find((x) =>
-          ["Bunny", "Revenge", "Kettu", "Vencore"].some(
+          ["Bunny", "Revenge", "Kettu", "Vencore", "ShiggyCord"].some(
             (mod) => x.label === mod && x.title === mod,
           ),
         );
