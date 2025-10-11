@@ -96,6 +96,34 @@ class PluginManager {
         setDebugInfo("isYouTubeMusicIgnored", false);
       }
 
+      // skip if Kizzy is playing and user wants to ignore it
+      if (currentSettings.ignoreKizzy) {
+        const kizzyActivity = SelfPresenceStore.findActivity(
+          (act) => act.name && act.name.toLowerCase() === "kizzy",
+        );
+        if (kizzyActivity) {
+          logVerbose("Kizzy is currently playing, clearing activity");
+          setDebugInfo("isKizzyIgnored", true);
+          clearActivity();
+          return;
+        }
+        setDebugInfo("isKizzyIgnored", false);
+      }
+
+      // skip if Metrolist is playing and user wants to ignore it
+      if (currentSettings.ignoreMetrolist) {
+        const metrolistActivity = SelfPresenceStore.findActivity(
+          (act) => act.name && act.name.toLowerCase() === "metrolist",
+        );
+        if (metrolistActivity) {
+          logVerbose("Metrolist is currently playing, clearing activity");
+          setDebugInfo("isMetrolistIgnored", true);
+          clearActivity();
+          return;
+        }
+        setDebugInfo("isMetrolistIgnored", false);
+      }
+
       incrementApiCall();
       const lastTrack = await serviceFactory
         .getCurrentService()

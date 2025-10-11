@@ -367,6 +367,27 @@ function DisplaySettingsPage() {
               forceUpdate();
             }}
           />
+          <TableSwitchRow
+            label="Ignore Kizzy"
+            subLabel="Don't show activity when Kizzy is playing"
+            value={get("ignoreKizzy", Constants.DEFAULT_SETTINGS.ignoreKizzy)}
+            onValueChange={(value: boolean) => {
+              set("ignoreKizzy", value);
+              forceUpdate();
+            }}
+          />
+          <TableSwitchRow
+            label="Ignore Metrolist"
+            subLabel="Don't show activity when Metrolist is playing"
+            value={get(
+              "ignoreMetrolist",
+              Constants.DEFAULT_SETTINGS.ignoreMetrolist,
+            )}
+            onValueChange={(value: boolean) => {
+              set("ignoreMetrolist", value);
+              forceUpdate();
+            }}
+          />
         </TableRowGroup>
       </Stack>
       <RN.View style={{ height: 64 }} />
@@ -568,7 +589,7 @@ export default function Settings() {
             subLabel="Show off your music status from multiple services"
           />
           <TableRow label="Author" subLabel="kmmiio99o" />
-          <TableRow label="Version" subLabel="1.1.1" />
+          <TableRow label="Version" subLabel="1.2.0" />
         </TableRowGroup>
       </Stack>
       <RN.View style={{ height: 64 }} />

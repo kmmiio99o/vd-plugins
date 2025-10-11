@@ -50,6 +50,8 @@ const Constants = {
     listeningTo: true,
     ignoreSpotify: true,
     ignoreYouTubeMusic: true,
+    ignoreKizzy: true,
+    ignoreMetrolist: true,
     verboseLogging: false,
     service: undefined as ServiceType | undefined,
     librefmUsername: "",
