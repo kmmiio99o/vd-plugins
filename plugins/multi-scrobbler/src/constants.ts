@@ -16,23 +16,27 @@ const Constants = {
   SERVICES: {
     lastfm: {
       name: "Last.fm",
-      baseUrl: "http://ws.audioscrobbler.com/2.0",
+      baseUrl: "https://ws.audioscrobbler.com/2.0",
       requiresApiKey: true,
       requiresToken: false,
     },
     librefm: {
       name: "Libre.fm",
-      baseUrl: "http://libre.fm/api",
+      baseUrl: "https://libre.fm/api",
       requiresApiKey: true,
       requiresToken: false,
     },
     listenbrainz: {
       name: "ListenBrainz",
-      baseUrl: "http://api.listenbrainz.org/1",
+      baseUrl: "https://api.listenbrainz.org/1",
       requiresApiKey: false,
       requiresToken: true,
     },
   } as Record<ServiceType, ServiceConfig>,
+
+  // Default request headers. Avoid setting a custom User-Agent here to prevent exposing
+  // environment or build details; the runtime should manage safe headers.
+  DEFAULT_HEADERS: {} as Record<string, string>,
 
   // Last.fm/Libre.fm use these hashes for their generic album covers
   DEFAULT_COVER_HASHES: [
