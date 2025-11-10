@@ -30,21 +30,25 @@ export type ActivityAssets = {
 export type ServiceType = "lastfm" | "librefm" | "listenbrainz";
 
 export type LFMSettings = {
-  appName: string;
-  username: string;
-  apiKey: string;
-  showTimestamp: boolean;
-  timeInterval: number | string;
-  listeningTo: boolean;
-  ignoreSpotify: boolean;
-  ignoreYouTubeMusic: boolean;
-  verboseLogging: boolean;
-  service: ServiceType | undefined;
   // Service-specific settings
   librefmUsername?: string;
   librefmApiKey?: string;
   listenbrainzUsername?: string;
   listenbrainzToken?: string;
+  appName: string;
+  username: string;
+  apiKey: string;
+  // Display settings
+  showTimestamp: boolean;
+  timeInterval: number | string;
+  listeningTo: boolean;
+  ignoreSpotify: boolean;
+  showLargeText: boolean;
+  ignoreYouTubeMusic: boolean;
+  // Verbose logging settings
+  verboseLogging: boolean;
+  // Main page
+  service: ServiceType | undefined;
 };
 
 export type Track = {

@@ -45,7 +45,7 @@ export function setDebugInfo(
   key: keyof typeof debugInfo,
   value: (typeof debugInfo)[typeof key],
 ) {
-  debugInfo[key] = value;
+  (debugInfo[key] as any) = value;
 
   // log the important stuff
   if (key === "lastError" && value) {

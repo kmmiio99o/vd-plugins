@@ -10,8 +10,12 @@ import Settings from "./ui/pages/Settings";
 
 const { FormSection, FormRow } = Forms;
 const { TableRowIcon } = findByProps("TableRowIcon");
-
 const bunny = window.bunny;
+declare global {
+  interface Window {
+    bunny: any;
+  }
+}
 
 const tabsNavigationRef = bunny?.metro?.findByPropsLazy("getRootNavigationRef");
 const settingConstants = bunny?.metro?.findByPropsLazy(
@@ -141,8 +145,8 @@ function patchTabsUI(tabs, patches) {
 
   patches.push(
     after("default", SettingsOverviewScreen, (args, ret) => {
-      if (!args[0][firstRender]) {
-        args[0][firstRender] = true;
+      if (!(args[0] as { [key: symbol]: boolean })[firstRender]) {
+        (args[0] as { [key: symbol]: boolean })[firstRender] = true;
 
         const { sections } = findInReactTree(
           ret,
