@@ -192,7 +192,7 @@ class PluginManager {
           ? ActivityType.LISTENING
           : ActivityType.PLAYING,
         details: lastTrack.name,
-        state: `by ${lastTrack.artist}`,
+        state: `${lastTrack.artist}`,
         status_display_type: 1,
         application_id: Constants.APPLICATION_ID,
       };
