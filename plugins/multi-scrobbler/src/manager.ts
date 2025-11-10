@@ -81,11 +81,13 @@ class PluginManager {
 
       // skip if YouTube Music is playing and user wants to ignore it
       if (currentSettings.ignoreYouTubeMusic) {
+        const YOUTUBE_MUSIC_APP_ID = "463097721130188830";
+        const PLUGIN_APP_ID = Constants.APPLICATION_ID;
+
         const youtubeActivity = SelfPresenceStore.findActivity(
           (act) =>
-            act.name === "YouTube Music" ||
-            act.application_id === "463097721130188830" ||
-            (act.name && act.name.toLowerCase().includes("youtube music")),
+            act.application_id === YOUTUBE_MUSIC_APP_ID &&
+            act.application_id !== PLUGIN_APP_ID,
         );
         if (youtubeActivity) {
           logVerbose("YouTube Music is currently playing, clearing activity");
