@@ -235,27 +235,31 @@ class PluginManager {
         const assets = await fetchAsset(assetUrls);
 
         if (assets[0]) {
-          const largeText = lastTrack.album
-            ? `on ${lastTrack.album}`
-            : `${lastTrack.artist} - ${lastTrack.name}`;
+          if (currentSettings.showLargeText) {
+            const largeText = lastTrack.album
+              ? `on ${lastTrack.album}`
+              : `${lastTrack.artist} - ${lastTrack.name}`;
 
-          // include track length in the tooltip if we have it
-          const durationText =
-            currentSettings.showTimestamp && lastTrack.duration
-              ? ` • ${formatDuration(lastTrack.duration)}`
-              : "";
+            const durationText =
+              currentSettings.showTimestamp && lastTrack.duration
+                ? ` • ${formatDuration(lastTrack.duration)}`
+                : "";
 
-          activity.assets = {
-            large_image: assets[0],
-            large_text: largeText + durationText,
-          };
+            activity.assets = {
+              large_image: assets[0],
+              large_text: largeText + durationText,
+            };
+          } else {
+            activity.assets = {
+              large_image: assets[0],
+            };
+          }
 
           logVerbose("Album art set:", assets[0]);
         } else if (lastTrack.album) {
-          // no album art but we can still show the album name
-          activity.assets = {
-            large_text: `on ${lastTrack.album}`,
-          };
+          activity.assets = currentSettings.showLargeText
+            ? { large_text: `on ${lastTrack.album}` }
+            : {};
         }
       }
 

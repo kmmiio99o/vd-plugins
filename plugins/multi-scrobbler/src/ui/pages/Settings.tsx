@@ -34,6 +34,8 @@ plugin.storage.librefmApiKey ??= "";
 plugin.storage.listenbrainzUsername ??= "";
 plugin.storage.listenbrainzToken ??= "";
 plugin.storage.addToSidebar ??= true;
+plugin.storage.showLargeText ??= true;
+plugin.storage.showLargeText ??= true;
 
 const get = (k: string, fallback?: any) => plugin.storage[k] ?? fallback;
 const set = (k: string, v: any) => (plugin.storage[k] = v);
@@ -328,6 +330,15 @@ function DisplaySettingsPage() {
             value={get("listeningTo", Constants.DEFAULT_SETTINGS.listeningTo)}
             onValueChange={(value: boolean) => {
               set("listeningTo", value);
+              forceUpdate();
+            }}
+          />
+          <TableSwitchRow
+            label="Show Tooltip Text"
+            subLabel="Show album name and/or track duration in Discord activity tooltip"
+            value={get("showLargeText", true)}
+            onValueChange={(value: boolean) => {
+              set("showLargeText", value);
               forceUpdate();
             }}
           />
