@@ -22,7 +22,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build plugin(s)
-        run: bun run ./build.mjs
+        run: bun run build
 
       - name: Copy additional files
         run: |
