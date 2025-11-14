@@ -35,7 +35,7 @@ plugin.storage.listenbrainzUsername ??= "";
 plugin.storage.listenbrainzToken ??= "";
 plugin.storage.addToSidebar ??= false;
 plugin.storage.showLargeText ??= true;
-plugin.storage.showLargeText ??= true;
+plugin.storage.ignoreList ??= [];
 
 const get = (k: string, fallback?: any) => plugin.storage[k] ?? fallback;
 const set = (k: string, v: any) => (plugin.storage[k] = v);
@@ -354,50 +354,112 @@ function DisplaySettingsPage() {
               forceUpdate();
             }}
           />
-          <TableSwitchRow
-            label="Ignore Spotify"
-            subLabel="Don't show activity when Spotify is playing"
-            value={get(
-              "ignoreSpotify",
-              Constants.DEFAULT_SETTINGS.ignoreSpotify,
-            )}
-            onValueChange={(value: boolean) => {
-              set("ignoreSpotify", value);
-              forceUpdate();
-            }}
+        </TableRowGroup>
+      </Stack>
+      <RN.View style={{ height: 64 }} />
+    </ScrollView>
+  );
+}
+
+function IgnoreListSettingsPage() {
+  useProxy(plugin.storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+  const [newAppName, setNewAppName] = React.useState("");
+
+  const addAppToIgnoreList = () => {
+    if (!newAppName.trim()) {
+      showToast("Please enter an app name", getAssetIDByName("Small"));
+      return;
+    }
+
+    const ignoreList = get("ignoreList", []);
+    if (!ignoreList.includes(newAppName.trim())) {
+      set("ignoreList", [...ignoreList, newAppName.trim()]);
+      setNewAppName("");
+      forceUpdate();
+      showToast("App added to ignore list", getAssetIDByName("Check"));
+    } else {
+      showToast("App already in ignore list", getAssetIDByName("Warning"));
+    }
+  };
+
+  const removeAppFromIgnoreList = (appName: string) => {
+    const ignoreList = get("ignoreList", []);
+    set(
+      "ignoreList",
+      ignoreList.filter((app: string) => app !== appName),
+    );
+    forceUpdate();
+    showToast("App removed from ignore list", getAssetIDByName("Check"));
+  };
+
+  return (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
+      <Stack spacing={8}>
+        <TableRowGroup title="Add App to Ignore">
+          <Stack spacing={4}>
+            <TextInput
+              placeholder="Enter app name"
+              value={newAppName}
+              onChange={setNewAppName}
+              isClearable
+              onSubmitEditing={addAppToIgnoreList}
+              returnKeyType="done"
+            />
+          </Stack>
+        </TableRowGroup>
+
+        <TableRowGroup>
+          <TableRow
+            label="Add to Ignore List"
+            subLabel="Add the current app name to your ignore list"
+            trailing={<TableRow.Arrow />}
+            onPress={addAppToIgnoreList}
           />
-          <TableSwitchRow
-            label="Ignore YouTube Music"
-            subLabel="Don't show activity when YouTube Music is playing (PC client)"
-            value={get(
-              "ignoreYouTubeMusic",
-              Constants.DEFAULT_SETTINGS.ignoreYouTubeMusic,
-            )}
-            onValueChange={(value: boolean) => {
-              set("ignoreYouTubeMusic", value);
-              forceUpdate();
-            }}
+        </TableRowGroup>
+
+        {get("ignoreList", []).length > 0 && (
+          <TableRowGroup title="Ignored Apps">
+            {get("ignoreList", []).map((appName: string, index: number) => (
+              <TableRow
+                key={index}
+                label={appName}
+                trailing={
+                  <RN.TouchableOpacity
+                    onPress={() => removeAppFromIgnoreList(appName)}
+                    style={{
+                      padding: 8,
+                      backgroundColor: "#ff4d4d",
+                      borderRadius: 12,
+                      width: 24,
+                      height: 24,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <RN.Image
+                      source={getAssetIDByName("TrashIcon")}
+                      style={{ width: 14, height: 14, tintColor: "#ffffff" }}
+                    />
+                  </RN.TouchableOpacity>
+                }
+              />
+            ))}
+          </TableRowGroup>
+        )}
+
+        <TableRowGroup title="About Ignore List">
+          <TableRow
+            label="How it Works"
+            subLabel="When any app in your ignore list is active, your music status will be hidden"
           />
-          <TableSwitchRow
-            label="Ignore Kizzy"
-            subLabel="Don't show activity when Kizzy is playing"
-            value={get("ignoreKizzy", Constants.DEFAULT_SETTINGS.ignoreKizzy)}
-            onValueChange={(value: boolean) => {
-              set("ignoreKizzy", value);
-              forceUpdate();
-            }}
+          <TableRow
+            label="Detection"
+            subLabel="Apps are detected by their Discord activity name"
           />
-          <TableSwitchRow
-            label="Ignore Metrolist"
-            subLabel="Don't show activity when Metrolist is playing"
-            value={get(
-              "ignoreMetrolist",
-              Constants.DEFAULT_SETTINGS.ignoreMetrolist,
-            )}
-            onValueChange={(value: boolean) => {
-              set("ignoreMetrolist", value);
-              forceUpdate();
-            }}
+          <TableRow
+            label="Examples"
+            subLabel="Spotify, YouTube Music, Kizzy, Metrolist, echo"
           />
         </TableRowGroup>
       </Stack>
@@ -572,6 +634,17 @@ export default function Settings() {
             }
           />
           <TableRow
+            label="Ignore List"
+            subLabel="Configure apps that should hide your status"
+            trailing={<TableRow.Arrow />}
+            onPress={() =>
+              navigation.push("VendettaCustomPage", {
+                title: "Ignore List Settings",
+                render: IgnoreListSettingsPage,
+              })
+            }
+          />
+          <TableRow
             label="Logging Settings"
             subLabel="Configure logging and debugging options"
             trailing={<TableRow.Arrow />}
@@ -584,8 +657,33 @@ export default function Settings() {
           />
           <TableSwitchRow
             label="Add to Sidebar"
-            subLabel="Show plugin in Discord settings"
-            value={false}
+            subLabel="Show plugin in Discord settings (may crash Discord)"
+            value={get("addToSidebar", false)}
+            onValueChange={(value: boolean) => {
+              if (value) {
+                const { showConfirmationAlert } = window;
+                showConfirmationAlert({
+                  title: "Warning: Potential Discord Crash",
+                  content:
+                    "Enabling 'Add to Sidebar' may cause Discord to crash or become unstable. This feature is experimental and not recommended.",
+                  confirmText: "Enable Anyway",
+                  cancelText: "Cancel",
+                  confirmColor: "red",
+                  onConfirm: () => {
+                    set("addToSidebar", true);
+                    forceUpdate();
+                    showToast(
+                      "Sidebar feature enabled - use with caution",
+                      getAssetIDByName("Warning"),
+                    );
+                  },
+                  onCancel: () => forceUpdate(),
+                });
+              } else {
+                set("addToSidebar", false);
+                forceUpdate();
+              }
+            }}
           />
         </TableRowGroup>
 

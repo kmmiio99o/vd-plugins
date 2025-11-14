@@ -65,65 +65,23 @@ class PluginManager {
     let willUpdateRPC = false;
 
     try {
-      // skip if Spotify is playing and user wants to ignore it
-      if (currentSettings.ignoreSpotify) {
-        const spotifyActivity = SelfPresenceStore.findActivity(
-          (act) => act.sync_id,
-        );
-        if (spotifyActivity) {
-          logVerbose("Spotify is currently playing, clearing activity");
-          setDebugInfo("isSpotifyIgnored", true);
+      // Check if any ignored app is active
+      if (currentSettings.ignoreList && currentSettings.ignoreList.length > 0) {
+        const ignoredActivity = SelfPresenceStore.findActivity((act) => {
+          if (!act.name) return false;
+          return currentSettings.ignoreList.some((ignoredApp: string) =>
+            act.name.toLowerCase().includes(ignoredApp.toLowerCase()),
+          );
+        });
+
+        if (ignoredActivity) {
+          logVerbose(
+            `Ignored app (${ignoredActivity.name}) is currently playing, clearing activity`,
+          );
+          // Remove these setDebugInfo calls that cause TypeScript errors
           clearActivity();
           return;
         }
-        setDebugInfo("isSpotifyIgnored", false);
-      }
-
-      // skip if YouTube Music is playing and user wants to ignore it
-      if (currentSettings.ignoreYouTubeMusic) {
-        const YOUTUBE_MUSIC_APP_ID = "463097721130188830";
-        const PLUGIN_APP_ID = Constants.APPLICATION_ID;
-
-        const youtubeActivity = SelfPresenceStore.findActivity(
-          (act) =>
-            act.application_id === YOUTUBE_MUSIC_APP_ID &&
-            act.application_id !== PLUGIN_APP_ID,
-        );
-        if (youtubeActivity) {
-          logVerbose("YouTube Music is currently playing, clearing activity");
-          setDebugInfo("isYouTubeMusicIgnored", true);
-          clearActivity();
-          return;
-        }
-        setDebugInfo("isYouTubeMusicIgnored", false);
-      }
-
-      // skip if Kizzy is playing and user wants to ignore it
-      if (currentSettings.ignoreKizzy) {
-        const kizzyActivity = SelfPresenceStore.findActivity(
-          (act) => act.name && act.name.toLowerCase() === "kizzy",
-        );
-        if (kizzyActivity) {
-          logVerbose("Kizzy is currently playing, clearing activity");
-          setDebugInfo("isKizzyIgnored", true);
-          clearActivity();
-          return;
-        }
-        setDebugInfo("isKizzyIgnored", false);
-      }
-
-      // skip if Metrolist is playing and user wants to ignore it
-      if (currentSettings.ignoreMetrolist) {
-        const metrolistActivity = SelfPresenceStore.findActivity(
-          (act) => act.name && act.name.toLowerCase() === "metrolist",
-        );
-        if (metrolistActivity) {
-          logVerbose("Metrolist is currently playing, clearing activity");
-          setDebugInfo("isMetrolistIgnored", true);
-          clearActivity();
-          return;
-        }
-        setDebugInfo("isMetrolistIgnored", false);
       }
 
       incrementApiCall();
@@ -175,7 +133,7 @@ class PluginManager {
         }
 
         activityTimestamps = {
-          start: startTime * 1000, // Discord wants milliseconds
+          start: startTime * 1000,
         };
 
         if (lastTrack.to) {
