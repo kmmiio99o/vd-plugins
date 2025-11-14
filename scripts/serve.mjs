@@ -344,8 +344,8 @@ async function main() {
   console.clear();
 
   // Configuration
-  const distPath = path.join(__dirname, "dist");
-  const port = process.env.PORT || 3000;
+  const distPath = path.join(__dirname, "..", "dist");
+  const port = process.env.PORT || 1400;
   const host = "0.0.0.0";
   const primaryIP = getPrimaryIP();
   const allInterfaces = getAllNetworkInterfaces();

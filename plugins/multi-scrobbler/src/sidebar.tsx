@@ -51,7 +51,7 @@ function patchPanelUI(tabs, patches) {
     patches.push(
       after(
         "default",
-        bunny?.metro?.findByNameLazy("UserSettingsOverviewWrapper", false),
+        bunny?.metro?.findByPropsLazy(["renderTitle", "sections"], false),
         (_, ret) => {
           const UserSettingsOverview = findInReactTree(
             ret.props.children,

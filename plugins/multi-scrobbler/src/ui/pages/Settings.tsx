@@ -33,7 +33,7 @@ plugin.storage.librefmUsername ??= "";
 plugin.storage.librefmApiKey ??= "";
 plugin.storage.listenbrainzUsername ??= "";
 plugin.storage.listenbrainzToken ??= "";
-plugin.storage.addToSidebar ??= true;
+plugin.storage.addToSidebar ??= false;
 plugin.storage.showLargeText ??= true;
 plugin.storage.showLargeText ??= true;
 
@@ -585,11 +585,7 @@ export default function Settings() {
           <TableSwitchRow
             label="Add to Sidebar"
             subLabel="Show plugin in Discord settings"
-            value={get("addToSidebar", false)}
-            onValueChange={(value: boolean) => {
-              set("addToSidebar", value);
-              forceUpdate();
-            }}
+            value={false}
           />
         </TableRowGroup>
 
