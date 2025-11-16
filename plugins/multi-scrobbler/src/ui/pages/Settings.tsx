@@ -309,7 +309,7 @@ export default function Settings() {
             subLabel="Show off your music status from multiple services"
           />
           <TableRow label="Author" subLabel="kmmiio99o" />
-          <TableRow label="Version" subLabel="1.2.0" />
+          <TableRow label="Version" subLabel="1.3.0" />
         </TableRowGroup>
       </Stack>
     </ScrollView>
