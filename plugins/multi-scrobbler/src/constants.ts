@@ -49,7 +49,6 @@ const Constants = {
     timeInterval: 5,
     showTimestamp: true,
     listeningTo: true,
-    ignoreSpotify: true,
     ignoreYouTubeMusic: true,
     ignoreKizzy: true,
     ignoreMetrolist: true,

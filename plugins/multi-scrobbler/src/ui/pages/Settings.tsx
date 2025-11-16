@@ -29,7 +29,6 @@ plugin.storage.appName ??= "Music";
 plugin.storage.timeInterval ??= 5;
 plugin.storage.showTimestamp ??= true;
 plugin.storage.listeningTo ??= true;
-plugin.storage.ignoreSpotify ??= true;
 plugin.storage.verboseLogging ??= false;
 plugin.storage.service ??= "lastfm";
 plugin.storage.librefmUsername ??= "";

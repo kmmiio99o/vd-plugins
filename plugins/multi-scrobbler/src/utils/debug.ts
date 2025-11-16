@@ -7,7 +7,6 @@ const debugInfo = {} as {
   lastActivity?: Activity;
   lastTrack?: Track;
   lastAPIResponse?: any;
-  isSpotifyIgnored?: boolean;
   isYouTubeMusicIgnored?: boolean;
   isKizzyIgnored?: boolean;
   isMetrolistIgnored?: boolean;
