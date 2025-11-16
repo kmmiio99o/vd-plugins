@@ -39,10 +39,7 @@ const Constants = {
   DEFAULT_HEADERS: {} as Record<string, string>,
 
   // Last.fm/Libre.fm use these hashes for their generic album covers
-  DEFAULT_COVER_HASHES: [
-    "2a96cbd8b46e442fc41c2b86b821562f",
-    "c6f59c1e5e7240a4c0d427abd71f3dbb",
-  ],
+  DEFAULT_COVER_HASHES: ["2a96cbd8b46e442fc41c2b86b821562f"],
 
   // Plugin defaults
   DEFAULT_SETTINGS: {

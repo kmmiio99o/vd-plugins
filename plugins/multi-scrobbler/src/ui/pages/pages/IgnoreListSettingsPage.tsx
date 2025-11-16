@@ -1,4 +1,3 @@
-// pages/IgnoreListSettingsPage.tsx
 import { React, ReactNative as RN } from "@vendetta/metro/common";
 import { useProxy } from "@vendetta/storage";
 import {

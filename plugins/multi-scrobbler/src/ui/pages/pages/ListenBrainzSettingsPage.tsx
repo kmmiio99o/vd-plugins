@@ -1,4 +1,3 @@
-// pages/ListenBrainzSettingsPage.tsx
 import { React } from "@vendetta/metro/common";
 import { useProxy } from "@vendetta/storage";
 import { Linking } from "react-native";
