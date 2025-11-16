@@ -42,7 +42,6 @@ export type LFMSettings = {
   showTimestamp: boolean;
   timeInterval: number | string;
   listeningTo: boolean;
-  ignoreSpotify: boolean;
   showLargeText: boolean;
   ignoreYouTubeMusic: boolean;
   // Verbose logging settings

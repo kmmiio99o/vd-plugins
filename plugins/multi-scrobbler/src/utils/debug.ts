@@ -7,9 +7,7 @@ const debugInfo = {} as {
   lastActivity?: Activity;
   lastTrack?: Track;
   lastAPIResponse?: any;
-  isYouTubeMusicIgnored?: boolean;
-  isKizzyIgnored?: boolean;
-  isMetrolistIgnored?: boolean;
+  ignoreList?: boolean;
   componentMountErrors?: string[];
   lastReanimatedError?: string;
   componentMountCount?: number;
