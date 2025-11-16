@@ -18,7 +18,7 @@ export const pluginState = {
 } as {
   pluginStopped: boolean;
   lastActivity?: any;
-  updateInterval?: NodeJS.Timer;
+  updateInterval?: NodeJS.Timeout;
   lastTrackUrl?: string;
 };
 

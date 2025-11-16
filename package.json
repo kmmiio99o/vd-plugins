@@ -3,7 +3,7 @@
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs -w",
     "lint": "eslint plugins",
-    "make": "node make.mjs",
+    "make": "node scripts/make.mjs",
     "serve": "node scripts/serve.mjs"
   },
   "devDependencies": {

@@ -4,7 +4,7 @@ const Constants = {
   DEFAULT_APP_NAME: "Music",
   DEFAULT_TIME_INTERVAL: 5,
   // Discord application ID
-  APPLICATION_ID: "1054951789318909972",
+  APPLICATION_ID: "1368513179272871956",
   // Don't check more than once every 3 seconds to avoid getting rate limited
   MIN_UPDATE_INTERVAL: 3,
   // How many times to retry failed API calls

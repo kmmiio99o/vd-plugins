@@ -21,6 +21,7 @@ const tabsNavigationRef = bunny?.metro?.findByPropsLazy("getRootNavigationRef");
 const settingConstants = bunny?.metro?.findByPropsLazy(
   "SETTING_RENDERER_CONFIG",
 );
+const createListModule = bunny?.metro?.findByPropsLazy("createList");
 const SettingsOverviewScreen = bunny?.metro?.findByNameLazy(
   "SettingsOverviewScreen",
   false,
@@ -96,37 +97,32 @@ function patchPanelUI(tabs, patches) {
 }
 
 function patchTabsUI(tabs, patches) {
-  if (!settingConstants || !SettingsOverviewScreen || !tabsNavigationRef) {
+  if (!settingConstants || !tabsNavigationRef) {
     console.warn("[LastFm] Missing required constants for tabs UI patch");
     return;
   }
 
-  const row = {};
-  row[tabs.key] = {
-    type: "pressable",
-    title: tabs.title,
-    icon: tabs.icon,
-    IconComponent:
-      tabs.icon &&
-      (() => {
-        const actualIconSource =
-          typeof tabs.icon === "object" && tabs.icon.uri !== undefined
-            ? tabs.icon.uri
-            : tabs.icon;
-        return React.createElement(TableRowIcon, { source: actualIconSource });
-      }),
-    usePredicate: tabs.predicate,
-    useTrailing: tabs.trailing,
-    onPress: () => {
-      const navigation = tabsNavigationRef.getRootNavigationRef();
-      const Component = tabs.page;
+  const row = {
+    [tabs.key]: {
+      type: "pressable",
+      title: tabs.title,
+      icon: tabs.icon,
+      IconComponent:
+        tabs.icon &&
+        (() => React.createElement(TableRowIcon, { source: tabs.icon })),
+      usePredicate: tabs.predicate,
+      useTrailing: tabs.trailing,
+      onPress: () => {
+        const navigation = tabsNavigationRef.getRootNavigationRef();
+        const Component = tabs.page;
 
-      navigation.navigate("VendettaCustomPage", {
-        title: tabs.title(),
-        render: () => React.createElement(Component),
-      });
+        navigation.navigate("VendettaCustomPage", {
+          title: tabs.title(),
+          render: () => React.createElement(Component),
+        });
+      },
+      withArrow: true,
     },
-    withArrow: true,
   };
 
   let rendererConfigValue = settingConstants.SETTING_RENDERER_CONFIG;
@@ -141,30 +137,54 @@ function patchTabsUI(tabs, patches) {
     set: (v) => (rendererConfigValue = v),
   });
 
-  const firstRender = Symbol("LastFm-pinToSettings");
+  const firstRender = Symbol("pinToSettings meow meow");
 
-  patches.push(
-    after("default", SettingsOverviewScreen, (args, ret) => {
-      if (!(args[0] as { [key: symbol]: boolean })[firstRender]) {
-        (args[0] as { [key: symbol]: boolean })[firstRender] = true;
+  try {
+    if (!createListModule) return;
+    patches.push(
+      after("createList", createListModule, function (args, ret) {
+        if (!args[0][firstRender]) {
+          args[0][firstRender] = true;
 
-        const { sections } = findInReactTree(
-          ret,
-          (i) => i.props?.sections,
-        ).props;
+          const [config] = args;
+          const sections = config.sections;
 
-        const section = sections?.find((x) =>
-          ["Bunny", "Revenge", "Kettu", "Vencore", "ShiggyCord"].some(
-            (mod) => x.label === mod && x.title === mod,
-          ),
-        );
+          const section = sections?.find((x: any) =>
+            ["Bunny", "Revenge", "Kettu", "Vencore", "ShiggyCord"].some(
+              (mod) => x.label === mod && x.title === mod,
+            ),
+          );
 
-        if (section?.settings) {
-          section.settings = [...section.settings, tabs.key];
+          if (section?.settings) {
+            section.settings = [...section.settings, tabs.key];
+          }
         }
-      }
-    }),
-  );
+      }),
+    );
+  } catch {
+    if (!SettingsOverviewScreen) return;
+    patches.push(
+      after("default", SettingsOverviewScreen, (args, ret) => {
+        if (!args[0][firstRender]) {
+          args[0][firstRender] = true;
+
+          const { sections } = findInReactTree(
+            ret,
+            (i) => i.props?.sections,
+          ).props;
+          const section = sections?.find((x: any) =>
+            ["Bunny", "Revenge", "Kettu", "Vencore", "ShiggyCord"].some(
+              (mod) => x.label === mod && x.title === mod,
+            ),
+          );
+
+          if (section?.settings) {
+            section.settings = [...section.settings, tabs.key];
+          }
+        }
+      }),
+    );
+  }
 }
 
 function patchSettingsPin(tabs) {

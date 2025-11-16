@@ -33,12 +33,396 @@ plugin.storage.librefmUsername ??= "";
 plugin.storage.librefmApiKey ??= "";
 plugin.storage.listenbrainzUsername ??= "";
 plugin.storage.listenbrainzToken ??= "";
-plugin.storage.addToSidebar ??= false;
+plugin.storage.addToSidebar ??= true;
 plugin.storage.showLargeText ??= true;
 plugin.storage.ignoreList ??= [];
+plugin.storage.showAlbumInTooltip ??= true;
+plugin.storage.showDurationInTooltip ??= true;
+// Removed: plugin.storage.showFallbackImage ??= false;
 
 const get = (k: string, fallback?: any) => plugin.storage[k] ?? fallback;
 const set = (k: string, v: any) => (plugin.storage[k] = v);
+
+// RPC Preview Component
+function RPCPreview() {
+  useProxy(plugin.storage);
+  const [previewTrack, setPreviewTrack] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [currentProgress, setCurrentProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    const fetchPreviewData = async () => {
+      if (!get("username") || !get("apiKey")) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        // Try to get recent tracks from Last.fm API
+        const response = await fetch(
+          `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${get("username")}&api_key=${get("apiKey")}&format=json&limit=1`,
+        );
+        const data = await response.json();
+
+        if (
+          data.recenttracks &&
+          data.recenttracks.track &&
+          data.recenttracks.track.length > 0
+        ) {
+          const track = data.recenttracks.track[0];
+
+          // Try to get track info for duration
+          let duration = 180; // Default 3 minutes
+          try {
+            const trackInfoResponse = await fetch(
+              `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=${get("apiKey")}&artist=${encodeURIComponent(track.artist["#text"])}&track=${encodeURIComponent(track.name)}&format=json&username=${get("username")}`,
+            );
+            const trackInfo = await trackInfoResponse.json();
+            if (trackInfo.track && trackInfo.track.duration) {
+              duration = Math.floor(trackInfo.track.duration / 1000); // Convert ms to seconds
+            }
+          } catch (error) {
+            console.log("Could not fetch track duration, using default");
+          }
+
+          setPreviewTrack({
+            name: track.name || "Unknown Track",
+            artist: track.artist?.["#text"] || "Unknown Artist",
+            album: track.album?.["#text"] || "Unknown Album",
+            image:
+              track.image?.[2]?.["#text"] ||
+              track.image?.[1]?.["#text"] ||
+              null,
+            nowPlaying: track["@attr"]?.nowplaying === "true",
+            duration: duration,
+            startTime:
+              track["@attr"]?.nowplaying === "true"
+                ? Math.floor(Date.now() / 1000) - 60
+                : null, // Simulate 1 minute progress for now playing
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch preview data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPreviewData();
+  }, [get("username"), get("apiKey")]);
+
+  // Update progress for now playing tracks
+  React.useEffect(() => {
+    if (!previewTrack?.nowPlaying || !get("showTimestamp")) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (previewTrack.startTime && previewTrack.duration) {
+        const now = Math.floor(Date.now() / 1000);
+        const elapsed = now - previewTrack.startTime;
+        const progress = Math.min(elapsed / previewTrack.duration, 1);
+        setCurrentProgress(progress);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [previewTrack, get("showTimestamp")]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const getPreviewText = () => {
+    let text = "";
+
+    if (get("showAlbumInTooltip") && previewTrack?.album) {
+      text += `on ${previewTrack.album}`;
+    }
+
+    if (get("showDurationInTooltip") && previewTrack?.duration) {
+      const durationText = ` • ${formatTime(previewTrack.duration)}`;
+      if (text) {
+        text += durationText;
+      } else {
+        text = formatTime(previewTrack.duration);
+      }
+    }
+
+    return text || "No tooltip text";
+  };
+
+  const getCurrentProgressData = () => {
+    if (!previewTrack?.duration) return { current: 0, total: 0, progress: 0 };
+
+    if (previewTrack.nowPlaying) {
+      const current = currentProgress * previewTrack.duration;
+      return {
+        current: current,
+        total: previewTrack.duration,
+        progress: currentProgress,
+      };
+    } else {
+      // For non-now playing tracks, show 30% progress as example
+      return {
+        current: previewTrack.duration * 0.3,
+        total: previewTrack.duration,
+        progress: 0.3,
+      };
+    }
+  };
+
+  const activityType = get("listeningTo") ? "Listening to" : "Playing";
+  const appName = get("appName", "Music");
+
+  if (isLoading) {
+    return (
+      <RN.View
+        style={{
+          backgroundColor: "#2f3136",
+          borderRadius: 8,
+          padding: 16,
+          marginHorizontal: 10,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: "#40444b",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 120,
+        }}
+      >
+        <RN.Text style={{ color: "#b9bbbe", fontSize: 14 }}>
+          Loading preview from Last.fm...
+        </RN.Text>
+      </RN.View>
+    );
+  }
+
+  if (!get("username") || !get("apiKey")) {
+    return (
+      <RN.View
+        style={{
+          backgroundColor: "#2f3136",
+          borderRadius: 8,
+          padding: 16,
+          marginHorizontal: 10,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: "#40444b",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 120,
+        }}
+      >
+        <RN.Text
+          style={{ color: "#b9bbbe", fontSize: 14, textAlign: "center" }}
+        >
+          Configure Last.fm credentials to see preview
+        </RN.Text>
+      </RN.View>
+    );
+  }
+
+  if (!previewTrack) {
+    return (
+      <RN.View
+        style={{
+          backgroundColor: "#2f3136",
+          borderRadius: 8,
+          padding: 16,
+          marginHorizontal: 10,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: "#40444b",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 120,
+        }}
+      >
+        <RN.Text
+          style={{ color: "#b9bbbe", fontSize: 14, textAlign: "center" }}
+        >
+          No recent tracks found or error loading data
+        </RN.Text>
+      </RN.View>
+    );
+  }
+
+  const progressData = getCurrentProgressData();
+
+  return (
+    <RN.View
+      style={{
+        backgroundColor: "#2f3136",
+        borderRadius: 8,
+        padding: 16,
+        marginHorizontal: 10,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: "#40444b",
+      }}
+    >
+      {/* Activity Type Header - replaces "RPC Preview" */}
+      <RN.View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 12,
+        }}
+      >
+        <RN.Text
+          style={{
+            color: "#b9bbbe",
+            fontSize: 14,
+            fontWeight: "600",
+          }}
+        >
+          {activityType} {appName}
+        </RN.Text>
+
+        {/* Now Playing Indicator - subtle text instead of blue badge */}
+        {previewTrack.nowPlaying && (
+          <RN.Text
+            style={{
+              color: "#72767d",
+              fontSize: 12,
+              fontStyle: "italic",
+            }}
+          >
+            RPC Preview
+          </RN.Text>
+        )}
+      </RN.View>
+
+      <RN.View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+        }}
+      >
+        {/* Album Art */}
+        <RN.View
+          style={{
+            width: 60,
+            height: 60,
+            backgroundColor: "#36393f",
+            borderRadius: 4,
+            justifyContent: "center",
+            alignItems: "center",
+            marginRight: 12,
+            borderWidth: 1,
+            borderColor: "#40444b",
+            overflow: "hidden",
+          }}
+        >
+          {previewTrack.image ? (
+            <RN.Image
+              source={{ uri: previewTrack.image }}
+              style={{ width: 60, height: 60 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <RN.Text
+              style={{
+                color: "#72767d",
+                fontSize: 24,
+              }}
+            >
+              🎵
+            </RN.Text>
+          )}
+        </RN.View>
+
+        <RN.View style={{ flex: 1 }}>
+          {/* Track Name */}
+          <RN.Text
+            style={{
+              color: "white",
+              fontSize: 16,
+              fontWeight: "600",
+              marginBottom: 4,
+            }}
+            numberOfLines={1}
+          >
+            {previewTrack.name}
+          </RN.Text>
+
+          {/* Artist Name */}
+          <RN.Text
+            style={{
+              color: "#b9bbbe",
+              fontSize: 14,
+              marginBottom: 4,
+            }}
+            numberOfLines={1}
+          >
+            {previewTrack.artist}
+          </RN.Text>
+
+          {/* Tooltip Text */}
+          {get("showLargeText") && getPreviewText() !== "No tooltip text" && (
+            <RN.Text
+              style={{
+                color: "#72767d",
+                fontSize: 12,
+                fontStyle: "italic",
+                marginBottom: 4,
+              }}
+              numberOfLines={1}
+            >
+              {getPreviewText()}
+            </RN.Text>
+          )}
+
+          {/* Timestamps */}
+          {get("showTimestamp") && previewTrack.duration && (
+            <RN.View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <RN.View
+                style={{
+                  flex: 1,
+                  height: 4,
+                  backgroundColor: "#36393f",
+                  borderRadius: 2,
+                  marginRight: 8,
+                  overflow: "hidden",
+                }}
+              >
+                <RN.View
+                  style={{
+                    width: `${progressData.progress * 100}%`,
+                    height: 4,
+                    backgroundColor: "#5865f2",
+                    borderRadius: 2,
+                  }}
+                />
+              </RN.View>
+              <RN.Text
+                style={{
+                  color: "#72767d",
+                  fontSize: 12,
+                  minWidth: 70,
+                  textAlign: "right",
+                }}
+              >
+                {formatTime(progressData.current)} /{" "}
+                {formatTime(progressData.total)}
+              </RN.Text>
+            </RN.View>
+          )}
+        </RN.View>
+      </RN.View>
+    </RN.View>
+  );
+}
 
 // Last.fm Settings Page
 function LastFmSettingsPage() {
@@ -323,7 +707,36 @@ function DisplaySettingsPage() {
           </Stack>
         </TableRowGroup>
 
-        <TableRowGroup title="Activity Options">
+        <TableRowGroup title="About Display Settings">
+          <TableRow
+            label="App Name"
+            subLabel="The name shown in Discord for your activity"
+          />
+          <TableRow
+            label="Update Interval"
+            subLabel="How often the plugin checks for new tracks (in seconds)"
+          />
+          <TableRow
+            label="Minimum Interval"
+            subLabel={`The plugin will never check more frequently than ${Constants.MIN_UPDATE_INTERVAL} seconds`}
+          />
+        </TableRowGroup>
+      </Stack>
+      <RN.View style={{ height: 64 }} />
+    </ScrollView>
+  );
+}
+
+// RPC Customization Settings Page
+function RPCCustomizationSettingsPage() {
+  useProxy(plugin.storage);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+  return (
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
+      <RPCPreview />
+      <Stack spacing={8}>
+        <TableRowGroup title="RPC Display Options">
           <TableSwitchRow
             label="Show as Listening"
             subLabel="Display as 'Listening to' instead of 'Playing'"
@@ -335,7 +748,7 @@ function DisplaySettingsPage() {
           />
           <TableSwitchRow
             label="Show Tooltip Text"
-            subLabel="Show album name and/or track duration in Discord activity tooltip"
+            subLabel="Show album name and track duration in Discord activity tooltip"
             value={get("showLargeText", true)}
             onValueChange={(value: boolean) => {
               set("showLargeText", value);
@@ -351,6 +764,24 @@ function DisplaySettingsPage() {
             )}
             onValueChange={(value: boolean) => {
               set("showTimestamp", value);
+              forceUpdate();
+            }}
+          />
+          <TableSwitchRow
+            label="Show Album in Tooltip"
+            subLabel="Include album name in the tooltip text"
+            value={get("showAlbumInTooltip", true)}
+            onValueChange={(value: boolean) => {
+              set("showAlbumInTooltip", value);
+              forceUpdate();
+            }}
+          />
+          <TableSwitchRow
+            label="Show Duration in Tooltip"
+            subLabel="Include track duration in the tooltip text"
+            value={get("showDurationInTooltip", true)}
+            onValueChange={(value: boolean) => {
+              set("showDurationInTooltip", value);
               forceUpdate();
             }}
           />
@@ -624,12 +1055,23 @@ export default function Settings() {
         <TableRowGroup title="Plugin Configuration">
           <TableRow
             label="Display Settings"
-            subLabel="Customize how music activity appears"
+            subLabel="Customize app name and update interval"
             trailing={<TableRow.Arrow />}
             onPress={() =>
               navigation.push("VendettaCustomPage", {
                 title: "Display Settings",
                 render: DisplaySettingsPage,
+              })
+            }
+          />
+          <TableRow
+            label="RPC Customization"
+            subLabel="Customize Discord rich presence display options"
+            trailing={<TableRow.Arrow />}
+            onPress={() =>
+              navigation.push("VendettaCustomPage", {
+                title: "RPC Customization",
+                render: RPCCustomizationSettingsPage,
               })
             }
           />
@@ -657,32 +1099,11 @@ export default function Settings() {
           />
           <TableSwitchRow
             label="Add to Sidebar"
-            subLabel="Show plugin in Discord settings (may crash Discord)"
+            subLabel="Show plugin in Discord settings"
             value={get("addToSidebar", false)}
             onValueChange={(value: boolean) => {
-              if (value) {
-                const { showConfirmationAlert } = window;
-                showConfirmationAlert({
-                  title: "Warning: Potential Discord Crash",
-                  content:
-                    "Enabling 'Add to Sidebar' may cause Discord to crash or become unstable. This feature is experimental and not recommended.",
-                  confirmText: "Enable Anyway",
-                  cancelText: "Cancel",
-                  confirmColor: "red",
-                  onConfirm: () => {
-                    set("addToSidebar", true);
-                    forceUpdate();
-                    showToast(
-                      "Sidebar feature enabled - use with caution",
-                      getAssetIDByName("Warning"),
-                    );
-                  },
-                  onCancel: () => forceUpdate(),
-                });
-              } else {
-                set("addToSidebar", false);
-                forceUpdate();
-              }
+              set("addToSidebar", value);
+              forceUpdate();
             }}
           />
         </TableRowGroup>

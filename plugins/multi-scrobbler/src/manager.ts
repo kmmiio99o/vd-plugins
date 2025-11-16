@@ -189,37 +189,53 @@ class PluginManager {
         });
       }
 
-      // set up album art and tooltip text
+      // set up album art and tooltip text - SIMPLIFIED VERSION (no fallback image)
       if (lastTrack.album || lastTrack.albumArt) {
         const assetUrls = lastTrack.albumArt ? [lastTrack.albumArt] : [];
         const assets = await fetchAsset(assetUrls);
 
-        if (assets[0]) {
+        // Only use album art if available
+        let largeImageAsset = assets[0];
+
+        if (largeImageAsset) {
+          activity.assets = {
+            large_image: largeImageAsset,
+          };
+
+          // Build tooltip text based on settings
           if (currentSettings.showLargeText) {
-            const largeText = lastTrack.album
-              ? `on ${lastTrack.album}`
-              : `${lastTrack.artist} - ${lastTrack.name}`;
+            let largeText = "";
 
-            const durationText =
-              currentSettings.showTimestamp && lastTrack.duration
-                ? ` • ${formatDuration(lastTrack.duration)}`
-                : "";
+            if (currentSettings.showAlbumInTooltip && lastTrack.album) {
+              largeText += `on ${lastTrack.album}`;
+            }
 
-            activity.assets = {
-              large_image: assets[0],
-              large_text: largeText + durationText,
-            };
-          } else {
-            activity.assets = {
-              large_image: assets[0],
-            };
+            if (currentSettings.showDurationInTooltip && lastTrack.duration) {
+              const durationText = formatDuration(lastTrack.duration);
+              if (largeText) {
+                largeText += ` • ${durationText}`;
+              } else {
+                largeText = durationText;
+              }
+            }
+
+            if (largeText) {
+              activity.assets.large_text = largeText;
+            }
           }
 
-          logVerbose("Album art set:", assets[0]);
-        } else if (lastTrack.album) {
-          activity.assets = currentSettings.showLargeText
-            ? { large_text: `on ${lastTrack.album}` }
-            : {};
+          logVerbose("Album art set:", largeImageAsset);
+          if (activity.assets.large_text) {
+            logVerbose("Tooltip text set:", activity.assets.large_text);
+          }
+        } else if (
+          lastTrack.album &&
+          currentSettings.showLargeText &&
+          currentSettings.showAlbumInTooltip
+        ) {
+          activity.assets = {
+            large_text: `on ${lastTrack.album}`,
+          };
         }
       }
 
