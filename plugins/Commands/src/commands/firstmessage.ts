@@ -42,7 +42,8 @@ export const firstMessageCommand = {
       name: "user",
       displayName: "user",
       description: "Target user to get their first message in this server/dm",
-      displayDescription: "Target user to get their first message in this server/dm",
+      displayDescription:
+        "Target user to get their first message in this server/dm",
       type: 6, // USER type
       required: false,
     },
@@ -74,40 +75,24 @@ export const firstMessageCommand = {
       const channelId = ctx.channel.id;
       const isDM = ctx.channel.type === 1;
 
-      let result = "https://discord.com/channels/";
+      // Channel option is not valid in DMs
+      if (isDM && channel) {
+        return { type: 4 };
+      }
 
+      let result = "https://discord.com/channels/";
       let message;
-      if (!user && !channel) {
-        if (isDM) {
-          message = await getFirstDMMessage(channelId);
-          result += `@me/${channelId}/${message.id}`;
-        } else {
-          message = await getFirstGuildMessage(guildId);
-          result += `${guildId}/${message.channel_id}/${message.id}`;
-        }
-      } else if (user) {
-        if (isDM) {
-          message = await getFirstDMMessage(channelId, user);
-          result += `@me/${channelId}/${message.id}`;
-        } else {
-          message = await getFirstGuildMessage(guildId, user);
-          result += `${guildId}/${message.channel_id}/${message.id}`;
-        }
-      } else if (channel) {
-        if (isDM) {
-          // Silent fail for invalid combination
-          return { type: 4 };
-        }
-        message = await getFirstGuildMessage(guildId, null, channel);
-        result += `${guildId}/${channel}/${message.id}`;
+
+      if (isDM) {
+        // DM logic: only user parameter matters
+        message = await getFirstDMMessage(channelId, user);
+        result += `@me/${channelId}/${message.id}`;
       } else {
-        // both user and channel specified
-        if (isDM) {
-          // Silent fail for invalid combination
-          return { type: 4 };
-        }
+        // Guild logic: both user and channel parameters can be used
         message = await getFirstGuildMessage(guildId, user, channel);
-        result += `${guildId}/${channel}/${message.id}`;
+        // Use the specified channel if provided, otherwise use the message's channel
+        const targetChannel = channel || message.channel_id;
+        result += `${guildId}/${targetChannel}/${message.id}`;
       }
 
       if (send) {
@@ -116,13 +101,13 @@ export const firstMessageCommand = {
           ctx.channel.id,
           { content: result },
           void 0,
-          { nonce: fixNonce }
+          { nonce: fixNonce },
         );
-        return { type: 4 };
       } else {
-        RN.Linking.openURL(result); // FIXED: use RN.Linking.openURL
-        return { type: 4 };
+        RN.Linking.openURL(result);
       }
+
+      return { type: 4 };
     } catch (error) {
       console.error("[FirstMessage] Error:", error);
       // Silent fail - no error message in chat
