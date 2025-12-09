@@ -14,11 +14,50 @@ export default function RPCPreview() {
   const fallbackTrack = {
     name: "Bohemian Rhapsody",
     artist: "Queen",
+    artists: ["Queen"],
     album: "A Night at the Opera",
     image: null,
     nowPlaying: true,
     duration: 354,
     startTime: Math.floor(Date.now() / 1000) - 120,
+  };
+
+  // Helper function to parse artist data from Last.fm
+  const parseArtists = (artistData: any): string[] => {
+    if (!artistData) return ["Unknown Artist"];
+
+    // Case 1: Already an array of strings
+    if (Array.isArray(artistData)) {
+      return artistData.filter((a) => a && typeof a === "string");
+    }
+
+    // Case 2: Object with "#text" field (Last.fm standard)
+    if (artistData["#text"]) {
+      const artistText = artistData["#text"];
+      // Split by comma, semicolon, or "&" and clean up
+      return artistText
+        .split(/[,;&]/)
+        .map((artist: string) => artist.trim())
+        .filter((artist: string) => artist.length > 0);
+    }
+
+    // Case 3: Plain string
+    if (typeof artistData === "string") {
+      return artistData
+        .split(/[,;&]/)
+        .map((artist: string) => artist.trim())
+        .filter((artist: string) => artist.length > 0);
+    }
+
+    return ["Unknown Artist"];
+  };
+
+  // Helper function to format artists for display
+  const formatArtists = (artists: string[]): string => {
+    if (!artists || artists.length === 0) return "Unknown Artist";
+    if (artists.length === 1) return artists[0];
+    if (artists.length === 2) return `${artists[0]} & ${artists[1]}`;
+    return `${artists.slice(0, -1).join(", ")} & ${artists[artists.length - 1]}`;
   };
 
   React.useEffect(() => {
@@ -44,11 +83,13 @@ export default function RPCPreview() {
           data.recenttracks.track.length > 0
         ) {
           const track = data.recenttracks.track[0];
+          const artists = parseArtists(track.artist);
 
           let duration = 180;
           try {
+            const primaryArtist = artists[0] || "Unknown Artist";
             const trackInfoResponse = await fetch(
-              `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=${getStorage("apiKey")}&artist=${encodeURIComponent(track.artist["#text"])}&track=${encodeURIComponent(track.name)}&format=json&username=${getStorage("username")}`,
+              `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=${getStorage("apiKey")}&artist=${encodeURIComponent(primaryArtist)}&track=${encodeURIComponent(track.name)}&format=json&username=${getStorage("username")}`,
             );
             const trackInfo = await trackInfoResponse.json();
             if (trackInfo.track && trackInfo.track.duration) {
@@ -60,7 +101,8 @@ export default function RPCPreview() {
 
           setPreviewTrack({
             name: track.name || "Unknown Track",
-            artist: track.artist?.["#text"] || "Unknown Artist",
+            artist: formatArtists(artists),
+            artists: artists,
             album: track.album?.["#text"] || "Unknown Album",
             image:
               track.image?.[2]?.["#text"] ||
