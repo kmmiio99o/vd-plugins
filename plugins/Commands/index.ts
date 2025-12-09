@@ -25,7 +25,8 @@ import {
   friendInviteViewCommand,
   friendInviteRevokeCommand,
 } from "./src/commands/friendinvites";
-import settings from "./settings";
+import settings from "./settings/settings";
+import patchSidebar from "./sidebar";
 
 if (!storage.factSettings) {
   storage.factSettings = {
@@ -76,6 +77,10 @@ if (!storage.hiddenSettings) {
     konochanBypassNsfw: false,
   };
 }
+// sidebar enabled setting
+if (storage.sidebarEnabled === undefined) {
+  storage.sidebarEnabled = true;
+}
 
 const commandMap = {
   catfact: catFactCommand,
@@ -102,18 +107,60 @@ const commandMap = {
 };
 
 let commands: Array<() => void> = [];
+let sidebarUnpatch: (() => void) | undefined;
 
 export default {
   onLoad: () => {
+    console.log("[Commands Plugin] Loading...");
+
+    // Patch sidebar if enabled
+    if (storage.sidebarEnabled !== false) {
+      try {
+        sidebarUnpatch = patchSidebar();
+        console.log("[Commands Plugin] Sidebar patched successfully");
+      } catch (error) {
+        console.error("[Commands Plugin] Failed to patch sidebar:", error);
+      }
+    }
+
+    // Register commands
     for (const [key, command] of Object.entries(commandMap)) {
       if (storage.enabledCommands[key]) {
-        commands.push(registerCommand(command));
+        try {
+          commands.push(registerCommand(command));
+          console.log(`[Commands Plugin] Registered command: ${key}`);
+        } catch (error) {
+          console.error(
+            `[Commands Plugin] Failed to register command ${key}:`,
+            error,
+          );
+        }
       }
     }
   },
   onUnload: () => {
-    commands.forEach((unregister) => unregister());
+    console.log("[Commands Plugin] Unloading...");
+
+    // Unregister commands
+    commands.forEach((unregister) => {
+      try {
+        unregister();
+      } catch (error) {
+        // Ignore errors during cleanup
+      }
+    });
     commands = [];
+
+    // Unpatch sidebar
+    if (sidebarUnpatch) {
+      try {
+        sidebarUnpatch();
+        sidebarUnpatch = undefined;
+        console.log("[Commands Plugin] Sidebar unpatched");
+      } catch (error) {
+        console.error("[Commands Plugin] Failed to unpatch sidebar:", error);
+      }
+    }
   },
   settings,
 };
