@@ -176,6 +176,7 @@ export default function RPCPreview() {
   }
 
   const progressData = getCurrentProgressData();
+  const previewText = getPreviewText();
 
   return (
     <RN.View style={styles.previewContainer}>
@@ -208,12 +209,11 @@ export default function RPCPreview() {
           <RN.Text style={styles.artistName} numberOfLines={1}>
             {previewTrack.artist}
           </RN.Text>
-          {getStorage("showLargeText") &&
-            getPreviewText() !== "No tooltip text" && (
-              <RN.Text style={styles.tooltipText} numberOfLines={1}>
-                {getPreviewText()}
-              </RN.Text>
-            )}
+          {getStorage("showLargeText") && previewText !== "No tooltip text" && (
+            <RN.Text style={styles.tooltipText} numberOfLines={1}>
+              {previewText}
+            </RN.Text>
+          )}
 
           {getStorage("showTimestamp") && previewTrack.duration && (
             <RN.View style={styles.progressContainer}>
@@ -239,7 +239,7 @@ export default function RPCPreview() {
   );
 }
 
-const styles = {
+const styles = RN.StyleSheet.create({
   container: {
     backgroundColor: "#1e1f22",
     borderRadius: 12,
@@ -377,4 +377,4 @@ const styles = {
     minWidth: 35,
     textAlign: "center",
   },
-} as const;
+});
