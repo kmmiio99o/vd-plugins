@@ -92,7 +92,7 @@ export default function Header() {
     title: {
       fontSize: 28,
       fontWeight: "700",
-      color: semanticColors.HEADER_PRIMARY,
+      color: semanticColors.MOBILE_TEXT_HEADING_PRIMARY,
       marginBottom: 4,
       textAlign: "left",
     },

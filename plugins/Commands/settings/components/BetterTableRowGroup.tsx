@@ -1,5 +1,5 @@
 import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
-import { semanticColors } from "@vendetta/ui";
+import { rawColors, semanticColors } from "@vendetta/ui";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 
 export default function BetterTableRowGroup({
@@ -14,8 +14,8 @@ export default function BetterTableRowGroup({
 }>) {
   const styles = stylesheet.createThemedStyleSheet({
     main: {
-      backgroundColor: semanticColors.CARD_PRIMARY_BG,
-      borderColor: semanticColors.BORDER_FAINT,
+      backgroundColor: rawColors.PLUM_18,
+      borderColor: semanticColors.CARD_BACKGROUND_DEFAULT,
       borderWidth: 1,
       borderRadius: 16,
       overflow: "hidden",

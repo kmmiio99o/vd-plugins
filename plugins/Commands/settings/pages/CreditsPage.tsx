@@ -1,7 +1,14 @@
 import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
-import { semanticColors } from "@vendetta/ui";
+import { rawColors, semanticColors } from "@vendetta/ui";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import BetterTableRowGroup from "../components/BetterTableRowGroup";
+
+type Credit = {
+  command: string;
+  author: string;
+  avatar: string;
+  github: string;
+};
 
 export default function CreditsPage() {
   const styles = stylesheet.createThemedStyleSheet({
@@ -9,42 +16,73 @@ export default function CreditsPage() {
       flex: 1,
       backgroundColor: semanticColors.BACKGROUND_PRIMARY,
     },
-    creditItem: {
+
+    scrollContent: {
+      paddingVertical: 16,
+      paddingHorizontal: 12,
+      alignItems: "stretch",
+    },
+
+    groupWrapper: {
+      marginHorizontal: 16,
+      marginTop: 16,
+      maxWidth: "100%",
+    },
+    groupMain: {
+      backgroundColor: rawColors.PLUM_18,
+      borderColor: semanticColors.CARD_BACKGROUND_DEFAULT,
+      borderWidth: 1,
+      borderRadius: 16,
+      overflow: "hidden",
+      flex: 1,
+      maxWidth: "100%",
+    },
+
+    cardPressable: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 16,
-      paddingHorizontal: 20,
-      backgroundColor: semanticColors.CARD_PRIMARY_BG,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+    },
+
+    avatarContainer: {
+      width: 56,
+      height: 56,
       borderRadius: 12,
-      marginHorizontal: 16,
-      marginVertical: 6,
+      overflow: "hidden",
+      backgroundColor: semanticColors.BACKGROUND_SECONDARY,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 12,
     },
     avatar: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      marginRight: 16,
-      backgroundColor: semanticColors.BACKGROUND_SECONDARY,
+      width: 56,
+      height: 56,
+      borderRadius: 12,
+      resizeMode: "cover",
     },
+
     textContainer: {
       flex: 1,
+      justifyContent: "center",
     },
     commandText: {
-      fontSize: 17,
-      fontWeight: "600",
-      color: semanticColors.HEADER_PRIMARY,
-      marginBottom: 4,
+      fontSize: 16,
+      fontWeight: "700",
+      color: semanticColors.MOBILE_TEXT_HEADING_PRIMARY,
+      marginBottom: 2,
     },
     authorText: {
-      fontSize: 15,
+      fontSize: 14,
       color: semanticColors.TEXT_MUTED,
-      marginBottom: 2,
+      marginBottom: 6,
     },
     linkText: {
       fontSize: 13,
-      color: semanticColors.TEXT_MUTED,
-      fontWeight: "500",
+      color: semanticColors.LINK,
+      fontWeight: "600",
     },
+
     infoText: {
       fontSize: 14,
       color: semanticColors.TEXT_MUTED,
@@ -61,7 +99,7 @@ export default function CreditsPage() {
     },
   });
 
-  const credits = [
+  const credits: Credit[] = [
     {
       command: "Facts Commands",
       author: "jdev082",
@@ -128,52 +166,66 @@ export default function CreditsPage() {
     RN.Linking.openURL(githubUrl);
   };
 
+  // Resolve asset IDs (some assets may be numeric IDs or URIs depending on bundling)
+  const heartIconRaw = getAssetIDByName("HeartIcon");
+  const infoIconRaw = getAssetIDByName("ic_information_24px");
+  const heartIcon =
+    typeof heartIconRaw === "number" ? (heartIconRaw as number) : undefined;
+  const infoIcon =
+    typeof infoIconRaw === "number" ? (infoIconRaw as number) : undefined;
+
   return (
     <RN.ScrollView
       style={styles.container}
-      contentContainerStyle={{
-        flexGrow: 1,
-        paddingVertical: 16,
-        maxWidth: "100%",
-      }}
+      contentContainerStyle={styles.scrollContent}
     >
       <BetterTableRowGroup
         title="Plugin Authors"
-        icon={getAssetIDByName("HeartIcon")}
+        icon={heartIcon}
         padding={true}
       >
         <RN.Text style={styles.infoText}>
-          Thanks to this developers for creating such a nice plugins!{"\n"}
-          Tap on any developer to visit their GitHub profile.
+          Thanks to these developers for creating such great plugins!
+          {"\n"}Tap any developer to visit their GitHub profile.
         </RN.Text>
       </BetterTableRowGroup>
 
-      {credits.map((credit, index) => (
-        <RN.Pressable
-          key={index}
-          style={styles.creditItem}
-          onPress={() => handleProfilePress(credit.github)}
-          android_ripple={{
-            color: semanticColors.ANDROID_RIPPLE,
-            radius: 200,
-          }}
-        >
-          <RN.Image source={{ uri: credit.avatar }} style={styles.avatar} />
-          <RN.View style={styles.textContainer}>
-            <RN.Text style={styles.commandText}>{credit.command}</RN.Text>
-            <RN.Text style={styles.authorText}>by {credit.author}</RN.Text>
-            <RN.Text style={styles.linkText}>
-              {credit.github.replace("https://github.com/", "@")}
-            </RN.Text>
+      {credits.map((credit) => (
+        <RN.View key={credit.github} style={styles.groupWrapper}>
+          <RN.View style={styles.groupMain}>
+            <RN.View style={styles.rippleContainer}>
+              <RN.Pressable
+                style={styles.cardPressable}
+                onPress={() => handleProfilePress(credit.github)}
+                android_ripple={{
+                  color: semanticColors.ANDROID_RIPPLE,
+                  borderless: false,
+                  radius: 200,
+                }}
+                accessibilityRole="button"
+              >
+                <RN.View style={styles.avatarContainer}>
+                  <RN.Image
+                    source={{ uri: credit.avatar }}
+                    style={styles.avatar}
+                  />
+                </RN.View>
+
+                <RN.View style={styles.textContainer}>
+                  <RN.Text numberOfLines={1} style={styles.commandText}>
+                    {credit.command}
+                  </RN.Text>
+                  <RN.Text numberOfLines={1} style={styles.authorText}>
+                    by {credit.author}
+                  </RN.Text>
+                </RN.View>
+              </RN.Pressable>
+            </RN.View>
           </RN.View>
-        </RN.Pressable>
+        </RN.View>
       ))}
 
-      <BetterTableRowGroup
-        title="About"
-        icon={getAssetIDByName("InfoIcon")}
-        padding={true}
-      >
+      <BetterTableRowGroup title="About" icon={infoIcon} padding={true}>
         <RN.Text style={styles.versionText}>
           Commands Plugin Collection{"\n"}
           Version 1.3.0
