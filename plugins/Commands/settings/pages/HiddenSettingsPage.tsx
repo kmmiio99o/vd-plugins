@@ -45,7 +45,7 @@ export default function HiddenSettingsPage() {
       }}
     >
       <BetterTableRowGroup
-        title="⚠️ Warning"
+        title="Warning"
         icon={getAssetIDByName("WarningIcon")}
         padding={true}
       >

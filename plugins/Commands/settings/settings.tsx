@@ -240,7 +240,7 @@ export default function Settings() {
 
         <BetterTableRowGroup
           title="Other"
-          icon={getAssetIDByName("InformationIcon")}
+          icon={getAssetIDByName("CircleInformationIcon-primary")}
         >
           <FormRow
             label="Credits"
