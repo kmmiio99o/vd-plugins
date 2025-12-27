@@ -8,6 +8,7 @@ import {
   TableRowGroup,
   TableRow,
   TableSwitchRow,
+  TableCheckboxRow,
   ScrollView,
 } from "./pages/components/TableComponents";
 
@@ -62,7 +63,6 @@ class ServiceFactory {
 
   static async testService(service: ServiceType): Promise<boolean> {
     try {
-      // Mock implementation - you can replace with actual service testing
       switch (service) {
         case "lastfm":
           return await this.testLastFmConnection();
@@ -82,9 +82,7 @@ class ServiceFactory {
   private static async testLastFmConnection(): Promise<boolean> {
     const username = getStorage("username");
     const apiKey = getStorage("apiKey");
-
     if (!username || !apiKey) return false;
-
     try {
       const response = await fetch(
         `https://ws.audioscrobbler.com/2.0/?method=user.getinfo&user=${username}&api_key=${apiKey}&format=json`,
@@ -100,11 +98,8 @@ class ServiceFactory {
   private static async testLibreFmConnection(): Promise<boolean> {
     const username = getStorage("librefmUsername");
     const apiKey = getStorage("librefmApiKey");
-
     if (!username || !apiKey) return false;
-
     try {
-      // Libre.fm uses similar API to Last.fm
       const response = await fetch(
         `https://libre.fm/2.0/?method=user.getinfo&user=${username}&api_key=${apiKey}&format=json`,
       );
@@ -119,24 +114,16 @@ class ServiceFactory {
   private static async testListenBrainzConnection(): Promise<boolean> {
     const username = getStorage("listenbrainzUsername");
     const token = getStorage("listenbrainzToken");
-
     if (!username) return false;
-
     try {
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
       };
-
-      if (token) {
-        headers["Authorization"] = `Token ${token}`;
-      }
-
+      if (token) headers["Authorization"] = `Token ${token}`;
       const response = await fetch(
         `https://api.listenbrainz.org/1/user/${username}/listen-count`,
         { headers },
       );
-
-      // If we get any response, the connection is valid
       return response.status === 200;
     } catch (error) {
       console.error("ListenBrainz connection test failed:", error);
@@ -156,21 +143,18 @@ export default function Settings() {
 
   const getCredentialStatus = (service: ServiceType) => {
     switch (service) {
-      case "lastfm": {
+      case "lastfm":
         return getStorage("username") && getStorage("apiKey")
           ? "✅ Configured"
           : "❌ Missing credentials";
-      }
-      case "librefm": {
+      case "librefm":
         return getStorage("librefmUsername") && getStorage("librefmApiKey")
           ? "✅ Configured"
           : "❌ Missing credentials";
-      }
-      case "listenbrainz": {
+      case "listenbrainz":
         return getStorage("listenbrainzUsername")
           ? "✅ Configured"
           : "❌ Missing username";
-      }
       default:
         return "❓ Unknown";
     }
@@ -191,13 +175,15 @@ export default function Settings() {
           />
           {(["lastfm", "librefm", "listenbrainz"] as ServiceType[]).map(
             (service) => (
-              <TableSwitchRow
+              <TableCheckboxRow
                 key={service}
                 label={serviceFactory.getServiceDisplayName(service)}
                 subLabel={getCredentialStatus(service)}
-                value={currentService === service}
-                onValueChange={(value: boolean) => {
-                  if (value && service !== currentService) {
+                // Single choice logic: check if this matches current service
+                checked={currentService === service}
+                onPress={() => {
+                  // Only update if clicking a service that isn't already selected
+                  if (service !== currentService) {
                     setStorage("service", service);
                     forceUpdate();
                   }
@@ -308,7 +294,7 @@ export default function Settings() {
             subLabel="Show off your music status from multiple services"
           />
           <TableRow label="Author" subLabel="kmmiio99o" />
-          <TableRow label="Version" subLabel="1.3.1" />
+          <TableRow label="Version" subLabel="1.3.2" />
         </TableRowGroup>
       </Stack>
     </ScrollView>

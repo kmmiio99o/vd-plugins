@@ -4,7 +4,7 @@ import {
   ScrollView,
   Stack,
   TableRowGroup,
-  TableSwitchRow,
+  TableCheckboxRow,
   TableRow,
 } from "./components/TableComponents";
 import { plugin } from "@vendetta";
@@ -25,23 +25,20 @@ export default function RPCCustomizationSettingsPage() {
     Constants.DEFAULT_SETTINGS.showTimestamp,
   );
 
-  const handleListeningToChange = (value: boolean) => {
-    setStorage("listeningTo", value);
+  const handleListeningToChange = () => {
+    const newValue = !isListeningTo;
+    setStorage("listeningTo", newValue);
 
-    // If turning off "Show as Listening", also turn off "Show Timestamp"
-    if (!value && showTimestamp) {
+    if (!newValue && showTimestamp) {
       setStorage("showTimestamp", false);
     }
 
     forceUpdate();
   };
 
-  const handleTimestampChange = (value: boolean) => {
-    // Only allow turning on timestamp if "Show as Listening" is enabled
-    if (value && !isListeningTo) {
-      return;
-    }
-    setStorage("showTimestamp", value);
+  const handleTimestampChange = () => {
+    if (!isListeningTo) return;
+    setStorage("showTimestamp", !showTimestamp);
     forceUpdate();
   };
 
@@ -50,23 +47,24 @@ export default function RPCCustomizationSettingsPage() {
       <RPCPreview />
       <Stack spacing={8}>
         <TableRowGroup title="RPC Display Options">
-          <TableSwitchRow
+          <TableCheckboxRow
             label="Show as Listening"
             subLabel="Display as 'Listening to' instead of 'Playing'"
-            value={isListeningTo}
-            onValueChange={handleListeningToChange}
+            checked={isListeningTo}
+            onPress={handleListeningToChange}
           />
-          <TableSwitchRow
+
+          <TableCheckboxRow
             label="Show Tooltip Text"
             subLabel="Show album name and track duration in Discord activity tooltip"
-            value={getStorage("showLargeText", true)}
-            onValueChange={(value: boolean) => {
-              setStorage("showLargeText", value);
+            checked={getStorage("showLargeText", true)}
+            onPress={() => {
+              const current = getStorage("showLargeText", true);
+              setStorage("showLargeText", !current);
               forceUpdate();
             }}
           />
 
-          {/* Warning row when timestamp is disabled */}
           {!isListeningTo && (
             <TableRow
               label="Timestamp Unavailable"
@@ -76,30 +74,32 @@ export default function RPCCustomizationSettingsPage() {
             />
           )}
 
-          <TableSwitchRow
+          <TableCheckboxRow
             label="Show Timestamp"
             subLabel="Display track progress and duration"
-            value={showTimestamp}
-            onValueChange={handleTimestampChange}
+            checked={showTimestamp}
+            onPress={handleTimestampChange}
             disabled={!isListeningTo}
-            dimmed={!isListeningTo}
           />
 
-          <TableSwitchRow
+          <TableCheckboxRow
             label="Show Album in Tooltip"
             subLabel="Include album name in the tooltip text"
-            value={getStorage("showAlbumInTooltip", true)}
-            onValueChange={(value: boolean) => {
-              setStorage("showAlbumInTooltip", value);
+            checked={getStorage("showAlbumInTooltip", true)}
+            onPress={() => {
+              const current = getStorage("showAlbumInTooltip", true);
+              setStorage("showAlbumInTooltip", !current);
               forceUpdate();
             }}
           />
-          <TableSwitchRow
+
+          <TableCheckboxRow
             label="Show Duration in Tooltip"
             subLabel="Include track duration in the tooltip text"
-            value={getStorage("showDurationInTooltip", true)}
-            onValueChange={(value: boolean) => {
-              setStorage("showDurationInTooltip", value);
+            checked={getStorage("showDurationInTooltip", true)}
+            onPress={() => {
+              const current = getStorage("showDurationInTooltip", true);
+              setStorage("showDurationInTooltip", !current);
               forceUpdate();
             }}
           />
