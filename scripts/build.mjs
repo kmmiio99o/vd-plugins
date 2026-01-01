@@ -1,46 +1,79 @@
 import commonjs from "@rollup/plugin-commonjs";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import { createHash } from "crypto";
-import { readFile, readdir, writeFile } from "fs/promises";
+import { readFile, readdir, writeFile, stat } from "fs/promises";
 import { argv } from "process";
 import { rollup, watch } from "rollup";
 
 import swc from "@swc/core";
 import esbuild from "rollup-plugin-esbuild";
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN EXECUTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const args = argv.slice(2);
 console.clear();
 
+// Parse arguments
 const inputPlugins = args.filter((x) => !x.startsWith("-"));
 const flags = args.map((x) => x.toLowerCase()).filter((x) => x.startsWith("-"));
 
 const isWatch = flags.includes("--watch") || flags.includes("-w");
+const isVerbose = flags.includes("--verbose") || flags.includes("-v");
 const toBuild = inputPlugins.length ? inputPlugins : await readdir("./plugins");
 
-console.log(`Building ${toBuild.length} plugin(s)...`);
+console.log(`Found ${toBuild.length} plugin(s) to build`);
 
+if (isWatch) {
+  console.log("Running in watch mode\n");
+}
+
+// Build statistics
+let built = 0;
 let failed = 0;
+const startTime = Date.now();
 
+// Build all plugins
 for (const plugin of toBuild) {
+  if (plugin.endsWith(".ts")) continue;
+
+  const pluginStartTime = Date.now();
+
   try {
-    await buildPlugin(plugin);
+    console.log(`Building ${plugin}...`);
+
+    const result = await buildPlugin(plugin);
+    const buildTime = Date.now() - pluginStartTime;
+
+    console.log(`✓ ${plugin} (${buildTime}ms)`);
+    built++;
   } catch (e) {
-    console.error(e.stack || e);
+    console.log(`✗ ${plugin}`);
+    if (isVerbose) {
+      console.error(e);
+    } else {
+      console.error(e.message);
+    }
     failed++;
   }
 }
 
-console.log(
-  "\n" +
-    (failed
-      ? "\x1b[31m" + `Failed to build ${failed} plugin(s)` + "\x1b[0m"
-      : "\x1b[32m" + "All plugin(s) built successfully!" + "\x1b[0m"),
-);
+// Summary
+const totalTime = Date.now() - startTime;
+console.log(`\nBuild completed in ${totalTime}ms`);
+console.log(`Success: ${built}, Failed: ${failed}\n`);
 
-isWatch && console.log("\nWatching for changes...");
+if (isWatch) {
+  console.log("Watching for changes... (Press Ctrl+C to exit)\n");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BUILD FUNCTION
+// ═══════════════════════════════════════════════════════════════════════════════
 
 async function buildPlugin(plugin) {
-  if (plugin.endsWith(".ts")) return;
+  if (plugin.endsWith(".ts")) return {};
 
   const manifest = Object.assign(
     JSON.parse(await readFile("./base_manifest.json")),
@@ -72,11 +105,16 @@ async function buildPlugin(plugin) {
       inlineDynamicImports: true,
     },
     onwarn: (warning) => {
-      ![
-        "UNRESOLVED_IMPORT",
-        "MISSING_NAME_OPTION_FOR_IIFE_EXPORT",
-        "CIRCULAR_DEPENDENCY",
-      ].includes(warning.code) && console.warn(warning);
+      if (
+        ![
+          "UNRESOLVED_IMPORT",
+          "MISSING_NAME_OPTION_FOR_IIFE_EXPORT",
+          "CIRCULAR_DEPENDENCY",
+        ].includes(warning.code) &&
+        isVerbose
+      ) {
+        console.warn(`${plugin}: ${warning.message}`);
+      }
     },
     plugins: [
       nodeResolve({
@@ -106,13 +144,13 @@ async function buildPlugin(plugin) {
     ],
   };
 
-  const applyHash = async () =>
-    Object.assign(manifest, {
-      hash: createHash("sha256")
-        .update(await readFile(outPath))
-        .digest("hex"),
+  const applyHash = async () => {
+    const content = await readFile(outPath);
+    return Object.assign(manifest, {
+      hash: createHash("sha256").update(content).digest("hex"),
       main: entry,
     });
+  };
 
   if (!isWatch) {
     const bundle = await rollup(options);
@@ -122,8 +160,8 @@ async function buildPlugin(plugin) {
     await applyHash();
     await writeFile(`./dist/${plugin}/manifest.json`, JSON.stringify(manifest));
 
-    console.log(`${plugin}: ` + "\x1b[32m" + "Build succeed!" + "\x1b[0m");
-    return;
+    const stats = await stat(outPath);
+    return { size: stats.size };
   }
 
   const watcher = watch(options);
@@ -131,6 +169,9 @@ async function buildPlugin(plugin) {
   return await new Promise((resolve, reject) => {
     watcher.on("event", async (event) => {
       switch (event.code) {
+        case "BUNDLE_START":
+          break;
+
         case "BUNDLE_END": {
           event.result.close();
 
@@ -140,18 +181,18 @@ async function buildPlugin(plugin) {
             JSON.stringify(manifest),
           );
 
-          console.log(
-            `${plugin}: ` +
-              "\x1b[32m" +
-              `Build succeed! (${event.duration}ms)` +
-              "\x1b[0m",
-          );
-          resolve();
+          console.log(`⚡ ${plugin} rebuilt (${event.duration}ms)`);
+          resolve({ size: 0 });
           break;
         }
         case "ERROR":
         case "FATAL":
-          console.error(`${plugin}: ` + "\x1b[31m", "Failed! :(", "\x1b[0m");
+          console.error(`✗ ${plugin}`);
+          if (isVerbose) {
+            console.error(event.error);
+          } else {
+            console.error(event.error.message);
+          }
           reject(event.error);
           break;
       }
