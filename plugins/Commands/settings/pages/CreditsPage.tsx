@@ -37,6 +37,10 @@ export default function CreditsPage() {
       flex: 1,
       maxWidth: "100%",
     },
+    rippleContainer: {
+      borderRadius: 16,
+      overflow: "hidden",
+    },
 
     cardPressable: {
       flexDirection: "row",

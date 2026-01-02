@@ -1,6 +1,11 @@
 import { findByProps } from "@vendetta/metro";
 import { ReactNative as RN } from "@vendetta/metro/common";
 
+interface CommandOption {
+  name: string;
+  value: any;
+}
+
 const APIUtils = findByProps("getAPIBaseURL", "get");
 const MessageActions = findByProps("sendMessage");
 
@@ -66,10 +71,12 @@ export const firstMessageCommand = {
   ],
   execute: async (args: any, ctx: any) => {
     try {
-      const options = new Map(args.map((option: any) => [option.name, option]));
-      const user = options.get("user")?.value;
-      const channel = options.get("channel")?.value;
-      const send = options.get("send")?.value;
+      const options = new Map(
+        args.map((option: CommandOption) => [option.name, option]),
+      );
+      const user = (options.get("user") as CommandOption)?.value;
+      const channel = (options.get("channel") as CommandOption)?.value;
+      const send = (options.get("send") as CommandOption)?.value;
 
       const guildId = ctx.guild?.id;
       const channelId = ctx.channel.id;

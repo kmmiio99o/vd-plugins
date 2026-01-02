@@ -1,5 +1,4 @@
 import { storage } from "@vendetta/plugin";
-import { useProxy } from "@vendetta/storage";
 import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
 import { semanticColors } from "@vendetta/ui";
 import { getAssetIDByName } from "@vendetta/ui/assets";

@@ -1,6 +1,5 @@
 import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
 import { rawColors, semanticColors } from "@vendetta/ui";
-import { getAssetIDByName } from "@vendetta/ui/assets";
 
 export default function BetterTableRowGroup({
   title,

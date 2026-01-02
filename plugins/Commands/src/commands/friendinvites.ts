@@ -1,14 +1,21 @@
 import { findByProps } from "@vendetta/metro";
 import { showToast } from "@vendetta/ui/toasts";
+import { getAssetIDByName } from "@vendetta/ui/assets";
 
 const ClydeUtils = findByProps("sendBotMessage", "sendMessage");
-const inviteModule = findByProps("getAllFriendInvites", "createFriendInvite", "revokeFriendInvites");
+const inviteModule = findByProps(
+  "getAllFriendInvites",
+  "createFriendInvite",
+  "revokeFriendInvites",
+);
 const api = findByProps("get", "post");
 const getCurrentUser = findByProps("getCurrentUser")?.getCurrentUser;
 
 function send(ctx, content) {
   const fixNonce = Date.now().toString();
-  ClydeUtils.sendMessage(ctx.channel.id, { content }, void 0, { nonce: fixNonce });
+  ClydeUtils.sendMessage(ctx.channel.id, { content }, void 0, {
+    nonce: fixNonce,
+  });
 }
 
 export const friendInviteCreateCommand = {
@@ -22,7 +29,10 @@ export const friendInviteCreateCommand = {
   execute: async (_, ctx) => {
     try {
       if (!getCurrentUser?.().phone) {
-        showToast("You need a phone number connected to your account!", getAssetIDByName("Small"));
+        showToast(
+          "You need a phone number connected to your account!",
+          getAssetIDByName("Small"),
+        );
         return { type: 4 };
       }
 
@@ -36,7 +46,9 @@ export const friendInviteCreateCommand = {
       });
 
       if (createInvite?.code) {
-        const expires = Math.floor(new Date(createInvite.expires_at).getTime() / 1000);
+        const expires = Math.floor(
+          new Date(createInvite.expires_at).getTime() / 1000,
+        );
         const message = `https://discord.gg/${createInvite.code} · Expires: <t:${expires}:R>`;
         send(ctx, message);
         showToast("Friend invite created!", getAssetIDByName("Check"));
@@ -67,13 +79,16 @@ export const friendInviteViewCommand = {
         showToast("No active friend invites found", getAssetIDByName("Info"));
         return { type: 4 };
       }
-      
-      const friendInviteList = invites.map(i => {
+
+      const friendInviteList = invites.map((i) => {
         const expires = Math.floor(new Date(i.expires_at).getTime() / 1000);
         return `_https://discord.gg/${i.code}_ · Expires: <t:${expires}:R> · Uses: \`${i.uses}/${i.max_uses}\``;
       });
-      
-      send(ctx, `**Your Active Friend Invites:**\n${friendInviteList.join("\n")}`);
+
+      send(
+        ctx,
+        `**Your Active Friend Invites:**\n${friendInviteList.join("\n")}`,
+      );
       return { type: 4 };
     } catch (e) {
       console.error("[FriendInvite] View error:", e);
@@ -94,25 +109,37 @@ export const friendInviteRevokeCommand = {
   execute: async (_, ctx) => {
     try {
       const invitesBefore = await inviteModule.getAllFriendInvites();
-      
+
       if (!invitesBefore?.length) {
-        showToast("No active friend invites to revoke", getAssetIDByName("Info"));
+        showToast(
+          "No active friend invites to revoke",
+          getAssetIDByName("Info"),
+        );
         return { type: 4 };
       }
-      
+
       await inviteModule.revokeFriendInvites();
-      
+
       // Verify revocation worked
       const invitesAfter = await inviteModule.getAllFriendInvites();
-      
+
       if (invitesAfter.length === 0) {
-        send(ctx, `✅ Successfully revoked all ${invitesBefore.length} friend invite(s)!`);
-        showToast(`Revoked ${invitesBefore.length} invite(s)`, getAssetIDByName("Check"));
+        send(
+          ctx,
+          `✅ Successfully revoked all ${invitesBefore.length} friend invite(s)!`,
+        );
+        showToast(
+          `Revoked ${invitesBefore.length} invite(s)`,
+          getAssetIDByName("Check"),
+        );
       } else {
-        send(ctx, `⚠️ Partially revoked invites. ${invitesAfter.length} invite(s) remain active.`);
+        send(
+          ctx,
+          `⚠️ Partially revoked invites. ${invitesAfter.length} invite(s) remain active.`,
+        );
         showToast("Partial revocation", getAssetIDByName("Warning"));
       }
-      
+
       return { type: 4 };
     } catch (e) {
       console.error("[FriendInvite] Revoke error:", e);
