@@ -11,27 +11,27 @@ interface NekosLifeResult {
 
 // Valid SFW categories for validation
 const validSfwCategories = [
-    "avatar", "classic", "cuddle", "fox_girl", "gecg", "holo", 
-    "kemonomimi", "kiss", "neko", "ngif", "smug", "spank", 
+    "avatar", "classic", "cuddle", "fox_girl", "gecg", "holo",
+    "kemonomimi", "kiss", "neko", "ngif", "smug", "spank",
     "tickle", "waifu", "wallpaper", "woof"
 ];
 
 async function fetchNekosLifeImages(category: string, count: number): Promise<string[]> {
     const urls: string[] = [];
-  
+
     for (let i = 0; i < count; i++) {
         try {
             // Add delay between requests to avoid rate limiting
             if (i > 0) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
-      
+
             const response = await fetch(`https://nekos.life/api/v2/img/${category}`);
             if (!response.ok) {
                 console.error(`[NekosLife] API request failed: ${response.status}`);
                 continue;
             }
-      
+
             const data: NekosLifeResult = await response.json();
             if (data.url) {
                 urls.push(data.url);
@@ -40,7 +40,7 @@ async function fetchNekosLifeImages(category: string, count: number): Promise<st
             console.error(`[NekosLife] Error fetching image ${i + 1}:`, error);
         }
     }
-  
+
     return urls;
 }
 
@@ -91,7 +91,7 @@ export const nekoslifeCommand = {
     execute: async (args: any, ctx: any) => {
         try {
             console.log("[NekosLife] Command executed with args:", args);
-      
+
             // Parse arguments
             const categoryInput = args.find((arg: any) => arg.name === "category")?.value;
             const limitInput = args.find((arg: any) => arg.name === "limit")?.value;
@@ -99,11 +99,11 @@ export const nekoslifeCommand = {
             const isEphemeral = args.find((arg: any) => arg.name === "ephemeral")?.value || false;
 
             console.log("[NekosLife] Parsed values:", { categoryInput, limitInput, shouldSend, isEphemeral });
-      
+
             if (!categoryInput || typeof categoryInput !== "string") {
                 const errorMsg = "❌ Category is required! Examples: neko, waifu, cuddle, kiss";
                 console.error("[NekosLife] No category provided");
-        
+
                 if (isEphemeral) {
                     return {
                         type: 4,
@@ -114,15 +114,15 @@ export const nekoslifeCommand = {
                     };
                 }
                 showToast(errorMsg, getAssetIDByName("CircleXIcon"));
-                return { type: 4 };
+                return null;
             }
 
             // Clean and validate category
             const category = categoryInput.toLowerCase().trim();
-      
+
             if (!isValidSfwCategory(category)) {
                 const errorMsg = `❌ Invalid SFW category "${categoryInput}". Valid: neko, waifu, cuddle, kiss, holo, etc.`;
-        
+
                 if (isEphemeral) {
                     return {
                         type: 4,
@@ -133,7 +133,7 @@ export const nekoslifeCommand = {
                     };
                 }
                 showToast(errorMsg, getAssetIDByName("CircleXIcon"));
-                return { type: 4 };
+                return null;
             }
 
             // Parse and validate limit
@@ -164,7 +164,7 @@ export const nekoslifeCommand = {
                     };
                 }
                 showToast(errorMsg, getAssetIDByName("CircleXIcon"));
-                return { type: 4 };
+                return null;
             }
 
             const content = urls.join("\n");
@@ -182,18 +182,18 @@ export const nekoslifeCommand = {
                 console.log("[NekosLife] Sending to chat");
                 const fixNonce = Date.now().toString();
                 MessageActions.sendMessage(ctx.channel.id, { content }, void 0, { nonce: fixNonce });
-                return { type: 4 };
+                return null;
             } else {
                 console.log("[NekosLife] Sending as bot message");
                 messageUtil.sendBotMessage(ctx.channel.id, content);
-                return { type: 4 };
+                return null;
             }
         } catch (error) {
             console.error("[NekosLife] Command error:", error);
             const errorMessage = "❌ An error occurred while fetching images.";
-      
+
             const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
-      
+
             if (isEphemeral) {
                 return {
                     type: 4,
@@ -204,7 +204,7 @@ export const nekoslifeCommand = {
                 };
             }
             showToast(errorMessage, getAssetIDByName("CircleXIcon"));
-            return { type: 4 };
+            return null;
         }
     },
     applicationId: "-1",

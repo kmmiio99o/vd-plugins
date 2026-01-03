@@ -74,7 +74,7 @@ export const ipCommand = {
                     };
                 }
                 showToast(errorMsg, getAssetIDByName("CircleXIcon"));
-                return { type: 4 };
+                return null;
             }
 
             // Show loading toast
@@ -88,7 +88,7 @@ export const ipCommand = {
                   "country_phone,latitude,longitude,timezone,currency,completed_requests";
 
             const response = await fetch(url);
-      
+
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -107,7 +107,7 @@ export const ipCommand = {
                     };
                 }
                 showToast(errorMsg, getAssetIDByName("CircleXIcon"));
-                return { type: 4 };
+                return null;
             }
 
             // Format the response as code block
@@ -129,14 +129,14 @@ export const ipCommand = {
             } else {
                 // Send as bot message (ephemeral-like)
                 messageUtil.sendBotMessage(ctx.channel.id, content);
-                return { type: 4 };
+                return null;
             }
         } catch (error) {
             console.error("[IP] Command error:", error);
             const errorMessage = `❌ An error occurred while looking up IP information: ${error.message || "Unknown error"}`;
-      
+
             const isEphemeral = args?.find?.((arg: any) => arg.name === "ephemeral")?.value ?? false;
-      
+
             if (isEphemeral) {
                 return {
                     type: 4,
@@ -147,7 +147,7 @@ export const ipCommand = {
                 };
             }
             showToast(errorMessage, getAssetIDByName("CircleXIcon"));
-            return { type: 4 };
+            return null;
         }
     },
     applicationId: "-1",

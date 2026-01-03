@@ -6,30 +6,30 @@ const SpotifyStore = findByStoreName("SpotifyStore");
 
 // Individual command functions
 async function spotifyTrackExecute(args: any[], ctx: any) {
-    if (!storage.enabledCommands?.spotifyTrack) return { type: 4 };
-    return handleSpotifyCommand(ctx, (track: any) => 
+    if (!storage.enabledCommands?.spotifyTrack) return null;;
+    return handleSpotifyCommand(ctx, (track: any) =>
         `https://open.spotify.com/track/${track.id}`
     );
 }
 
 async function spotifyAlbumExecute(args: any[], ctx: any) {
-    if (!storage.enabledCommands?.spotifyAlbum) return { type: 4 };
+    if (!storage.enabledCommands?.spotifyAlbum) return null;
     return handleSpotifyCommand(ctx, (track: any) =>
         `https://open.spotify.com/album/${track.album.id}`
     );
 }
 
 async function spotifyArtistsExecute(args: any[], ctx: any) {
-    if (!storage.enabledCommands?.spotifyArtists) return { type: 4 };
+    if (!storage.enabledCommands?.spotifyArtists) return null;
     return handleSpotifyCommand(ctx, (track: any) =>
-        track.artists.map((artist: any) => 
+        track.artists.map((artist: any) =>
             `[${artist.name}](${artist.external_urls.spotify})`
         ).join("\n")
     );
 }
 
 async function spotifyCoverExecute(args: any[], ctx: any) {
-    if (!storage.enabledCommands?.spotifyCover) return { type: 4 };
+    if (!storage.enabledCommands?.spotifyCover) return null;
     return handleSpotifyCommand(ctx, (track: any) =>
         track.album.image.url
     );
@@ -49,23 +49,23 @@ async function handleSpotifyCommand(ctx: any, contentGenerator: (track: any) => 
                 void 0,
                 { nonce: fixNonce }
             );
-            return { type: 4 };
+            return null;
         }
 
         const content = contentGenerator(track);
         const fixNonce = Date.now().toString();
-    
+
         MessageActions.sendMessage(
             channelId,
             { content },
             void 0,
             { nonce: fixNonce }
         );
-    
-        return { type: 4 };
+
+        return null;
     } catch (error) {
         console.error("[Spotify Command] Error:", error);
-        return { type: 4 };
+        return null;
     }
 }
 

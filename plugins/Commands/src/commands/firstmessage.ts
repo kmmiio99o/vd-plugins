@@ -1,4 +1,5 @@
 import { findByProps } from "@vendetta/metro";
+import { showToast } from "@vendetta/ui/toasts";
 import { ReactNative as RN } from "@vendetta/metro/common";
 
 interface CommandOption {
@@ -84,7 +85,8 @@ export const firstMessageCommand = {
 
       // Channel option is not valid in DMs
       if (isDM && channel) {
-        return { type: 4 };
+        showToast("Channel option cannot be used in DMs", 3000);
+        return null;
       }
 
       let result = "https://discord.com/channels/";
@@ -114,11 +116,13 @@ export const firstMessageCommand = {
         RN.Linking.openURL(result);
       }
 
-      return { type: 4 };
+      return null;
     } catch (error) {
       console.error("[FirstMessage] Error:", error);
-      // Silent fail - no error message in chat
-      return { type: 4 };
+      // Show toast on error
+      showToast("Failed to fetch first message", 3000);
+      // Silent fail
+      return null;
     }
   },
   applicationId: "-1",

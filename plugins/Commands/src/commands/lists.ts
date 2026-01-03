@@ -73,7 +73,7 @@ const addonAuthors = (authors: any) => {
     if (!authors) return "Unknown";
     if (!Array.isArray(authors)) return "Unknown";
     if (authors.length === 0) return "Unknown";
-    
+
     return authors
         .filter(author => author && (typeof author === "string" || (typeof author === "object" && author.name)))
         .map(author => typeof author === "string" ? author : (author.name || "Unknown"))
@@ -108,11 +108,11 @@ export async function themeList(args: any[], ctx: any) {
         if (!themes || typeof themes !== "object") {
             const channelID: string = ctx.channel.id;
             Clyde.sendBotMessage(channelID, "No themes found or themes not loaded yet.");
-            return { type: 4 };
+            return null;
         }
 
         const objectValues = Object.values(themes);
-        
+
         const channelID: string = ctx.channel.id;
 
         const themeList = baseListHeader("Theme", Object.keys(themes).length);
@@ -120,14 +120,14 @@ export async function themeList(args: any[], ctx: any) {
         if (objectValues.length) {
             for (const theme of objectValues) {
                 if (!theme || typeof theme !== "object") continue;
-                
+
                 const { selected, data, id } = theme;
-                
+
                 // Safe destructuring with fallbacks
                 const name = data?.name || "Unknown Theme";
                 const description = data?.description || "No description";
                 const authors = data?.authors;
-        
+
                 if (detailed || alwaysDetailed)
                     themeList.push(
                         `> **Name**: ${name}`,
@@ -157,12 +157,12 @@ export async function themeList(args: any[], ctx: any) {
                     cancelText: ALERT.CANCEL,
                     onConfirm: async () => await sendList(channelID, themeList)
                 });
-            
+
             await sendList(channelID, themeList);
         }
     } catch (error) {
         console.error("[ThemeList] Error:", error);
-        return { type: 4 };
+        return null;
     }
 }
 
@@ -176,16 +176,16 @@ export async function pluginList(args: any[], ctx: any) {
         // Ensure plugins is valid
         if (!plugins || typeof plugins !== "object") {
             Clyde.sendBotMessage(channelID, "No plugins found or plugins not loaded yet.");
-            return { type: 4 };
+            return null;
         }
 
         const pluginList = baseListHeader("Plugin", Object.keys(plugins).length);
 
         for (const plugin of Object.values(plugins)) {
             if (!plugin || typeof plugin !== "object") continue;
-            
+
             const { enabled, manifest, id } = plugin;
-            
+
             // Safe destructuring with fallbacks
             const name = manifest?.name || "Unknown Plugin";
             const description = manifest?.description || "No description";
@@ -223,14 +223,14 @@ export async function pluginList(args: any[], ctx: any) {
         }
     } catch (error) {
         console.error("[PluginList] Error:", error);
-        return { type: 4 };
+        return null;
     }
 }
 
 // Export commands for your existing structure
 export const pluginListCommand = {
     name: "plugin-list",
-    displayName: "plugin list", 
+    displayName: "plugin list",
     description: "Send your plugin list to the current channel",
     displayDescription: "Send your plugin list to the current channel",
     options: [
@@ -252,7 +252,7 @@ export const pluginListCommand = {
 export const themeListCommand = {
     name: "theme-list",
     displayName: "theme list",
-    description: "Send your theme list to the current channel", 
+    description: "Send your theme list to the current channel",
     displayDescription: "Send your theme list to the current channel",
     options: [
         {
@@ -265,7 +265,7 @@ export const themeListCommand = {
         },
     ],
     execute: themeList,
-    applicationId: "-1", 
+    applicationId: "-1",
     inputType: 1,
     type: 1,
 };

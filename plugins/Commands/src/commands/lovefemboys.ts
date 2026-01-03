@@ -95,7 +95,7 @@ export const lovefemboysCommand = {
                 });
 
                 if (!shouldProceed) {
-                    return { type: 4 };
+                  return null;
                 }
             }
 

@@ -1,11 +1,12 @@
 import { findByProps } from "@vendetta/metro";
+import { showToast } from "@vendetta/ui/toasts";
 import { storage } from "@vendetta/plugin";
 import { catFact, dogFact, uselessFact } from "../utils/api";
 
 const MessageActions = findByProps("sendMessage");
 
 // Helper function to format fact response
-const formatFactResponse = (fact: { text: string; source?: string }) => {
+const formatFactResponse = (fact: { text: string; source?: string; length?: number }) => {
     let response = fact.text;
     if (storage.factSettings?.includeCitation && fact.source) {
         response += `\n\nSource: ${fact.source}`;
@@ -25,17 +26,22 @@ export const catFactCommand = {
         try {
             const fact = await catFact();
             const fixNonce = Date.now().toString();
+
             MessageActions.sendMessage(
                 ctx.channel.id,
                 { content: formatFactResponse(fact) },
                 void 0,
                 { nonce: fixNonce }
             );
-            return { type: 4 };
+
+            // return NOTHING - let client handle the acknowledgement
+            return null;
         } catch (error) {
             console.error("[CatFact] Error:", error);
-            // Silent fail - no error message in chat
-            return { type: 4 };
+            // Show toast on error
+            showToast("Failed to fetch cat fact", 3000);
+            // Return nothing on error too
+            return null;
         }
     },
 };
@@ -52,17 +58,20 @@ export const dogFactCommand = {
         try {
             const fact = await dogFact();
             const fixNonce = Date.now().toString();
+
             MessageActions.sendMessage(
                 ctx.channel.id,
                 { content: formatFactResponse(fact) },
                 void 0,
                 { nonce: fixNonce }
             );
-            return { type: 4 };
+
+            return null;
         } catch (error) {
             console.error("[DogFact] Error:", error);
-            // Silent fail - no error message in chat
-            return { type: 4 };
+            // Show toast on error
+            showToast("Failed to fetch dog fact", 3000);
+            return null;
         }
     },
 };
@@ -79,17 +88,20 @@ export const uselessFactCommand = {
         try {
             const fact = await uselessFact();
             const fixNonce = Date.now().toString();
+
             MessageActions.sendMessage(
                 ctx.channel.id,
                 { content: formatFactResponse(fact) },
                 void 0,
                 { nonce: fixNonce }
             );
-            return { type: 4 };
+
+            return null;
         } catch (error) {
             console.error("[UselessFact] Error:", error);
-            // Silent fail - no error message in chat
-            return { type: 4 };
+            // Show toast on error
+            showToast("Failed to fetch useless fact", 3000);
+            return null;
         }
     },
 };

@@ -16,19 +16,19 @@ export const garyCommand = {
             if (!storage.garySettings) {
                 storage.garySettings = { imageSource: "gary" };
             }
-      
+
             const source = storage.garySettings.imageSource || "gary";
-            console.log(`[Gary Command] Using image source: ${source}`); // Debug log
-      
+            console.log(`[Gary Command] Using image source: ${source}`);
+
             const imageUrl = await getGaryUrl(source);
 
             if (!imageUrl) {
                 console.log("[Gary Command] No image URL received");
-                // Silent fail - no error message
-                return { type: 4 };
+                // Silent fail
+                return null;
             }
 
-            console.log(`[Gary Command] Sending image: ${imageUrl}`); // Debug log
+            console.log(`[Gary Command] Sending image: ${imageUrl}`);
             const fixNonce = Date.now().toString();
             MessageActions.sendMessage(ctx.channel.id, { content: imageUrl }, void 0, {
                 nonce: fixNonce,
@@ -36,8 +36,8 @@ export const garyCommand = {
             return { type: 4 };
         } catch (error) {
             console.error("[Gary] Error:", error);
-            // Silent fail - no error message in chat
-            return { type: 4 };
+            // Silent fail
+            return null;
         }
     },
     applicationId: "-1",

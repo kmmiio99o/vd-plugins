@@ -24,7 +24,7 @@ export const petPetCommand = {
             const user = await UserStore.getUser(args[0].value);
             const image = user.getAvatarURL(512);
             const data = await getPetPetData(image);
-      
+
             const fixNonce = Date.now().toString();
             MessageActions.sendMessage(
                 ctx.channel.id,
@@ -32,11 +32,11 @@ export const petPetCommand = {
                 void 0,
                 { nonce: fixNonce }
             );
-            return { type: 4 };
+            return null;
         } catch (error) {
             console.error("[PetPet] Error:", error);
-            // Silent fail - no error message in chat
-            return { type: 4 };
+            // Silent fail
+            return null;
         }
     },
     applicationId: "-1",

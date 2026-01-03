@@ -85,25 +85,25 @@ export const konoSelfCommand = {
 
       if (isNSFW && !ctx.channel.nsfw && !bypassEnabled) {
         showNSFWWarning();
-        return { type: 4 };
+        return null;
       }
 
       const imageUrl = await fetchImage(isNSFW);
 
       if (!imageUrl) {
-        // Silent fail - no error message
-        return { type: 4 };
+        // Silent fail
+        return null;
       }
 
       messageUtil.sendBotMessage(
         ctx.channel.id,
         `Here's your random image: ${imageUrl}`,
       );
-      return { type: 4 };
+      return null;
     } catch (error) {
       console.error("[KonoSelf] Error:", error);
       // Silent fail - no error message in chat
-      return { type: 4 };
+      return null;
     }
   },
   applicationId: "-1",
@@ -136,14 +136,14 @@ export const konoSendCommand = {
 
       if (isNSFW && !ctx.channel.nsfw && !bypassEnabled) {
         showNSFWWarning();
-        return { type: 4 };
+        return null;
       }
 
       const imageUrl = await fetchImage(isNSFW);
 
       if (!imageUrl) {
-        // Silent fail - no error message
-        return { type: 4 };
+        // Silent fail
+        return null;
       }
 
       const fixNonce = Date.now().toString();
@@ -155,7 +155,7 @@ export const konoSendCommand = {
           nonce: fixNonce,
         },
       );
-      return { type: 4 };
+      return null;
     } catch (error) {
       console.error("[KonoSend] Error:", error);
       // Silent fail - no error message in chat

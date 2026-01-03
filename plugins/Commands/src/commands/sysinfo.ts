@@ -181,7 +181,7 @@ function executeSysinfoCommand(args: any[], ctx: any) {
 
     if ((ephemeral || epermit) && !(epermit && !ephemeral)) {
       messageUtil.sendBotMessage(ctx.channel.id, output.join("\n"));
-      return { type: 4 };
+      return null;
     } else {
       const fixNonce = Date.now().toString();
       MessageActions.sendMessage(
@@ -190,12 +190,12 @@ function executeSysinfoCommand(args: any[], ctx: any) {
         void 0,
         { nonce: fixNonce },
       );
-      return { type: 4 };
+      return null;
     }
   } catch (e) {
     console.error("[Sysinfo] Error:", e);
-    // Silent fail - no chat message
-    return { type: 4 };
+    // Silent fail
+    return null;
   }
 }
 

@@ -18,7 +18,7 @@ export const sendMessage = (
     ephemeral?: boolean,
 ) => {
     // If no content, just acknowledge the command
-    if (!content) return { type: 4 };
+    if (!content) return null;
 
     // For ephemeral messages, return special format
     if (ephemeral) {
@@ -45,20 +45,20 @@ export const sendMessage = (
 
         MessageActions.sendMessage(channelId, message, void 0, { nonce });
 
-        return { type: 4 }; // Acknowledge the command
+        return null;
     } catch (error) {
         console.error("[Commands] Message send failed:", error);
-        // Silent fail - no error message in chat
-        return { type: 4 };
+        // Silent fail
+        return null;
     }
 };
 
 // Helper function to validate channel types in commands
 export const validateChannelForCommand = (ctx: any) => {
     if (!isValidChannel(ctx.channel.type)) {
-        return { 
+        return {
             type: 4,
-            data: { 
+            data: {
                 content: "This command cannot be used in threads, forum channels, or voice channels.",
                 flags: 64 // Ephemeral
             }
