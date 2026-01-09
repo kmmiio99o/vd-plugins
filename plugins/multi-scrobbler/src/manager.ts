@@ -53,8 +53,14 @@ class PluginManager {
   // Check for new tracks and update Discord status when something changes
   private async updateActivity() {
     if (pluginState.pluginStopped) {
+      log("Plugin is stopped; skipping activity updates and clearing timers");
       logVerbose("Plugin is stopped, skipping update");
-      this.stopUpdates();
+      try {
+        this.stopUpdates();
+        logVerbose("Update timers cleared due to stopped plugin");
+      } catch (e) {
+        logError("Error while stopping updates for stopped plugin:", e);
+      }
       return;
     }
 
@@ -75,10 +81,16 @@ class PluginManager {
         });
 
         if (ignoredActivity) {
+          log(`Ignored app (${ignoredActivity.name}) is currently active; clearing activity and skipping updates`);
           logVerbose(
             `Ignored app (${ignoredActivity.name}) is currently playing, clearing activity`,
           );
-          // Remove these setDebugInfo calls that cause TypeScript errors
+          try {
+            // Provide a little debug context so we can see why updates are skipped
+            setDebugInfo("ignoredActivity", ignoredActivity.name);
+          } catch (e) {
+            logVerbose("Failed to set debug info for ignored activity:", e);
+          }
           clearActivity();
           return;
         }
@@ -91,13 +103,20 @@ class PluginManager {
       setDebugInfo("lastTrack", lastTrack);
 
       if (!lastTrack.nowPlaying) {
+        log("No currently playing track reported by service; clearing activity and skipping RPC update");
         logVerbose("Track is not currently playing");
+        try {
+          setDebugInfo("lastTrack_nowPlaying", false);
+        } catch (e) {
+          logVerbose("Failed to set debug info for nowPlaying:", e);
+        }
         clearActivity();
         return;
       }
 
       // use simple URL comparison like Last.fm plugin
       if (pluginState.lastTrackUrl === lastTrack.url) {
+        log("Track unchanged; skipping Discord RPC update");
         logVerbose("Track hasn't changed");
         recordSuccessfulUpdate();
         this.consecutiveFailures = 0;
@@ -255,7 +274,20 @@ class PluginManager {
       );
     } catch (error) {
       logError("Update failed:", error);
-      recordServiceError(currentSettings.service, (error as Error).message);
+      try {
+        recordServiceError(currentSettings.service, (error as Error).message);
+      } catch (e) {
+        logError("Failed to record service error:", e);
+      }
+      try {
+        setDebugInfo("lastUpdateError", {
+          message: (error as Error).message,
+          service: currentSettings.service,
+          lastTrackUrl: pluginState.lastTrackUrl,
+        });
+      } catch (e) {
+        logVerbose("Failed to set debug info for last update error:", e);
+      }
       this.handleError(error as Error);
     }
   }
