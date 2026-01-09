@@ -10,6 +10,89 @@ import { serviceFactory } from "./services/ServiceFactory";
 import Settings from "./ui/pages/Settings";
 import patchSidebar from "./sidebar";
 
+try {
+  console.log("[Scrobble Plugin] module loaded (index.tsx)");
+
+  (function installBridge() {
+    try {
+      const g: any = typeof globalThis !== "undefined" ? globalThis : (typeof window !== "undefined" ? window : undefined);
+      if (!g) return;
+
+      g.__scrobbleBridge = g.__scrobbleBridge || {};
+
+      // Force invocation of the plugin's onLoad (if the plugin export is available at runtime).
+      g.__scrobbleBridge.forceOnLoad = () => {
+        try {
+          const pluginExport =
+            g.__scrobble_plugin ||
+            (typeof module !== "undefined" && (module as any).exports && (module as any).exports.default) ||
+            null;
+
+          if (pluginExport && typeof pluginExport.onLoad === "function") {
+            try {
+              pluginExport.onLoad();
+              console.log("[Scrobble Plugin] bridge: onLoad invoked");
+            } catch (e) {
+              console.error("[Scrobble Plugin] bridge: onLoad threw an error:", e);
+            }
+          } else {
+            console.warn("[Scrobble Plugin] bridge: plugin export or onLoad not available");
+          }
+        } catch (e) {
+          console.error("[Scrobble Plugin] bridge: failed to invoke onLoad:", e);
+        }
+      };
+
+      // Return whatever we can find for programmatic inspection
+      g.__scrobbleBridge.inspect = () => {
+        try {
+          return g.__scrobble_plugin || (typeof module !== "undefined" && (module as any).exports && (module as any).exports.default) || null;
+        } catch (e) {
+          console.error("[Scrobble Plugin] bridge.inspect error:", e);
+          return null;
+        }
+      };
+
+      // Small helper to allow reloading the plugin module (best-effort - may be limited by runtime)
+      g.__scrobbleBridge.tryReload = () => {
+        try {
+          // Attempt to clear a require cache if present and re-require the module
+          if (typeof require !== "undefined" && require.cache) {
+            try {
+              const path = require.resolve && require.resolve("./index.tsx");
+              if (path && require.cache[path]) delete require.cache[path];
+            } catch {}
+            try {
+              const re = require("./index.tsx");
+              const exported = re && re.__esModule && typeof re.default !== "undefined" ? re.default : re;
+              (g as any).__scrobble_plugin = exported;
+              console.log("[Scrobble Plugin] bridge: reloaded plugin module");
+              return exported;
+            } catch (e) {
+              console.error("[Scrobble Plugin] bridge: reload failed:", e);
+              return null;
+            }
+          } else {
+            console.warn("[Scrobble Plugin] bridge.tryReload not supported in this runtime");
+            return null;
+          }
+        } catch (e) {
+          console.error("[Scrobble Plugin] bridge.tryReload error:", e);
+          return null;
+        }
+      };
+    } catch (e) {
+      try {
+        console.error("[Scrobble Plugin] Failed to install debug bridge:", e);
+      } catch {}
+    }
+  })();
+} catch (e) {
+  try {
+    console.error("[Scrobble Plugin] Top-level init error:", e);
+  } catch {}
+}
+
 (function installUnhandledRejectionHandler() {
   try {
     const g = typeof globalThis !== "undefined" ? (globalThis as any) : {};
@@ -245,12 +328,11 @@ async function validateAndInitialize() {
   }
 }
 
-export default {
+const __scrobble_plugin_export = {
   onLoad() {
     log("Plugin loading...");
     pluginState.pluginStopped = false;
 
-    // Start heartbeat so we can confirm plugin process is alive
     try {
       startHeartbeat();
       log("Heartbeat started");
@@ -262,12 +344,9 @@ export default {
     if (!currentSettings.service) {
       log("No service configured. Please select a service in plugin settings.");
     } else {
-      // Show what we're starting with
       try {
         const serviceName = serviceFactory.getCurrentService().getServiceName();
-        log(
-          `Configuration: Service=${serviceName}, Update Interval=${currentSettings.timeInterval}s, Verbose=${currentSettings.verboseLogging}`,
-        );
+        log(`Configuration: Service=${serviceName}, Update Interval=${currentSettings.timeInterval}s, Verbose=${currentSettings.verboseLogging}`);
       } catch (e) {
         logError("Failed to read service configuration:", e);
       }
@@ -302,7 +381,6 @@ export default {
     log("Plugin unloading...");
     pluginState.pluginStopped = true;
 
-    // Stop heartbeat first to avoid stray logs after unload
     try {
       stopHeartbeat();
       log("Heartbeat stopped");
@@ -335,7 +413,6 @@ export default {
     const oldSidebar = currentSettings.addToSidebar;
     const newSidebar = newSettings.addToSidebar;
 
-    // Apply the new settings
     try {
       Object.assign(currentSettings, newSettings);
     } catch (e) {
@@ -366,7 +443,6 @@ export default {
       }
     }
 
-    // Switch services if needed
     if (oldService !== newService && newService) {
       log(`Service changed from ${oldService || "none"} to ${newService}`);
       try {
@@ -375,11 +451,9 @@ export default {
         logError("Failed to switch service:", e);
       }
     } else if (!pluginState.pluginStopped && currentSettings.service) {
-      // Just restart with the updated settings (only if service is selected)
       log("Restarting with updated settings...");
       await tryInitialize();
     } else if (!currentSettings.service) {
-      // Service was unselected, stop the plugin
       log("Service unselected, stopping plugin...");
       try {
         stop();
@@ -398,3 +472,23 @@ export default {
 
   settings: Settings,
 };
+
+try {
+  // Expose the resolved plugin export to the global bridge so console can access it
+  const g: any = typeof globalThis !== "undefined" ? globalThis : (typeof window !== "undefined" ? window : undefined);
+  if (g) {
+    try {
+      g.__scrobble_plugin = __scrobble_plugin_export;
+      if (g.__scrobbleBridge && typeof g.__scrobbleBridge.inspect === "function") {
+        // allow immediate inspection
+        console.log("[Scrobble Plugin] global plugin export attached for inspection");
+      }
+    } catch (e) {
+      console.error("[Scrobble Plugin] Failed to assign global plugin export:", e);
+    }
+  }
+} catch (e) {
+  // ignore
+}
+
+export default __scrobble_plugin_export;

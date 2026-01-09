@@ -14,6 +14,9 @@ const debugInfo = {} as {
   settingsLoadAttempts?: number;
   lastNavigationError?: string;
   lastError?: Error;
+  lastUpdateError?: any;
+  lastTrack_nowPlaying?: boolean;
+  ignoredActivity?: string | boolean;
   serviceErrors?: Record<ServiceType, string[]>;
   apiCallCount?: number;
   lastSuccessfulUpdate?: string;
