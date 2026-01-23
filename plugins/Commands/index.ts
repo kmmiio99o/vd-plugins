@@ -127,7 +127,7 @@ export default {
     for (const [key, command] of Object.entries(commandMap)) {
       if (storage.enabledCommands[key]) {
         try {
-          commands.push(registerCommand(command));
+          commands.push(registerCommand(command as any));
           console.log(`[Commands Plugin] Registered command: ${key}`);
         } catch (error) {
           console.error(
