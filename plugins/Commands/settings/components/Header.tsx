@@ -4,6 +4,7 @@ import { semanticColors } from "@vendetta/ui";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { findByProps } from "@vendetta/metro";
+import Text from "../../../../nexxstuff/components/Text";
 
 export default function Header() {
   const [clickCounter, setClickCounter] = React.useState(0);
@@ -87,24 +88,7 @@ export default function Header() {
     textContainer: {
       flex: 1,
       marginLeft: 4,
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: "700",
-      color: semanticColors.MOBILE_TEXT_HEADING_PRIMARY,
-      marginBottom: 4,
-      textAlign: "left",
-    },
-    subtitle: {
-      fontSize: 14,
-      color: semanticColors.TEXT_MUTED,
-      textAlign: "left",
-      lineHeight: 20,
-    },
-    avatarPlaceholder: {
-      width: 48,
-      height: 48,
-      tintColor: semanticColors.INTERACTIVE_NORMAL,
+      justifyContent: "center",
     },
     animatedIndicator: {
       position: "absolute",
@@ -122,6 +106,11 @@ export default function Header() {
       color: "#FFFFFF",
       fontSize: 10,
       fontWeight: "bold",
+    },
+    avatarPlaceholder: {
+      width: 48,
+      height: 48,
+      tintColor: semanticColors.INTERACTIVE_NORMAL,
     },
   });
 
@@ -257,10 +246,12 @@ export default function Header() {
         </RN.Pressable>
 
         <RN.View style={styles.textContainer}>
-          <RN.Text style={styles.title}>Commands</RN.Text>
-          <RN.Text style={styles.subtitle}>
+          <Text variant="display-md" color="TEXT_DEFAULT" align="left">
+            Commands
+          </Text>
+          <Text variant="text-md/bold" color="TEXT_MUTED" align="left">
             A collection of useful commands for Vendetta like clients
-          </RN.Text>
+          </Text>
         </RN.View>
       </RN.View>
     </RN.View>
