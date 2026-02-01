@@ -55,7 +55,7 @@ export default function ListenBrainzSettingsPage() {
               isClearable
             />
             <TextInput
-              placeholder="ListenBrainz Token (for private profiles)"
+              placeholder="ListenBrainz Token"
               value={getStorage("listenbrainzToken")}
               onChange={(v: string) => {
                 setStorage("listenbrainzToken", v);

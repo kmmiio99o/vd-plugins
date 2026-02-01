@@ -148,9 +148,7 @@ export default function Settings() {
           ? "✅ Configured"
           : "❌ Missing credentials";
       case "librefm":
-        return getStorage("librefmUsername") && getStorage("librefmApiKey")
-          ? "✅ Configured"
-          : "❌ Missing credentials";
+        return "❌ Service temporarily disabled";
       case "listenbrainz":
         return getStorage("listenbrainzUsername")
           ? "✅ Configured"
@@ -188,6 +186,7 @@ export default function Settings() {
                     forceUpdate();
                   }
                 }}
+                disabled={service === "librefm"}
               />
             ),
           )}
@@ -208,7 +207,7 @@ export default function Settings() {
           />
           <TableRow
             label="Libre.fm Settings"
-            subLabel="Configure Libre.fm credentials and options"
+            subLabel="Disabled - not being able to test it out"
             trailing={<TableRow.Arrow />}
             onPress={() =>
               navigation.push("VendettaCustomPage", {
@@ -216,6 +215,7 @@ export default function Settings() {
                 render: LibreFmSettingsPage,
               })
             }
+            disabled={true}
           />
           <TableRow
             label="ListenBrainz Settings"
