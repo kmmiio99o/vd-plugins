@@ -12,7 +12,6 @@ import {
 import { serviceFactory } from "./services/ServiceFactory";
 import {
   formatDuration,
-  validateTimestamps,
   getCurrentTimestamp,
 } from "./utils/time";
 

@@ -2,7 +2,6 @@ import { plugin } from "@vendetta";
 import { useProxy } from "@vendetta/storage";
 import { React } from "@vendetta/metro/common";
 import { NavigationNative } from "@vendetta/metro/common";
-import { findByProps } from "@vendetta/metro";
 import {
   Stack,
   TableRowGroup,
