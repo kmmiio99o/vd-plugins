@@ -22,14 +22,14 @@ const Constants = {
     },
     librefm: {
       name: "Libre.fm",
-      baseUrl: "https://libre.fm/api",
+      baseUrl: "https://libre.fm/2.0",
       requiresApiKey: true,
       requiresToken: false,
     },
     listenbrainz: {
       name: "ListenBrainz",
       baseUrl: "https://api.listenbrainz.org/1",
-      requiresApiKey: false,
+      requiresApiKey: true,
       requiresToken: true,
     },
   } as Record<ServiceType, ServiceConfig>,
