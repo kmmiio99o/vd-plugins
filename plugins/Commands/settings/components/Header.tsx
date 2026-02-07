@@ -130,8 +130,13 @@ export default function Header() {
         animated = hasAnimatedAvatar;
       }
       // Fall back to default avatar
-      else if (getDefaultAvatarURL) {
-        url = getDefaultAvatarURL(currentUser);
+      else if (getDefaultAvatarURL && typeof getDefaultAvatarURL === 'function') {
+        try {
+          url = getDefaultAvatarURL(currentUser);
+        } catch (error) {
+          console.error('Error getting default avatar URL:', error);
+          url = null;
+        }
       }
       // Last resort: Construct Discord CDN URL
       else if (currentUser.avatar) {
@@ -219,7 +224,6 @@ export default function Header() {
                 />
                 {isAnimatedAvatar && (
                   <RN.View style={styles.animatedIndicator}>
-                    <RN.Text style={styles.gifText}>GIF</RN.Text>
                   </RN.View>
                 )}
               </>
