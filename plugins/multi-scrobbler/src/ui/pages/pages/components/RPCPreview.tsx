@@ -89,7 +89,7 @@ export default function RPCPreview() {
           try {
             const primaryArtist = artists[0] || "Unknown Artist";
             const trackInfoResponse = await fetch(
-              `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=${getStorage("apiKey")}&artist=${encodeURIComponent(primaryArtist)}&track=${encodeURIComponent(track.name)}&format=json&username=${getStorage("username")}`,
+              `https://ws.audioscrobbler.com/2.0/?method=track.getInfo&api_key=${getStorage("apiKey")}&artist=${encodeURIComponent(primaryArtist)}&track=${encodeURIComponent(track.name)}&format=json&u[...]`
             );
             const trackInfo = await trackInfoResponse.json();
             if (trackInfo.track && trackInfo.track.duration) {
@@ -195,8 +195,11 @@ export default function RPCPreview() {
     }
   };
 
+  // Store getStorage calls with defaults to prevent undefined rendering
   const activityType = getStorage("listeningTo") ? "Listening to" : "Playing";
-  const appName = getStorage("appName", "Music");
+  const appName = getStorage("appName") || "Music";
+  const showLargeText = getStorage("showLargeText", true);
+  const showTimestamp = getStorage("showTimestamp", false);
 
   if (isLoading) {
     return (
@@ -251,13 +254,13 @@ export default function RPCPreview() {
           <RN.Text style={styles.artistName} numberOfLines={1}>
             {previewTrack.artist}
           </RN.Text>
-          {getStorage("showLargeText") && previewText !== "No tooltip text" && (
+          {showLargeText && previewText !== "No tooltip text" && (
             <RN.Text style={styles.tooltipText} numberOfLines={1}>
               {previewText}
             </RN.Text>
           )}
 
-          {getStorage("showTimestamp") && previewTrack.duration && (
+          {showTimestamp && previewTrack.duration ? (
             <RN.View style={styles.progressContainer}>
               <RN.Text style={styles.timeText}>
                 {formatTime(progressData.current)}
@@ -274,7 +277,7 @@ export default function RPCPreview() {
                 {formatTime(progressData.total)}
               </RN.Text>
             </RN.View>
-          )}
+          ) : null}
         </RN.View>
       </RN.View>
     </RN.View>
