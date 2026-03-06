@@ -197,12 +197,13 @@ export class ListenBrainzService extends BaseService {
         albumArt,
         url:
           latestListen.track_metadata.additional_info?.origin_url ||
-          `https://listenbrainz.org/user/${username}`,
+          `https://listenbrainz.org/player/${latestListen.track_metadata.additional_info?.recording_mbid || `${encodeURIComponent(latestListen.track_metadata.artist_name)}/${encodeURIComponent(latestListen.track_metadata.track_name)}`}`,
+
         date: isNowPlaying
           ? "now"
           : new Date(trackTimestamp * 1000).toISOString(),
         nowPlaying: isNowPlaying,
-        loved: false, // ListenBrainz doesn't have a direct "loved" concept
+        loved: false,
         from: trackTimestamp,
         to: endTime,
         duration,
