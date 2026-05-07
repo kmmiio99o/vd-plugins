@@ -26,7 +26,6 @@ import {
   friendInviteRevokeCommand,
 } from "./src/commands/friendinvites";
 import settings from "./settings/settings";
-import patchSidebar from "./sidebar";
 
 if (!storage.factSettings) {
   storage.factSettings = {
@@ -77,10 +76,6 @@ if (!storage.hiddenSettings) {
     konochanBypassNsfw: false,
   };
 }
-// sidebar enabled setting
-if (storage.sidebarEnabled === undefined) {
-  storage.sidebarEnabled = true;
-}
 
 const commandMap = {
   catfact: catFactCommand,
@@ -107,21 +102,10 @@ const commandMap = {
 };
 
 let commands: Array<() => void> = [];
-let sidebarUnpatch: (() => void) | undefined;
 
 export default {
   onLoad: () => {
     console.log("[Commands Plugin] Loading...");
-
-    // Patch sidebar if enabled
-    if (storage.sidebarEnabled !== false) {
-      try {
-        sidebarUnpatch = patchSidebar();
-        console.log("[Commands Plugin] Sidebar patched successfully");
-      } catch (error) {
-        console.error("[Commands Plugin] Failed to patch sidebar:", error);
-      }
-    }
 
     // Register commands
     for (const [key, command] of Object.entries(commandMap)) {
@@ -150,17 +134,6 @@ export default {
       }
     });
     commands = [];
-
-    // Unpatch sidebar
-    if (sidebarUnpatch) {
-      try {
-        sidebarUnpatch();
-        sidebarUnpatch = undefined;
-        console.log("[Commands Plugin] Sidebar unpatched");
-      } catch (error) {
-        console.error("[Commands Plugin] Failed to unpatch sidebar:", error);
-      }
-    }
   },
   settings,
 };

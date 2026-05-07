@@ -8,7 +8,6 @@ import { UserStore } from "./modules";
 import { serviceFactory } from "./services/ServiceFactory";
 
 import Settings from "./ui/pages/Settings";
-import patchSidebar from "./sidebar";
 
 export const pluginState = {
   pluginStopped: false,
@@ -22,16 +21,12 @@ export const pluginState = {
   lastTrackUrl?: string;
 };
 
-let sidebarUnpatch: (() => void) | undefined;
-
 // Initialize default settings
 const defaultSettings: LFMSettings = Constants.DEFAULT_SETTINGS;
 Object.keys(defaultSettings).forEach((key) => {
   plugin.storage[key] =
     plugin.storage[key] ?? defaultSettings[key as keyof typeof defaultSettings];
 });
-
-plugin.storage.addToSidebar ??= false;
 
 export const currentSettings = new Proxy(plugin.storage, {
   get(target, prop: string) {
@@ -124,16 +119,6 @@ export default {
     console.log("[Multi-Scrobbler] Loading...");
     pluginState.pluginStopped = false;
 
-    // Patch sidebar if enabled
-    if (currentSettings.addToSidebar !== false) {
-      try {
-        sidebarUnpatch = patchSidebar();
-        console.log("[Multi-Scrobbler] Sidebar patched successfully");
-      } catch (error) {
-        console.error("[Multi-Scrobbler] Failed to patch sidebar:", error);
-      }
-    }
-
     validateAndInitialize();
   },
 
@@ -141,49 +126,14 @@ export default {
     console.log("[Multi-Scrobbler] Unloading...");
     pluginState.pluginStopped = true;
 
-    // Unpatch sidebar
-    if (sidebarUnpatch) {
-      try {
-        sidebarUnpatch();
-        sidebarUnpatch = undefined;
-        console.log("[Multi-Scrobbler] Sidebar unpatched");
-      } catch (error) {
-        console.error("[Multi-Scrobbler] Failed to unpatch sidebar:", error);
-      }
-    }
-
     stop();
   },
 
   async onSettingsUpdate(newSettings: any) {
     const oldService = currentSettings.service;
     const newService = newSettings.service;
-    const oldSidebar = currentSettings.addToSidebar;
-    const newSidebar = newSettings.addToSidebar;
 
     Object.assign(currentSettings, newSettings);
-
-    // Check if sidebar setting changed
-    if (oldSidebar !== newSidebar) {
-      if (newSidebar) {
-        try {
-          sidebarUnpatch = patchSidebar();
-          console.log("[Multi-Scrobbler] Sidebar enabled");
-        } catch (error) {
-          console.error("[Multi-Scrobbler] Failed to enable sidebar:", error);
-        }
-      } else {
-        if (sidebarUnpatch) {
-          try {
-            sidebarUnpatch();
-          } catch (e) {
-            console.error("[Multi-Scrobbler] Failed to unpatch sidebar:", e);
-          }
-          sidebarUnpatch = undefined;
-          console.log("[Multi-Scrobbler] Sidebar disabled");
-        }
-      }
-    }
 
     if (oldService !== newService && newService) {
       console.log(`[Multi-Scrobbler] Service changed from ${oldService || "none"} to ${newService}`);

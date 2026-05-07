@@ -283,6 +283,7 @@ export default function Settings() {
               setStorage("addToSidebar", value);
               forceUpdate();
             }}
+            disabled={true}
           />
         </TableRowGroup>
 
