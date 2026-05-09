@@ -10,10 +10,10 @@ import { serviceFactory } from "./services/ServiceFactory";
 import Settings from "./ui/pages/Settings";
 
 export const pluginState = {
-  pluginStopped: false,
-  lastActivity: undefined,
-  updateInterval: undefined,
-  lastTrackUrl: undefined,
+    pluginStopped: false,
+    lastActivity: undefined,
+    updateInterval: undefined,
+    lastTrackUrl: undefined,
 } as {
   pluginStopped: boolean;
   lastActivity?: any;
@@ -24,18 +24,18 @@ export const pluginState = {
 // Initialize default settings
 const defaultSettings: LFMSettings = Constants.DEFAULT_SETTINGS;
 Object.keys(defaultSettings).forEach((key) => {
-  plugin.storage[key] =
+    plugin.storage[key] =
     plugin.storage[key] ?? defaultSettings[key as keyof typeof defaultSettings];
 });
 
 export const currentSettings = new Proxy(plugin.storage, {
-  get(target, prop: string) {
-    return target[prop];
-  },
-  set(target, prop: string, value) {
-    target[prop] = value;
-    return true;
-  },
+    get(target, prop: string) {
+        return target[prop];
+    },
+    set(target, prop: string, value) {
+        target[prop] = value;
+        return true;
+    },
 });
 
 // Connection status tracking
@@ -44,122 +44,122 @@ const MAX_CONNECTION_ATTEMPTS = 3;
 const RECONNECT_DELAY = 5000;
 
 async function tryInitialize() {
-  try {
-    await initialize();
-    connectionAttempts = 0;
-    console.log("[Multi-Scrobbler] Successfully connected");
-  } catch (error) {
-    console.error("[Multi-Scrobbler] Initialization error:", error);
-    connectionAttempts++;
+    try {
+        await initialize();
+        connectionAttempts = 0;
+        console.log("[Multi-Scrobbler] Successfully connected");
+    } catch (error) {
+        console.error("[Multi-Scrobbler] Initialization error:", error);
+        connectionAttempts++;
 
-    if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
-      console.log(
-        `[Multi-Scrobbler] Retrying connection... (attempt ${connectionAttempts})`,
-      );
-      setTimeout(tryInitialize, RECONNECT_DELAY);
-    } else {
-      console.error(
-        "[Multi-Scrobbler] Failed to connect after multiple attempts",
-      );
+        if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
+            console.log(
+                `[Multi-Scrobbler] Retrying connection... (attempt ${connectionAttempts})`,
+            );
+            setTimeout(tryInitialize, RECONNECT_DELAY);
+        } else {
+            console.error(
+                "[Multi-Scrobbler] Failed to connect after multiple attempts",
+            );
+        }
     }
-  }
 }
 
 async function validateAndInitialize() {
-  if (!currentSettings.service) {
-    console.log("[Multi-Scrobbler] No service selected. Please configure a service in settings.");
-    return;
-  }
+    if (!currentSettings.service) {
+        console.log("[Multi-Scrobbler] No service selected. Please configure a service in settings.");
+        return;
+    }
 
-  let serviceName = "Unknown";
-  try {
-    serviceName = serviceFactory.getCurrentService().getServiceName();
-  } catch (e) {
-    console.error("[Multi-Scrobbler] Failed to determine current service name:", e);
-  }
+    let serviceName = "Unknown";
+    try {
+        serviceName = serviceFactory.getCurrentService().getServiceName();
+    } catch (e) {
+        console.error("[Multi-Scrobbler] Failed to determine current service name:", e);
+    }
 
-  const service = currentSettings.service;
-  let hasCredentials = false;
+    const service = currentSettings.service;
+    let hasCredentials = false;
 
-  switch (service) {
-    case "lastfm":
-      hasCredentials = !!(currentSettings.username && currentSettings.apiKey);
-      break;
-    case "librefm":
-      hasCredentials = !!(currentSettings.librefmUsername && currentSettings.librefmApiKey);
-      break;
-    case "listenbrainz":
-      hasCredentials = !!currentSettings.listenbrainzUsername;
-      break;
-  }
+    switch (service) {
+        case "lastfm":
+            hasCredentials = !!(currentSettings.username && currentSettings.apiKey);
+            break;
+        case "librefm":
+            hasCredentials = !!(currentSettings.librefmUsername && currentSettings.librefmApiKey);
+            break;
+        case "listenbrainz":
+            hasCredentials = !!currentSettings.listenbrainzUsername;
+            break;
+    }
 
-  if (!hasCredentials) {
-    console.error(`[Multi-Scrobbler] Missing credentials for ${serviceName}. Please configure in settings.`);
-    return;
-  }
+    if (!hasCredentials) {
+        console.error(`[Multi-Scrobbler] Missing credentials for ${serviceName}. Please configure in settings.`);
+        return;
+    }
 
-  console.log(`[Multi-Scrobbler] Starting with ${serviceName}...`);
+    console.log(`[Multi-Scrobbler] Starting with ${serviceName}...`);
 
-  if (UserStore.getCurrentUser()) {
-    tryInitialize();
-  } else {
-    const waitForUser = () => {
-      if (UserStore.getCurrentUser()) {
+    if (UserStore.getCurrentUser()) {
         tryInitialize();
-        FluxDispatcher.unsubscribe("CONNECTION_OPEN", waitForUser);
-      }
-    };
+    } else {
+        const waitForUser = () => {
+            if (UserStore.getCurrentUser()) {
+                tryInitialize();
+                FluxDispatcher.unsubscribe("CONNECTION_OPEN", waitForUser);
+            }
+        };
 
-    FluxDispatcher.subscribe("CONNECTION_OPEN", waitForUser);
-  }
+        FluxDispatcher.subscribe("CONNECTION_OPEN", waitForUser);
+    }
 }
 
 export default {
-  onLoad() {
-    console.log("[Multi-Scrobbler] Loading...");
-    pluginState.pluginStopped = false;
+    onLoad() {
+        console.log("[Multi-Scrobbler] Loading...");
+        pluginState.pluginStopped = false;
 
-    validateAndInitialize();
-  },
+        validateAndInitialize();
+    },
 
-  onUnload() {
-    console.log("[Multi-Scrobbler] Unloading...");
-    pluginState.pluginStopped = true;
+    onUnload() {
+        console.log("[Multi-Scrobbler] Unloading...");
+        pluginState.pluginStopped = true;
 
-    stop();
-  },
-
-  async onSettingsUpdate(newSettings: any) {
-    const oldService = currentSettings.service;
-    const newService = newSettings.service;
-
-    Object.assign(currentSettings, newSettings);
-
-    if (oldService !== newService && newService) {
-      console.log(`[Multi-Scrobbler] Service changed from ${oldService || "none"} to ${newService}`);
-      try {
-        await switchService(newService);
-      } catch (e) {
-        console.error("[Multi-Scrobbler] Failed to switch service:", e);
-      }
-    } else if (!pluginState.pluginStopped && currentSettings.service) {
-      tryInitialize();
-    } else if (!currentSettings.service) {
-      console.log("[Multi-Scrobbler] Service unselected, stopping plugin...");
-      try {
         stop();
-      } catch (e) {
-        console.error("[Multi-Scrobbler] Error while stopping due to service unselected:", e);
-      }
-    }
-  },
+    },
 
-  onDiscordReconnect() {
-    if (!pluginState.pluginStopped) {
-      console.log("[Multi-Scrobbler] Discord reconnected, reinitializing...");
-      tryInitialize();
-    }
-  },
+    async onSettingsUpdate(newSettings: any) {
+        const oldService = currentSettings.service;
+        const newService = newSettings.service;
 
-  settings: Settings,
+        Object.assign(currentSettings, newSettings);
+
+        if (oldService !== newService && newService) {
+            console.log(`[Multi-Scrobbler] Service changed from ${oldService || "none"} to ${newService}`);
+            try {
+                await switchService(newService);
+            } catch (e) {
+                console.error("[Multi-Scrobbler] Failed to switch service:", e);
+            }
+        } else if (!pluginState.pluginStopped && currentSettings.service) {
+            tryInitialize();
+        } else if (!currentSettings.service) {
+            console.log("[Multi-Scrobbler] Service unselected, stopping plugin...");
+            try {
+                stop();
+            } catch (e) {
+                console.error("[Multi-Scrobbler] Error while stopping due to service unselected:", e);
+            }
+        }
+    },
+
+    onDiscordReconnect() {
+        if (!pluginState.pluginStopped) {
+            console.log("[Multi-Scrobbler] Discord reconnected, reinitializing...");
+            tryInitialize();
+        }
+    },
+
+    settings: Settings,
 };
