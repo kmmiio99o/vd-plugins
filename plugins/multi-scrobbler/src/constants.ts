@@ -7,6 +7,8 @@ const Constants = {
     APPLICATION_ID: "1368513179272871956",
     // Don't check more than once every 3 seconds to avoid getting rate limited
     MIN_UPDATE_INTERVAL: 3,
+    // Libre.fm specifically requested a 1-minute minimum to reduce load
+    LIBREFM_MIN_UPDATE_INTERVAL: 60,
     // How many times to retry failed API calls
     MAX_RETRY_ATTEMPTS: 3,
     // Wait 5 seconds between retries

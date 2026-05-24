@@ -381,10 +381,18 @@ class PluginManager {
         // Don't reset track state - let updateActivity() handle whether to update
         await this.updateActivity();
 
+        const currentService = currentSettings.service;
+        let minInterval: number = Constants.MIN_UPDATE_INTERVAL;
+
+        if (currentService === "librefm") {
+            minInterval = Constants.LIBREFM_MIN_UPDATE_INTERVAL;
+            log(`Libre.fm active: enforcing ${minInterval}s minimum update interval`);
+        }
+
         const interval = Math.max(
             (Number(currentSettings.timeInterval) ||
-        Constants.DEFAULT_SETTINGS.timeInterval) * 1000,
-            Constants.MIN_UPDATE_INTERVAL * 1000,
+                Constants.DEFAULT_SETTINGS.timeInterval) * 1000,
+            minInterval * 1000,
         );
 
         this.updateTimer = setInterval(() => this.updateActivity(), interval);

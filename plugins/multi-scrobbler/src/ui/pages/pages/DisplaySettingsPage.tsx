@@ -15,6 +15,9 @@ export default function DisplaySettingsPage() {
     useProxy(plugin.storage);
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
+    const currentService = getStorage("service");
+    const isLibreFm = currentService === "librefm";
+
     return (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
             <Stack spacing={8}>
@@ -29,24 +32,33 @@ export default function DisplaySettingsPage() {
                             }}
                             isClearable
                         />
-                        <TextInput
-                            placeholder={`Update Interval (Default: ${Constants.DEFAULT_SETTINGS.timeInterval}s)`}
-                            value={String(
-                                getStorage(
-                                    "timeInterval",
-                                    Constants.DEFAULT_SETTINGS.timeInterval,
-                                ),
-                            )}
-                            onChange={(v: string) => {
-                                const interval = Number(v);
-                                if (interval >= Constants.MIN_UPDATE_INTERVAL) {
-                                    setStorage("timeInterval", interval);
-                                    forceUpdate();
-                                }
-                            }}
-                            keyboardType="numeric"
-                            isClearable
-                        />
+                        {isLibreFm ? (
+                            <TableRow
+                                label="Update Interval Disabled"
+                                subLabel="Libre.fm requires a fixed 60s update interval to prevent rate limiting"
+                                disabled={true}
+                                dimmed={true}
+                            />
+                        ) : (
+                            <TextInput
+                                placeholder={`Update Interval (Default: ${Constants.DEFAULT_SETTINGS.timeInterval}s)`}
+                                value={String(
+                                    getStorage(
+                                        "timeInterval",
+                                        Constants.DEFAULT_SETTINGS.timeInterval,
+                                    ),
+                                )}
+                                onChange={(v: string) => {
+                                    const interval = Number(v);
+                                    if (interval >= Constants.MIN_UPDATE_INTERVAL) {
+                                        setStorage("timeInterval", interval);
+                                        forceUpdate();
+                                    }
+                                }}
+                                keyboardType="numeric"
+                                isClearable
+                            />
+                        )}
                     </Stack>
                 </TableRowGroup>
 
