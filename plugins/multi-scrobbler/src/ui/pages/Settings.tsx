@@ -229,6 +229,7 @@ export default function Settings() {
                     />
                 </TableRowGroup>
 
+<<<<<<< HEAD
                 {/* Plugin Configuration */}
                 <TableRowGroup title="Plugin Configuration">
                     <TableRow
@@ -286,6 +287,64 @@ export default function Settings() {
                         disabled={true}
                     />
                 </TableRowGroup>
+=======
+        {/* Plugin Configuration */}
+        <TableRowGroup title="Plugin Configuration">
+          <TableRow
+            label="Display Settings"
+            subLabel="Customize app name and update interval"
+            trailing={<TableRow.Arrow />}
+            onPress={() =>
+              navigation.push("VendettaCustomPage", {
+                title: "Display Settings",
+                render: DisplaySettingsPage,
+              })
+            }
+          />
+          <TableRow
+            label="RPC Customization"
+            subLabel="Customize Discord rich presence display options"
+            trailing={<TableRow.Arrow />}
+            onPress={() =>
+              navigation.push("VendettaCustomPage", {
+                title: "RPC Customization",
+                render: RPCCustomizationSettingsPage,
+              })
+            }
+          />
+          <TableRow
+            label="Ignore List"
+            subLabel="Configure apps that should hide your status"
+            trailing={<TableRow.Arrow />}
+            onPress={() =>
+              navigation.push("VendettaCustomPage", {
+                title: "Ignore List Settings",
+                render: IgnoreListSettingsPage,
+              })
+            }
+          />
+          <TableRow
+            label="Logging Settings"
+            subLabel="Configure logging and debugging options"
+            trailing={<TableRow.Arrow />}
+            onPress={() =>
+              navigation.push("VendettaCustomPage", {
+                title: "Logging Settings",
+                render: LoggingSettingsPage,
+              })
+            }
+          />
+          <TableSwitchRow
+            label="Add to Sidebar"
+            subLabel="Show plugin in Discord settings"
+            value={getStorage("addToSidebar", false)}
+            onValueChange={(value: boolean) => {
+              setStorage("addToSidebar", value);
+              forceUpdate();
+            }}
+          />
+        </TableRowGroup>
+>>>>>>> parent of ecd97c7 (feat: detach Sidebar patches as they)
 
                 {/* About */}
                 <TableRowGroup title="About">

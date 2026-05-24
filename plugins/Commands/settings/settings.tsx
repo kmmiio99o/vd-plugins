@@ -71,8 +71,8 @@ storage.hiddenSettings ??= {
     konochanBypassNsfw: false,
 };
 
-// Sidebar setting
-storage.sidebarEnabled ??= false;
+// Sidebar setting (enabled by default)
+storage.sidebarEnabled ??= true;
 
 // MAIN SETTINGS COMPONENT
 export default function Settings() {
