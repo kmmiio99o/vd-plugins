@@ -124,96 +124,66 @@ export default {
         console.log("[Multi-Scrobbler] Loading...");
         pluginState.pluginStopped = false;
 
-<<<<<<< HEAD
+        // Patch sidebar if enabled
+        if (currentSettings.addToSidebar !== false) {
+            try {
+                sidebarUnpatch = patchSidebar();
+                console.log("[Multi-Scrobbler] Sidebar patched successfully");
+            } catch (error) {
+                console.error("[Multi-Scrobbler] Failed to patch sidebar:", error);
+            }
+        }
+
         validateAndInitialize();
     },
-=======
-    // Patch sidebar if enabled
-    if (currentSettings.addToSidebar !== false) {
-      try {
-        sidebarUnpatch = patchSidebar();
-        console.log("[Multi-Scrobbler] Sidebar patched successfully");
-      } catch (error) {
-        console.error("[Multi-Scrobbler] Failed to patch sidebar:", error);
-      }
-    }
-
-    validateAndInitialize();
-  },
->>>>>>> parent of ecd97c7 (feat: detach Sidebar patches as they)
 
     onUnload() {
         console.log("[Multi-Scrobbler] Unloading...");
         pluginState.pluginStopped = true;
 
-<<<<<<< HEAD
-=======
-    // Unpatch sidebar
-    if (sidebarUnpatch) {
-      try {
-        sidebarUnpatch();
-        sidebarUnpatch = undefined;
-        console.log("[Multi-Scrobbler] Sidebar unpatched");
-      } catch (error) {
-        console.error("[Multi-Scrobbler] Failed to unpatch sidebar:", error);
-      }
-    }
-
-    stop();
-  },
-
-  async onSettingsUpdate(newSettings: any) {
-    const oldService = currentSettings.service;
-    const newService = newSettings.service;
-    const oldSidebar = currentSettings.addToSidebar;
-    const newSidebar = newSettings.addToSidebar;
-
-    Object.assign(currentSettings, newSettings);
-
-    // Check if sidebar setting changed
-    if (oldSidebar !== newSidebar) {
-      if (newSidebar) {
-        try {
-          sidebarUnpatch = patchSidebar();
-          console.log("[Multi-Scrobbler] Sidebar enabled");
-        } catch (error) {
-          console.error("[Multi-Scrobbler] Failed to enable sidebar:", error);
-        }
-      } else {
+        // Unpatch sidebar
         if (sidebarUnpatch) {
-          try {
-            sidebarUnpatch();
-          } catch (e) {
-            console.error("[Multi-Scrobbler] Failed to unpatch sidebar:", e);
-          }
-          sidebarUnpatch = undefined;
-          console.log("[Multi-Scrobbler] Sidebar disabled");
+            try {
+                sidebarUnpatch();
+                sidebarUnpatch = undefined;
+                console.log("[Multi-Scrobbler] Sidebar unpatched");
+            } catch (error) {
+                console.error("[Multi-Scrobbler] Failed to unpatch sidebar:", error);
+            }
         }
-      }
-    }
 
-    if (oldService !== newService && newService) {
-      console.log(`[Multi-Scrobbler] Service changed from ${oldService || "none"} to ${newService}`);
-      try {
-        await switchService(newService);
-      } catch (e) {
-        console.error("[Multi-Scrobbler] Failed to switch service:", e);
-      }
-    } else if (!pluginState.pluginStopped && currentSettings.service) {
-      tryInitialize();
-    } else if (!currentSettings.service) {
-      console.log("[Multi-Scrobbler] Service unselected, stopping plugin...");
-      try {
->>>>>>> parent of ecd97c7 (feat: detach Sidebar patches as they)
         stop();
     },
 
     async onSettingsUpdate(newSettings: any) {
         const oldService = currentSettings.service;
         const newService = newSettings.service;
+        const oldSidebar = currentSettings.addToSidebar;
+        const newSidebar = newSettings.addToSidebar;
 
-<<<<<<< HEAD
         Object.assign(currentSettings, newSettings);
+
+        // Check if sidebar setting changed
+        if (oldSidebar !== newSidebar) {
+            if (newSidebar) {
+                try {
+                    sidebarUnpatch = patchSidebar();
+                    console.log("[Multi-Scrobbler] Sidebar enabled");
+                } catch (error) {
+                    console.error("[Multi-Scrobbler] Failed to enable sidebar:", error);
+                }
+            } else {
+                if (sidebarUnpatch) {
+                    try {
+                        sidebarUnpatch();
+                    } catch (e) {
+                        console.error("[Multi-Scrobbler] Failed to unpatch sidebar:", e);
+                    }
+                    sidebarUnpatch = undefined;
+                    console.log("[Multi-Scrobbler] Sidebar disabled");
+                }
+            }
+        }
 
         if (oldService !== newService && newService) {
             console.log(`[Multi-Scrobbler] Service changed from ${oldService || "none"} to ${newService}`);
@@ -243,7 +213,3 @@ export default {
 
     settings: Settings,
 };
-=======
-  settings: Settings,
-};
->>>>>>> parent of ecd97c7 (feat: detach Sidebar patches as they)

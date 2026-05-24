@@ -113,7 +113,16 @@ export default {
     onLoad: () => {
         console.log("[Commands Plugin] Loading...");
 
-<<<<<<< HEAD
+        // Patch sidebar if enabled
+        if (storage.sidebarEnabled !== false) {
+            try {
+                sidebarUnpatch = patchSidebar();
+                console.log("[Commands Plugin] Sidebar patched successfully");
+            } catch (error) {
+                console.error("[Commands Plugin] Failed to patch sidebar:", error);
+            }
+        }
+
         // Register commands
         for (const [key, command] of Object.entries(commandMap)) {
             if (storage.enabledCommands[key]) {
@@ -127,35 +136,11 @@ export default {
                     );
                 }
             }
-=======
-    // Patch sidebar if enabled
-    if (storage.sidebarEnabled !== false) {
-      try {
-        sidebarUnpatch = patchSidebar();
-        console.log("[Commands Plugin] Sidebar patched successfully");
-      } catch (error) {
-        console.error("[Commands Plugin] Failed to patch sidebar:", error);
-      }
-    }
-
-    // Register commands
-    for (const [key, command] of Object.entries(commandMap)) {
-      if (storage.enabledCommands[key]) {
-        try {
-          commands.push(registerCommand(command as any));
-          console.log(`[Commands Plugin] Registered command: ${key}`);
-        } catch (error) {
-          console.error(
-            `[Commands Plugin] Failed to register command ${key}:`,
-            error,
-          );
->>>>>>> parent of ecd97c7 (feat: detach Sidebar patches as they)
         }
     },
     onUnload: () => {
         console.log("[Commands Plugin] Unloading...");
 
-<<<<<<< HEAD
         // Unregister commands
         commands.forEach((unregister) => {
             try {
@@ -165,30 +150,17 @@ export default {
             }
         });
         commands = [];
+
+        // Unpatch sidebar
+        if (sidebarUnpatch) {
+            try {
+                sidebarUnpatch();
+                sidebarUnpatch = undefined;
+                console.log("[Commands Plugin] Sidebar unpatched");
+            } catch (error) {
+                console.error("[Commands Plugin] Failed to unpatch sidebar:", error);
+            }
+        }
     },
     settings,
-=======
-    // Unregister commands
-    commands.forEach((unregister) => {
-      try {
-        unregister();
-      } catch (error) {
-        // Ignore errors during cleanup
-      }
-    });
-    commands = [];
-
-    // Unpatch sidebar
-    if (sidebarUnpatch) {
-      try {
-        sidebarUnpatch();
-        sidebarUnpatch = undefined;
-        console.log("[Commands Plugin] Sidebar unpatched");
-      } catch (error) {
-        console.error("[Commands Plugin] Failed to unpatch sidebar:", error);
-      }
-    }
-  },
-  settings,
->>>>>>> parent of ecd97c7 (feat: detach Sidebar patches as they)
 };
