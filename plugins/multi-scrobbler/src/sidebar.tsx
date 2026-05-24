@@ -105,6 +105,7 @@ function patchTabsUI(tabs, patches) {
     const row = {
         [tabs.key]: {
             type: "pressable",
+            useTitle: tabs.title,
             title: tabs.title,
             icon: tabs.icon,
             IconComponent:
