@@ -12,18 +12,18 @@ export const petPetCommand = {
     options: [
         {
             name: "user",
-            description: "The user(or their id) to be patted",
+            description: "The user (or their id) to be patted",
             type: 6,
             required: true,
             displayName: "user",
-            displayDescription: "The user(or their id) to be patted",
+            displayDescription: "The user (or their id) to be patted",
         },
     ],
     execute: async (args: any, ctx: any) => {
         try {
             const user = await UserStore.getUser(args[0].value);
             const image = user.getAvatarURL(512);
-            const data = await getPetPetData(image);
+            const data = await getPetPetData(image, user.id);
 
             const fixNonce = Date.now().toString();
             MessageActions.sendMessage(

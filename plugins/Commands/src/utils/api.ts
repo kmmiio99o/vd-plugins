@@ -30,13 +30,28 @@ export const catFact = async () => {
     };
 };
 
-// Image APIs
-export const getPetPetData = async (image: string) => {
-    const data = await fetch(
-        `https://api.obamabot.me/v2/image/petpet?image=${image.replace("webp", "png")}`,
-    );
-    const body = await data.json();
-    return body;
+// Image APIs – primary: obamabot.me, fallback: ptc.pwn3t.ru
+export const getPetPetData = async (image: string, userId: string) => {
+    try {
+        const response = await fetch(
+            `https://api.obamabot.me/v2/image/petpet?image=${image.replace("webp", "png")}`
+        );
+        if (response.ok) {
+            const body = await response.json();
+            if (body && body.url) {
+                return body; // returns { url: ... }
+            }
+        }
+    } catch (error) {
+        console.warn("[PetPet] Obama API failed, falling back to .ru:", error);
+    }
+    if (userId) {
+        const url = `https://ptc.pwn3t.ru/${userId}.gif`;
+        return { url };
+    }
+
+    // If all fail, throw error
+    throw new Error("All PetPet APIs are down");
 };
 
 // Gary API function
