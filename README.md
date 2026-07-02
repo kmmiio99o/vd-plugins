@@ -9,6 +9,7 @@ A collection of plugins for [**Kettu**](https://codeberg.org/cocobo1/Kettu), [**
 | **Commands** | Adds useful commands to Kettu |
 | **Last.fm** | Scrobbling support for Last.fm *(Note: Superseded by Multi Scrobbler)* |
 | **Multi Scrobbler** | Advanced scrobbling support for multiple music services |
+| **ChatboxAvatar** | Quickly view your profile from the chatbox. |
 
 ## 🚀 Installation
 
@@ -29,6 +30,10 @@ https://kmmiio99o.github.io/vd-plugins/lastfm
 - **Multi Scrobbler**: 
 ```
 https://kmmiio99o.github.io/vd-plugins/multiscrobbler
+```
+- **ChatboxAvatar**: 
+```
+https://kmmiio99o.github.io/vd-plugins/ChatboxAvatar
 ```
 
 ## ℹ️ Notes
