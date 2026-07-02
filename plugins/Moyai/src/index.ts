@@ -64,15 +64,20 @@ function onMessage(event) {
     }
 }
 
+const recentReactions = new Set<string>();
+
 function onReaction(event) {
     try {
         if (
             (storage.allowReactions ?? true) &&
-        event.channelId == SelectedChannelStore.getChannelId() &&
-        !event.optimistic
+        event.channelId == SelectedChannelStore.getChannelId()
         ) {
             const name = event.emoji?.name;
             if (name === "🗿" || (name && /moy?ai/i.test(name))) {
+                const key = `${event.messageId}:${name}`;
+                if (recentReactions.has(key)) return;
+                recentReactions.add(key);
+                setTimeout(() => recentReactions.delete(key), 500);
                 playSound();
             }
         }
@@ -97,6 +102,7 @@ export default {
     onUnload: () => {
         FluxDispatcher.unsubscribe("MESSAGE_CREATE", onMessage);
         FluxDispatcher.unsubscribe("MESSAGE_REACTION_ADD", onReaction);
+        recentReactions.clear();
     },
     settings: MoyaiSettings,
 };
