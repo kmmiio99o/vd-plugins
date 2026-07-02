@@ -79,7 +79,7 @@ if (!storage.hiddenSettings) {
 }
 // sidebar enabled setting
 if (storage.sidebarEnabled === undefined) {
-  storage.sidebarEnabled = true;
+    storage.sidebarEnabled = true;
 }
 
 const commandMap = {
@@ -145,7 +145,7 @@ export default {
         commands.forEach((unregister) => {
             try {
                 unregister();
-            } catch (error) {
+            } catch {
                 // Ignore errors during cleanup
             }
         });

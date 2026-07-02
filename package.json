@@ -1,11 +1,12 @@
 {
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "watch": "node scripts/build.mjs -w",
-    "lint": "eslint plugins",
-    "make": "node scripts/make.mjs",
-    "serve": "node scripts/serve.mjs"
-  },
+      "build": "node scripts/build.mjs",
+      "watch": "node scripts/build.mjs -w",
+      "lint": "eslint plugins",
+      "lint:fix": "eslint plugins --fix",
+      "make": "node scripts/make.mjs",
+      "serve": "node scripts/serve.mjs"
+    },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
