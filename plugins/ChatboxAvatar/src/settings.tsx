@@ -47,6 +47,16 @@ export default function ChatboxAvatarSettings() {
                         <TableRadioRow value="main" label="Prefer Main Profile" />
                     </TableRadioGroup>
                 </TableRowGroup>
+                <TableRowGroup title="Position">
+                    <TableRadioGroup
+                        value={get("position", "after_actions")}
+                        onChange={(v: string) => { set("position", v); forceUpdate(); }}
+                    >
+                        <TableRadioRow value="before_actions" label="Before Action Buttons" />
+                        <TableRadioRow value="after_actions" label="After Action Buttons" />
+                        <TableRadioRow value="near_send" label="Near Send Button" />
+                    </TableRadioGroup>
+                </TableRowGroup>
                 <TableRowGroup title="Status Icon">
                     <TableRadioGroup
                         value={get("showStatusCutout", true) ? "true" : "false"}

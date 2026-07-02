@@ -10,6 +10,7 @@ const Flux = findByProps("useStateFromStores");
 const { Pressable, View } = ReactNative;
 
 const ChatInputActions = find(m => m?.type?.displayName === "ChatInputActions") || findByName("ChatInputActions");
+const ChatInputSendButton = find(m => m?.type?.displayName === "ChatInputSendButton") || findByName("ChatInputSendButton");
 
 const Avatar = findByProps("default", "AvatarSizes", "getStatusSize")?.default || findByProps("getStatusSize")?.default || findByName("Avatar");
 
@@ -99,31 +100,39 @@ export default {
             showStatusCutout: true,
             profileType: "server",
             showInDms: true,
+            position: "after_actions",
         };
         for (const key in defaults) {
             plugin.storage[key] = plugin.storage[key] ?? defaults[key];
         }
 
-        if (!ChatInputActions) return;
-
-        if (ChatInputActions.type) {
+        if (ChatInputActions) {
+            const target = ChatInputActions.type || ChatInputActions;
             patches.push(
-                after("render", ChatInputActions.type, (args, ret) => {
+                after("render", target, (args, ret) => {
+                    const position = getSetting("position", "after_actions");
+                    if (position === "near_send") return ret;
                     return (
                         <View style={{ flexDirection: "row", alignItems: "center" }}>
+                            {position === "before_actions" && <AvatarAction />}
                             {ret}
-                            <AvatarAction />
+                            {position === "after_actions" && <AvatarAction />}
                         </View>
                     );
                 })
             );
-        } else {
+        }
+
+        if (ChatInputSendButton) {
+            const target = ChatInputSendButton.type || ChatInputSendButton;
             patches.push(
-                after("render", ChatInputActions, (args, ret) => {
+                after("render", target, (args, ret) => {
+                    const position = getSetting("position", "after_actions");
+                    if (position !== "near_send") return ret;
                     return (
                         <View style={{ flexDirection: "row", alignItems: "center" }}>
-                            {ret}
                             <AvatarAction />
+                            {ret}
                         </View>
                     );
                 })
