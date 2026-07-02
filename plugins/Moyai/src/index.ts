@@ -24,6 +24,7 @@ const prepareSound = () =>
 let playingTimeout: ReturnType<typeof setTimeout> | null = null;
 let playing = false;
 async function playSound() {
+    if (!soundPrepared) return;
     try {
         if (playing) {
             if (playingTimeout != null) clearTimeout(playingTimeout);
@@ -34,7 +35,7 @@ async function playSound() {
         await DCDSoundManager.play(SOUND_ID);
         playingTimeout = setTimeout(() => {
             playing = false;
-            DCDSoundManager.stop(SOUND_ID);
+            if (soundPrepared) DCDSoundManager.stop(SOUND_ID);
             playingTimeout = null;
         }, SOUND_DURATION);
     } catch {
