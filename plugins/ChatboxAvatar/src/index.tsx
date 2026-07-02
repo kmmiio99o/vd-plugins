@@ -106,10 +106,12 @@ export default {
             plugin.storage[key] = plugin.storage[key] ?? defaults[key];
         }
 
-        if (ChatInputActions) {
-            const target = ChatInputActions.type || ChatInputActions;
+        const actionsTarget = ChatInputActions?.type || ChatInputActions;
+        const sendTarget = ChatInputSendButton?.type || ChatInputSendButton;
+
+        if (actionsTarget && actionsTarget !== sendTarget) {
             patches.push(
-                after("render", target, (args, ret) => {
+                after("render", actionsTarget, (args, ret) => {
                     const position = getSetting("position", "after_actions");
                     if (position === "near_send") return ret;
                     return (
@@ -123,16 +125,30 @@ export default {
             );
         }
 
-        if (ChatInputSendButton) {
-            const target = ChatInputSendButton.type || ChatInputSendButton;
+        if (sendTarget && sendTarget !== actionsTarget) {
             patches.push(
-                after("render", target, (args, ret) => {
+                after("render", sendTarget, (args, ret) => {
                     const position = getSetting("position", "after_actions");
                     if (position !== "near_send") return ret;
                     return (
                         <View style={{ flexDirection: "row", alignItems: "center" }}>
                             <AvatarAction />
                             {ret}
+                        </View>
+                    );
+                })
+            );
+        }
+
+        if (actionsTarget && actionsTarget === sendTarget) {
+            patches.push(
+                after("render", actionsTarget, (args, ret) => {
+                    const position = getSetting("position", "after_actions");
+                    return (
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                            {position === "before_actions" && <AvatarAction />}
+                            {ret}
+                            {(position === "after_actions" || position === "near_send") && <AvatarAction />}
                         </View>
                     );
                 })
