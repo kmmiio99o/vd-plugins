@@ -16,6 +16,18 @@ const ChannelStore = findByStoreName("ChannelStore");
 const SelfPresenceStore = findByStoreName("SelfPresenceStore");
 
 const showUserProfileActionSheet = findByName("showUserProfileActionSheet");
+const showYouAccountActionSheetByProp = findByProps("showYouAccountActionSheet");
+
+function openAccountSheet(userId: string, channelId: string) {
+    const fn = showYouAccountActionSheetByProp?.showYouAccountActionSheet;
+    if (typeof fn === "function") {
+        try {
+            fn(true, true);
+            return;
+        } catch (_) {}
+    }
+    showUserProfileActionSheet?.({ userId, channelId });
+}
 
 function AvatarAction() {
     const self = Flux?.useStateFromStores?.([UserStore], () => UserStore?.getCurrentUser?.());
@@ -28,6 +40,7 @@ function AvatarAction() {
     return (
         <Pressable
             onPress={() => showUserProfileActionSheet?.({ userId: self.id, channelId: channel?.id ?? channelId })}
+            onLongPress={() => openAccountSheet(self.id, channel?.id ?? channelId)}
             style={{ justifyContent: "center", alignItems: "center", marginHorizontal: 4 }}
         >
             <Avatar
