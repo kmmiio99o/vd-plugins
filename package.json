@@ -21,9 +21,11 @@
     "rollup": "^4.57.1",
     "rollup-plugin-esbuild": "^6.2.1",
     "typescript": "^5.9.3",
-    "vendetta-types": "^2.4.21"
+    "vendetta-types": "^2.4.21",
+    "vendetta-extras": "^1.0.3"
   },
   "dependencies": {
+    "@revenge-mod/revenge": "github:revenge-mod/revenge",
     "@swc/helpers": "^0.5.18",
     "serve": "^14.2.5"
   },
