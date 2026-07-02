@@ -1,7 +1,10 @@
 import { after } from "@vendetta/patcher";
 import { find, findByName, findByProps, findByStoreName } from "@vendetta/metro";
 import { ReactNative } from "@vendetta/metro/common";
+import { plugin } from "@vendetta";
 import React from "react";
+
+import Settings from "./settings";
 
 const Flux = findByProps("useStateFromStores");
 const { Pressable, View } = ReactNative;
@@ -24,10 +27,14 @@ function openAccountSheet(userId: string, channelId: string) {
         try {
             fn(true, true);
             return;
-        } catch (_) {}
+        } catch {
+            // fall through to showUserProfileActionSheet
+        }
     }
     showUserProfileActionSheet?.({ userId, channelId });
 }
+
+const getSetting = (key: string, fallback: any) => plugin.storage[key] ?? fallback;
 
 function AvatarAction() {
     const self = Flux?.useStateFromStores?.([UserStore], () => UserStore?.getCurrentUser?.());
@@ -37,16 +44,44 @@ function AvatarAction() {
 
     if (!self || !Avatar) return null;
 
+    const pressAction = getSetting("pressAction", "profile");
+    const longPressAction = getSetting("longPressAction", "server");
+    const showStatusCutout = getSetting("showStatusCutout", true);
+    const profileType = getSetting("profileType", "server");
+    const showInDms = getSetting("showInDms", true);
+
+    const isDm = channel?.type === 1 || channel?.type === 3;
+    if (isDm && !showInDms) return null;
+
+    const guildId = profileType === "server" ? channel?.guild_id : undefined;
+    const profileChannelId = profileType === "server" ? (channel?.id ?? channelId) : undefined;
+
+    const handlePress = () => {
+        if (pressAction === "server") {
+            openAccountSheet(self.id, channel?.id ?? channelId);
+        } else {
+            showUserProfileActionSheet?.({ userId: self.id, channelId: profileChannelId });
+        }
+    };
+
+    const handleLongPress = () => {
+        if (longPressAction === "server") {
+            openAccountSheet(self.id, channel?.id ?? channelId);
+        } else {
+            showUserProfileActionSheet?.({ userId: self.id, channelId: profileChannelId });
+        }
+    };
+
     return (
         <Pressable
-            onPress={() => showUserProfileActionSheet?.({ userId: self.id, channelId: channel?.id ?? channelId })}
-            onLongPress={() => openAccountSheet(self.id, channel?.id ?? channelId)}
+            onPress={handlePress}
+            onLongPress={handleLongPress}
             style={{ justifyContent: "center", alignItems: "center", marginHorizontal: 4 }}
         >
             <Avatar
                 user={self}
-                guildId={channel?.guild_id}
-                status={status}
+                guildId={guildId}
+                status={showStatusCutout ? status : undefined}
                 avatarDecoration={self?.avatarDecoration}
                 animate={true}
             />
@@ -58,6 +93,17 @@ const patches: (() => void)[] = [];
 
 export default {
     onLoad() {
+        const defaults: Record<string, any> = {
+            pressAction: "profile",
+            longPressAction: "server",
+            showStatusCutout: true,
+            profileType: "server",
+            showInDms: true,
+        };
+        for (const key in defaults) {
+            plugin.storage[key] = plugin.storage[key] ?? defaults[key];
+        }
+
         if (!ChatInputActions) return;
 
         if (ChatInputActions.type) {
@@ -90,4 +136,5 @@ export default {
         }
         patches.length = 0;
     },
+    settings: Settings,
 };
