@@ -107,6 +107,12 @@ export class LastFmService extends BaseService {
                 ? parseInt(lastTrack.date.uts)
                 : Math.floor(Date.now() / 1000);
 
+            const resolveField = (v: any, altKey = "name"): string => {
+                if (!v) return "";
+                if (typeof v === "string") return v;
+                return v["#text"] ?? v[altKey] ?? "";
+            };
+
             let duration: number | null = null;
             let endTime: number | null = null;
 
@@ -116,7 +122,7 @@ export class LastFmService extends BaseService {
                     const trackInfoParams = new URLSearchParams({
                         method: "track.getInfo",
                         track: lastTrack.name,
-                        artist: lastTrack.artist.name,
+                        artist: resolveField(lastTrack.artist),
                         api_key: currentSettings.apiKey,
                         format: "json",
                     });
@@ -144,8 +150,8 @@ export class LastFmService extends BaseService {
 
             const track: Track = {
                 name: lastTrack.name,
-                artist: lastTrack.artist.name,
-                album: lastTrack.album["#text"],
+                artist: resolveField(lastTrack.artist),
+                album: resolveField(lastTrack.album, "title"),
                 albumArt,
                 url: lastTrack.url,
                 date: lastTrack.date?.["#text"] ?? "now",
