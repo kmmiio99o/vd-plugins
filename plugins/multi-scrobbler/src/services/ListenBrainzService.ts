@@ -3,11 +3,6 @@ import { currentSettings } from "..";
 import Constants from "../constants";
 import { BaseService } from "./BaseService";
 
-interface ListenBrainzResponse {
-  listens?: ListenBrainzListen[];
-  error?: string;
-}
-
 interface ListenBrainzListen {
   listened_at: number;
   track_metadata: {
@@ -30,10 +25,6 @@ interface ListenBrainzListen {
     };
   };
   playing_now?: boolean;
-}
-
-interface ListenBrainzPlayingNowResponse {
-  listens: ListenBrainzListen[];
 }
 
 export class ListenBrainzService extends BaseService {
@@ -179,15 +170,10 @@ export class ListenBrainzService extends BaseService {
                 }
             }
 
-            // Try to get album art from MusicBrainz or other sources
-            const albumArt: string | null = null;
+            // Try to get album art from Cover Art Archive
+            let albumArt: string | null = null;
             if (latestListen.track_metadata.additional_info?.release_mbid) {
-                try {
-                    // We could fetch cover art from Cover Art Archive, but for now we'll leave it null
-                    // albumArt = `https://coverartarchive.org/release/${latestListen.track_metadata.additional_info.release_mbid}/front`;
-                } catch (error) {
-                    this.logVerbose("Failed to fetch album art:", error);
-                }
+                albumArt = `https://coverartarchive.org/release/${latestListen.track_metadata.additional_info.release_mbid}/front`;
             }
 
             const track: Track = {
