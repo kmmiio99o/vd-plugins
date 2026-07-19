@@ -92,7 +92,7 @@ function patchPanelUI(tabs, patches) {
             ),
         );
     } catch (error) {
-        logger.info("Panel UI patch failed graciously 💔", error);
+        // we don't need to care about this error
     }
 }
 

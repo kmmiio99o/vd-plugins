@@ -1,16 +1,16 @@
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
-import { React, ReactNative, stylesheet } from "@vendetta/metro/common";
+import { React } from "@vendetta/metro/common";
 import { NavigationNative } from "@vendetta/metro/common";
-import { semanticColors } from "@vendetta/ui";
-import { getAssetIDByName } from "@vendetta/ui/assets";
-import { Forms } from "@vendetta/ui/components";
 import { alerts } from "@vendetta/ui";
-import { showToast } from "@vendetta/ui/toasts";
+import {
+    ScrollView,
+    Stack,
+    TableRowGroup,
+    TableRow,
+} from "./components/TableComponents";
 import Header from "./components/Header";
-import BetterTableRowGroup from "./components/BetterTableRowGroup";
 
-// Import all pages directly
 import FactsSettingsPage from "./pages/FactsSettingsPage";
 import ListSettingsPage from "./pages/ListSettingsPage";
 import ImageSettingsPage from "./pages/ImageSettingsPage";
@@ -21,60 +21,68 @@ import OtherSettingsPage from "./pages/OtherSettingsPage";
 import HiddenSettingsPage from "./pages/HiddenSettingsPage";
 import CreditsPage from "./pages/CreditsPage";
 
-const { FormRow } = Forms;
+if (storage.factSettings == null) {
+    storage.factSettings = {
+        sendAsReply: true,
+        includeCitation: false,
+    };
+}
 
-// Initialize storage with default values
-storage.factSettings ??= {
-    sendAsReply: true,
-    includeCitation: false,
-};
+if (storage.listSettings == null) {
+    storage.listSettings = {
+        pluginListAlwaysDetailed: false,
+        themeListAlwaysDetailed: false,
+    };
+}
 
-storage.listSettings ??= {
-    pluginListAlwaysDetailed: false,
-    themeListAlwaysDetailed: false,
-};
+if (storage.garySettings == null) {
+    storage.garySettings = {
+        imageSource: "gary",
+    };
+}
 
-storage.garySettings ??= {
-    imageSource: "gary",
-};
+if (storage.enabledCommands == null) {
+    storage.enabledCommands = {
+        catfact: true,
+        dogfact: true,
+        useless: true,
+        petpet: true,
+        pluginList: true,
+        themeList: true,
+        konoself: true,
+        konosend: true,
+        firstmessage: true,
+        sysinfo: true,
+        spotifyTrack: true,
+        spotifyAlbum: true,
+        spotifyArtists: true,
+        spotifyCover: true,
+        gary: true,
+        ip: true,
+        lovefemboys: false,
+        nekoslife: false,
+        friendInviteCreate: true,
+        friendInviteView: true,
+        friendInviteRevoke: true,
+    };
+}
 
-storage.enabledCommands ??= {
-    catfact: true,
-    dogfact: true,
-    useless: true,
-    petpet: true,
-    pluginList: true,
-    themeList: true,
-    konoself: true,
-    konosend: true,
-    firstmessage: true,
-    sysinfo: true,
-    spotifyTrack: true,
-    spotifyAlbum: true,
-    spotifyArtists: true,
-    spotifyCover: true,
-    gary: true,
-    ip: true,
-    lovefemboys: false,
-    nekoslife: false,
-    friendInviteCreate: true,
-    friendInviteView: true,
-    friendInviteRevoke: true,
-};
+if (storage.pendingRestart == null) {
+    storage.pendingRestart = false;
+}
 
-storage.pendingRestart ??= false;
+if (storage.hiddenSettings == null) {
+    storage.hiddenSettings = {
+        enabled: false,
+        visible: false,
+        konochanBypassNsfw: false,
+    };
+}
 
-// Hidden settings storage with NSFW bypass option
-storage.hiddenSettings ??= {
-    enabled: false,
-    visible: false,
-    konochanBypassNsfw: false,
-};
+if (storage.sidebarEnabled == null) {
+    storage.sidebarEnabled = true;
+}
 
-// Sidebar setting (enabled by default)
-storage.sidebarEnabled ??= true;
-
-// MAIN SETTINGS COMPONENT
 export default function Settings() {
     useProxy(storage);
     const navigation = NavigationNative.useNavigation();
@@ -95,30 +103,26 @@ export default function Settings() {
         };
     }, []);
 
-    return (
-        <ReactNative.View style={{ flex: 1 }}>
-            <ReactNative.ScrollView
-                style={{
-                    flex: 1,
-                    backgroundColor: semanticColors.BACKGROUND_PRIMARY,
-                }}
-                contentContainerStyle={{
-                    flexGrow: 1,
-                    maxWidth: "100%",
-                }}
-                showsVerticalScrollIndicator={false}
-            >
-                <Header />
+    const garySourceLabel =
+        storage.garySettings.imageSource === "gary"
+            ? "Gary API"
+            : storage.garySettings.imageSource === "catapi"
+                ? "Cat API"
+                : storage.garySettings.imageSource === "minker"
+                    ? "Minker API"
+                    : storage.garySettings.imageSource === "goober"
+                        ? "Goober API"
+                        : "Gary API";
 
-                <BetterTableRowGroup
-                    title="Command Categories"
-                    icon={getAssetIDByName("ChannelListIcon")}
-                >
-                    <FormRow
+    return (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
+            <Header />
+            <Stack spacing={12}>
+                <TableRowGroup title="Command Categories">
+                    <TableRow
                         label="Facts Commands"
                         subLabel="Cat facts, dog facts, and useless facts"
-                        leading={<FormRow.Icon source={getAssetIDByName("BookmarkIcon")} />}
-                        trailing={<FormRow.Arrow />}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "Facts Commands",
@@ -126,11 +130,10 @@ export default function Settings() {
                             })
                         }
                     />
-                    <FormRow
+                    <TableRow
                         label="List Commands"
                         subLabel="Plugin lists and theme lists"
-                        leading={<FormRow.Icon source={getAssetIDByName("ListViewIcon")} />}
-                        trailing={<FormRow.Arrow />}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "List Commands",
@@ -138,11 +141,10 @@ export default function Settings() {
                             })
                         }
                     />
-                    <FormRow
+                    <TableRow
                         label="Image Commands"
                         subLabel="PetPet, KonoChan, and image utilities"
-                        leading={<FormRow.Icon source={getAssetIDByName("ImageIcon")} />}
-                        trailing={<FormRow.Arrow />}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "Image Commands",
@@ -150,21 +152,10 @@ export default function Settings() {
                             })
                         }
                     />
-                    <FormRow
+                    <TableRow
                         label="Gary Commands"
-                        subLabel={`Gary images - Current: ${
-                            storage.garySettings.imageSource === "gary"
-                                ? "Gary API"
-                                : storage.garySettings.imageSource === "catapi"
-                                    ? "Cat API"
-                                    : storage.garySettings.imageSource === "minker"
-                                        ? "Minker API"
-                                        : storage.garySettings.imageSource === "goober"
-                                            ? "Goober API"
-                                            : "Gary API"
-                        }`}
-                        leading={<FormRow.Icon source={getAssetIDByName("CameraIcon")} />}
-                        trailing={<FormRow.Arrow />}
+                        subLabel={`Gary images - Current: ${garySourceLabel}`}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "Gary Commands",
@@ -172,13 +163,10 @@ export default function Settings() {
                             })
                         }
                     />
-                    <FormRow
+                    <TableRow
                         label="Spotify Commands"
                         subLabel="Share your Spotify activity"
-                        leading={
-                            <FormRow.Icon source={getAssetIDByName("SpotifyNeutralIcon")} />
-                        }
-                        trailing={<FormRow.Arrow />}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "Spotify Commands",
@@ -186,17 +174,10 @@ export default function Settings() {
                             })
                         }
                     />
-                    <FormRow
+                    <TableRow
                         label="Aliucord Commands"
                         subLabel="Commands from Aliucord"
-                        leading={
-                            <FormRow.Icon
-                                source={{
-                                    uri: "https://avatars.githubusercontent.com/u/78881422?s=200&v=4",
-                                }}
-                            />
-                        }
-                        trailing={<FormRow.Arrow />}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "Aliucord",
@@ -204,11 +185,10 @@ export default function Settings() {
                             })
                         }
                     />
-                    <FormRow
+                    <TableRow
                         label="Other Commands"
                         subLabel="Utility and system commands"
-                        leading={<FormRow.Icon source={getAssetIDByName("WrenchIcon")} />}
-                        trailing={<FormRow.Arrow />}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "Other Commands",
@@ -216,18 +196,14 @@ export default function Settings() {
                             })
                         }
                     />
-                </BetterTableRowGroup>
+                </TableRowGroup>
 
                 {storage.hiddenSettings?.visible && (
-                    <BetterTableRowGroup
-                        title="Hidden Settings"
-                        icon={getAssetIDByName("EyeIcon")}
-                    >
-                        <FormRow
+                    <TableRowGroup title="Hidden Settings">
+                        <TableRow
                             label="Hidden Commands"
                             subLabel="Access to experimental and NSFW commands"
-                            leading={<FormRow.Icon source={getAssetIDByName("EyeIcon")} />}
-                            trailing={<FormRow.Arrow />}
+                            trailing={<TableRow.Arrow />}
                             onPress={() =>
                                 navigation.push("VendettaCustomPage", {
                                     title: "Hidden Settings",
@@ -235,18 +211,14 @@ export default function Settings() {
                                 })
                             }
                         />
-                    </BetterTableRowGroup>
+                    </TableRowGroup>
                 )}
 
-                <BetterTableRowGroup
-                    title="Other"
-                    icon={getAssetIDByName("CircleInformationIcon-primary")}
-                >
-                    <FormRow
+                <TableRowGroup title="Other">
+                    <TableRow
                         label="Credits"
                         subLabel="View original authors of the plugins"
-                        leading={<FormRow.Icon source={getAssetIDByName("HeartIcon")} />}
-                        trailing={<FormRow.Arrow />}
+                        trailing={<TableRow.Arrow />}
                         onPress={() =>
                             navigation.push("VendettaCustomPage", {
                                 title: "Credits",
@@ -254,11 +226,8 @@ export default function Settings() {
                             })
                         }
                     />
-                </BetterTableRowGroup>
-
-                {/* Add sufficient bottom padding for scrolling */}
-                <ReactNative.View style={{ height: 32 }} />
-            </ReactNative.ScrollView>
-        </ReactNative.View>
+                </TableRowGroup>
+            </Stack>
+        </ScrollView>
     );
 }

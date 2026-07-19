@@ -1,10 +1,19 @@
 import { storage } from "@vendetta/plugin";
-import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
+import { React, ReactNative as RN } from "@vendetta/metro/common";
 import { semanticColors } from "@vendetta/ui";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
-import { findByProps } from "@vendetta/metro";
-import Text from "../../../../nexxstuff/components/Text";
+import { findByProps, findByStoreName } from "@vendetta/metro";
+
+const TextStyleSheet = findByProps("TextStyleSheet").TextStyleSheet;
+const ThemeStore = findByStoreName("ThemeStore");
+const colorModule = findByProps("colors", "unsafe_rawColors");
+const colorResolver = colorModule?.internal ?? colorModule?.meta;
+
+function resolveSemanticColor(color: any, theme?: string) {
+    const t = theme ?? ThemeStore?.theme;
+    return (color && colorResolver?.resolveSemanticColor(t, color)) || "#000000";
+}
 
 export default function Header() {
     const [clickCounter, setClickCounter] = React.useState(0);
@@ -21,15 +30,32 @@ export default function Header() {
         }
     }, []);
 
-    // Get current user from Discord's user store
-    const users = findByProps("getUser", "getCurrentUser");
-    const currentUser = users?.getCurrentUser?.();
+    // Get current user from Discord's user store with error handling
+    let currentUser = null;
+    try {
+        const users = findByProps("getUser", "getCurrentUser");
+        currentUser = users?.getCurrentUser?.();
+    } catch (e) {
+        console.warn("[Commands Header] Failed to get current user:", e);
+    }
 
-    // Get avatar URL utility
-    const { getUserAvatarURL } = findByProps("getUserAvatarURL") || {};
-    const { getDefaultAvatarURL } = findByProps("getDefaultAvatarURL") || {};
+    // Get avatar URL utilities with error handling
+    let getUserAvatarURL = null;
+    let getDefaultAvatarURL = null;
+    try {
+        const userAvatarModule = findByProps("getUserAvatarURL");
+        getUserAvatarURL = userAvatarModule?.getUserAvatarURL;
+    } catch (e) {
+        console.warn("[Commands Header] Failed to get getUserAvatarURL:", e);
+    }
+    try {
+        const defaultAvatarModule = findByProps("getDefaultAvatarURL");
+        getDefaultAvatarURL = defaultAvatarModule?.getDefaultAvatarURL;
+    } catch (e) {
+        console.warn("[Commands Header] Failed to get getDefaultAvatarURL:", e);
+    }
 
-    const styles = stylesheet.createThemedStyleSheet({
+    const styles = RN.StyleSheet.create({
         container: {
             flexDirection: "row",
             alignItems: "center",
@@ -56,12 +82,11 @@ export default function Header() {
             width: 96,
             height: 96,
             borderRadius: 24,
-            backgroundColor: semanticColors.BACKGROUND_SECONDARY,
             justifyContent: "center",
             alignItems: "center",
             overflow: "hidden",
             borderWidth: 2,
-            borderColor: semanticColors.BACKGROUND_TERTIARY,
+            borderColor: semanticColors.MOBILE_CHATINPUT_BORDER_DEFAULT,
         },
         avatar: {
             width: 92,
@@ -125,25 +150,30 @@ export default function Header() {
 
             // Try to get the user's custom avatar first
             if (getUserAvatarURL && currentUser.avatar) {
-                // Use animated parameter for GIF avatars
-                url = getUserAvatarURL(currentUser, hasAnimatedAvatar);
-                animated = hasAnimatedAvatar;
+                try {
+                    // Use animated parameter for GIF avatars
+                    url = getUserAvatarURL(currentUser, hasAnimatedAvatar);
+                    animated = hasAnimatedAvatar;
+                } catch (e) {
+                    console.warn("[Commands Header] Error getting custom avatar:", e);
+                    url = null;
+                }
             }
             // Fall back to default avatar
-            else if (getDefaultAvatarURL && typeof getDefaultAvatarURL === "function") {
+            if (!url && getDefaultAvatarURL && typeof getDefaultAvatarURL === "function") {
                 try {
                     url = getDefaultAvatarURL(currentUser);
                 } catch (error) {
-                    console.error("Error getting default avatar URL:", error);
+                    console.warn("[Commands Header] Error getting default avatar URL:", error);
                     url = null;
                 }
             }
             // Last resort: Construct Discord CDN URL
-            else if (currentUser.avatar) {
+            if (!url && currentUser.avatar) {
                 const isGif = currentUser.avatar.startsWith("a_");
                 url = `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.${isGif ? "gif" : "png"}?size=256`;
                 animated = isGif;
-            } else {
+            } else if (!url) {
                 // Default Discord avatar based on discriminator or id
                 const defaultAvatarIndex = currentUser.discriminator
                     ? parseInt(currentUser.discriminator) % 5
@@ -250,12 +280,12 @@ export default function Header() {
                 </RN.Pressable>
 
                 <RN.View style={styles.textContainer}>
-                    <Text variant="display-md" color="TEXT_DEFAULT" align="left">
+                    <RN.Text style={[TextStyleSheet["display-md"], { color: resolveSemanticColor(semanticColors["TEXT_DEFAULT"]) }]}>
             Commands
-                    </Text>
-                    <Text variant="text-md/bold" color="TEXT_MUTED" align="left">
+                    </RN.Text>
+                    <RN.Text style={[TextStyleSheet["text-md/bold"], { color: resolveSemanticColor(semanticColors["TEXT_MUTED"]) }]}>
             A collection of useful commands for Vendetta like clients
-                    </Text>
+                    </RN.Text>
                 </RN.View>
             </RN.View>
         </RN.View>

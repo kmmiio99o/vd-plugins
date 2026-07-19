@@ -1,22 +1,19 @@
-import { React, ReactNative as RN, stylesheet } from "@vendetta/metro/common";
+import { React, ReactNative as RN } from "@vendetta/metro/common";
 import { semanticColors } from "@vendetta/ui";
-import { getAssetIDByName } from "@vendetta/ui/assets";
-import BetterTableRowGroup from "../components/BetterTableRowGroup";
+import {
+    ScrollView,
+    Stack,
+    TableRowGroup,
+    TableRow,
+} from "../components/TableComponents";
 
 export default function NekosLifeCategoriesPage() {
-    const styles = stylesheet.createThemedStyleSheet({
-        container: {
-            flex: 1,
-            backgroundColor: semanticColors.BACKGROUND_PRIMARY,
-        },
+    const styles = RN.StyleSheet.create({
         tableHeader: {
             flexDirection: "row",
             alignItems: "center",
             paddingVertical: 12,
             paddingHorizontal: 16,
-            backgroundColor: semanticColors.BACKGROUND_MODIFIER_ACCENT,
-            borderBottomWidth: 2,
-            borderBottomColor: semanticColors.BORDER_STRONG,
         },
         headerText: {
             fontSize: 14,
@@ -40,8 +37,6 @@ export default function NekosLifeCategoriesPage() {
             alignItems: "center",
             paddingVertical: 12,
             paddingHorizontal: 16,
-            borderBottomWidth: 1,
-            borderBottomColor: semanticColors.BORDER_FAINT,
         },
         categoryName: {
             fontSize: 16,
@@ -71,15 +66,8 @@ export default function NekosLifeCategoriesPage() {
             fontWeight: "600",
             color: semanticColors.TEXT_NORMAL,
         },
-        infoText: {
-            fontSize: 14,
-            color: semanticColors.TEXT_MUTED,
-            textAlign: "center",
-            lineHeight: 20,
-        },
     });
 
-    // nekos.life categories
     const sfwCategories = [
         { name: "Avatar", value: "avatar" },
         { name: "Classic", value: "classic" },
@@ -99,63 +87,46 @@ export default function NekosLifeCategoriesPage() {
         { name: "Woof", value: "woof" },
     ];
 
-    // Sort categories alphabetically
     const sortedCategories = sfwCategories.sort((a, b) =>
         a.name.localeCompare(b.name),
     );
 
     return (
-        <RN.ScrollView
-            style={styles.container}
-            contentContainerStyle={{
-                flexGrow: 1,
-                paddingVertical: 16,
-                maxWidth: "100%",
-            }}
-        >
-            <BetterTableRowGroup
-                title="📊 Category Statistics"
-                icon={getAssetIDByName("ChartIcon")}
-                padding={true}
-            >
-                <RN.Text style={styles.infoText}>
-          Total SFW Categories: {sfwCategories.length}
-                    {"\n\n"}
-          Use these category names with the /nekoslife command.{"\n"}
-          All categories are Safe For Work (SFW).
-                </RN.Text>
-            </BetterTableRowGroup>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 10 }}>
+            <Stack spacing={12}>
+                <TableRowGroup title="Category Statistics">
+                    <TableRow
+                        label={`${sfwCategories.length} SFW Categories`}
+                        subLabel="Use these category names with the /nekoslife command. All categories are Safe For Work (SFW)."
+                    />
+                </TableRowGroup>
 
-            <BetterTableRowGroup
-                title="📋 SFW Categories"
-                icon={getAssetIDByName("ListViewIcon")}
-            >
-                {/* Table Header */}
-                <RN.View style={styles.tableHeader}>
-                    <RN.Text style={[styles.headerText, styles.nameHeader]}>
-            Category Name
-                    </RN.Text>
-                    <RN.Text style={[styles.headerText, styles.codeHeader]}>
-            Command Code
-                    </RN.Text>
-                    <RN.Text style={[styles.headerText, styles.badgeHeader]}>
-            Type
-                    </RN.Text>
-                </RN.View>
+                <TableRowGroup title="SFW Categories">
+                    <RN.View style={styles.tableHeader}>
+                        <RN.Text style={[styles.headerText, styles.nameHeader]}>
+                            Category Name
+                        </RN.Text>
+                        <RN.Text style={[styles.headerText, styles.codeHeader]}>
+                            Command Code
+                        </RN.Text>
+                        <RN.Text style={[styles.headerText, styles.badgeHeader]}>
+                            Type
+                        </RN.Text>
+                    </RN.View>
 
-                {/* Table Rows */}
-                {sortedCategories.map((category, index) => (
-                    <RN.View key={index} style={styles.categoryItem}>
-                        <RN.Text style={styles.categoryName}>{category.name}</RN.Text>
-                        <RN.Text style={styles.categoryValue}>{category.value}</RN.Text>
-                        <RN.View style={styles.sfwBadgeContainer}>
-                            <RN.View style={styles.sfwBadge}>
-                                <RN.Text style={styles.badgeText}>SFW</RN.Text>
+                    {sortedCategories.map((category, index) => (
+                        <RN.View key={index} style={styles.categoryItem}>
+                            <RN.Text style={styles.categoryName}>{category.name}</RN.Text>
+                            <RN.Text style={styles.categoryValue}>{category.value}</RN.Text>
+                            <RN.View style={styles.sfwBadgeContainer}>
+                                <RN.View style={styles.sfwBadge}>
+                                    <RN.Text style={styles.badgeText}>SFW</RN.Text>
+                                </RN.View>
                             </RN.View>
                         </RN.View>
-                    </RN.View>
-                ))}
-            </BetterTableRowGroup>
-        </RN.ScrollView>
+                    ))}
+                </TableRowGroup>
+            </Stack>
+        </ScrollView>
     );
 }
