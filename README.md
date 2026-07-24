@@ -11,12 +11,13 @@ A collection of plugins for [**Kettu**](https://codeberg.org/cocobo1/Kettu), [**
 | **Multi Scrobbler** | Advanced scrobbling support for multiple music services |
 | **ChatboxAvatar** | Quickly view your profile from the chatbox. |
 | **Moyai** | 🗿 - Plays a sound on message send/react |
+| **Server Drawer** | Server Drawer above the YouBar, manage your servers differently! |
 
 ## 🚀 Installation
 
 1. Copy plugin link from here
-2. Open **Vendetta** and go to the **Plugins** page
-3. Click the "Add Plugin" or "Install from URL" button
+2. Open **Discord Settings** and go to the **Plugins** page
+3. Click the "+" in the corner and paste the plugin link
 
 ## 🔗 Plugin Links
 
@@ -39,6 +40,10 @@ https://rksv.kmmiio99o.dev/ChatboxAvatar
 - **Moyai**: 
 ```
 https://rksv.kmmiio99o.dev/Moyai
+```
+- **Server Drawer**: 
+```
+https://rksv.kmmiio99o.dev/ServerDrawer
 ```
 
 ## ℹ️ Notes
