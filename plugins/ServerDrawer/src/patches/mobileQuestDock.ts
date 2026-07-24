@@ -22,6 +22,7 @@ export function patchMobileQuestDock(cleanups: (() => void)[]): boolean {
             userStatus: { enrolledAt: "2099-01-01", claimedAt: null },
             benefits: { rewards: [] },
             guildId: "0",
+            tasks: [],
         };
     };
     cleanups.push(() => { mod.useMobileQuestDock = orig; });
