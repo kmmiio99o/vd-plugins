@@ -1,0 +1,14 @@
+{
+  "name": "Server Drawer",
+  "description": "Server Drawer above the YouBar, manage your servers differently!",
+  "authors": [
+    {
+      "name": "kmmiio99o",
+      "id": "879393496627306587"
+    }
+  ],
+  "main": "src/index.tsx",
+  "vendetta": {
+    "icon": "ServerIcon"
+  }
+}

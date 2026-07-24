@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kmmiio99o's Plugins</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            background-image: radial-gradient(circle at 20% 50%, rgba(88, 166, 255, 0.06) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 20%, rgba(163, 113, 247, 0.05) 0%, transparent 50%);
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            padding: 32px;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 2em; border-bottom: 1px solid #30363d; padding-bottom: 0.3em; margin-bottom: 16px; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid #30363d; padding-bottom: 0.3em; margin-top: 24px; margin-bottom: 16px; }
+        a { color: #58a6ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+        th, td { border: 1px solid #30363d; padding: 8px 16px; text-align: left; }
+        th { background: #161b22; }
+        tr:nth-child(even) { background: #161b22; }
+        code {
+            background: #161b22;
+            padding: 0.2em 0.4em;
+            border-radius: 6px;
+            font-size: 85%;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        }
+        pre {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        pre code { background: none; padding: 0; font-size: 85%; }
+        ul, ol { padding-left: 2em; margin: 8px 0; }
+        li { margin: 4px 0; }
+        em { color: #8b949e; }
+        strong { color: #f0f6fc; }
+        hr { border: none; border-top: 1px solid #30363d; margin: 24px 0; }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+    <script>
+        fetch("README.md")
+            .then(r => r.text())
+            .then(md => {
+                document.getElementById("content").innerHTML = marked.parse(md);
+            });
+    </script>
+</body>
+</html>
