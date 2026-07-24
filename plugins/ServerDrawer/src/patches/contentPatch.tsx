@@ -37,9 +37,17 @@ export function patchEmpty(
         return false;
     }
     const orig = mod.type;
+    const originalComponent = orig;
+
     mod.type = function EmptyPatch() {
         return null;
     };
+
+    if (originalComponent) {
+        Object.defineProperties(mod.type, Object.getOwnPropertyDescriptors(originalComponent));
+        mod.type.displayName = name;
+    }
+
     cleanups.push(() => { mod.type = orig; });
     return true;
 }
