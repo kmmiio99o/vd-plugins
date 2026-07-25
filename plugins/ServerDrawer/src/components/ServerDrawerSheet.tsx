@@ -5,6 +5,7 @@ import { GuildNode } from "../utils/theme";
 import GuildItem from "./GuildItem";
 import FolderItem from "./FolderItem";
 
+const Flux = findByProps("useStateFromStores");
 const SortedGuildStore = findByStoreName("SortedGuildStore");
 const RootNav = findByProps("getRootNavigationRef");
 const Haptic = findByProps("triggerHapticFeedback", "HapticFeedbackTypes");
@@ -28,10 +29,13 @@ export default function ServerDrawerSheet({ gestureContext }: { gestureContext: 
         }
     }, []);
 
-    const nodes: GuildNode[] = React.useMemo(() => {
-        const t = SortedGuildStore?.getGuildsTree();
-        return (t?.root?.children || []).filter((n: GuildNode) => n.type !== "root");
-    }, []);
+    const nodes: GuildNode[] = Flux?.useStateFromStores?.(
+        [SortedGuildStore],
+        () => {
+            const t = SortedGuildStore?.getGuildsTree();
+            return (t?.root?.children || []).filter((n: GuildNode) => n.type !== "root");
+        },
+    ) ?? [];
 
     const ctx = (gestureContext ? React.useContext(gestureContext) : null) as any;
     const minH = ctx?.minExpandedContentHeight;
