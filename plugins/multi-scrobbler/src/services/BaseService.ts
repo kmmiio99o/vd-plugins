@@ -56,6 +56,7 @@ export abstract class BaseService implements ServiceClient {
 
   protected async makeRequest(
       url: string,
+      // eslint-disable-next-line no-undef
       options: RequestInit = {},
   ): Promise<any> {
       try {

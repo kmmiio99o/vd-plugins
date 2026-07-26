@@ -32,7 +32,7 @@ function getCurrentUTCDateTime() {
         const seconds = String(utc.getSeconds()).padStart(2, "0");
 
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    } catch (e) {
+    } catch {
         return "Unknown";
     }
 }
@@ -74,7 +74,7 @@ function getDiscordInfo() {
 function generateSystemInfo() {
     try {
         const { cpuCoreCount, cpuPerc, memUsage } = getHardwareInfo();
-        const discordInfo = getDiscordInfo();
+        void getDiscordInfo();
         const _debugInfo =
       (typeof getDebugInfo === "function" ? (getDebugInfo() as any) : {}) || {};
         const { vendetta, discord, react, hermes, os, device } = _debugInfo;

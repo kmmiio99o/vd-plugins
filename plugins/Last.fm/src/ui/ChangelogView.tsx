@@ -1,6 +1,6 @@
 import { clipboard } from "@vendetta/metro/common";
 import { getAssetIDByName } from "@vendetta/ui/assets";
-import { Forms, General } from "@vendetta/ui/components";
+import { General } from "@vendetta/ui/components";
 import { showToast } from "@vendetta/ui/toasts";
 import { changelog, currentVersion } from "../changelog";
 import { React } from "@vendetta/metro/common";

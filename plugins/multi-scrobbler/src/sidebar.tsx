@@ -27,6 +27,7 @@ const SettingsOverviewScreen = bunny?.metro?.findByNameLazy(
     false,
 );
 
+/* eslint-disable react/prop-types */
 function Section({ tabs }) {
     const navigation = NavigationNative.useNavigation();
 
@@ -46,6 +47,7 @@ function Section({ tabs }) {
         },
     });
 }
+/* eslint-enable react/prop-types */
 
 function patchPanelUI(tabs, patches) {
     try {
@@ -135,7 +137,7 @@ function patchTabsUI(tabs, patches) {
             ...rendererConfigValue,
             ...row,
         }),
-        set: (v) => (rendererConfigValue = v),
+        set(v) { rendererConfigValue = v; },
     });
 
     const firstRender = Symbol("pinToSettings meow meow");
@@ -143,7 +145,7 @@ function patchTabsUI(tabs, patches) {
     try {
         if (!createListModule) return;
         patches.push(
-            after("createList", createListModule, function (args, ret) {
+            after("createList", createListModule, function (args) {
                 if (!args[0][firstRender]) {
                     args[0][firstRender] = true;
 

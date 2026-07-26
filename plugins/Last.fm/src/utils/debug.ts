@@ -69,7 +69,7 @@ export function useDebugInfo(): string {
         const runtimeInfo = {
             ...debugInfo,
             timestamp: new Date().toISOString(),
-            reactVersion: require("react").version,
+            reactVersion: "unknown",
             hasReanimatedError: !!debugInfo.lastReanimatedError,
             totalErrors: debugInfo.componentMountErrors?.length || 0,
         };

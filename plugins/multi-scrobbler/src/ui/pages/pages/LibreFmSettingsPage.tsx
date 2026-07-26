@@ -29,7 +29,7 @@ export default function LibreFmSettingsPage() {
             } else {
                 showToast("❌ Libre.fm connection failed", getAssetIDByName("XIcon"));
             }
-        } catch (error) {
+        } catch {
             showToast("❌ Connection error", getAssetIDByName("XIcon"));
         }
     };

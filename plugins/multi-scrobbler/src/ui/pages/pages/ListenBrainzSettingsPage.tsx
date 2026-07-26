@@ -35,7 +35,7 @@ export default function ListenBrainzSettingsPage() {
                     getAssetIDByName("XIcon"),
                 );
             }
-        } catch (error) {
+        } catch {
             showToast("❌ Connection error", getAssetIDByName("XIcon"));
         }
     };

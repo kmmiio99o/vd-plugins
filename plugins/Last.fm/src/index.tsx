@@ -1,6 +1,5 @@
 import { plugin } from "@vendetta";
 import { FluxDispatcher } from "@vendetta/metro/common";
-import { Forms } from "@vendetta/ui/components";
 
 import { LFMSettings } from "../../defs";
 import Constants from "./constants";
@@ -9,8 +8,6 @@ import { UserStore } from "./modules";
 
 // Import Settings component directly
 import Settings from "./ui/pages/Settings";
-
-const { FormText } = Forms;
 
 export const pluginState = {
     pluginStopped: false,

@@ -106,7 +106,7 @@ export const friendInviteRevokeCommand = {
     type: 1,
     applicationId: "-1",
     inputType: 1,
-    execute: async (_, ctx) => {
+    execute: async () => {
         try {
             const invitesBefore = await inviteModule.getAllFriendInvites();
 

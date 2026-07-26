@@ -8,7 +8,6 @@ export default function RPCPreview() {
     const [previewTrack, setPreviewTrack] = React.useState<any>(null);
     const [isLoading, setIsLoading] = React.useState(true);
     const [currentProgress, setCurrentProgress] = React.useState(0);
-    const [usingFallback, setUsingFallback] = React.useState(false);
 
     // Fallback preview data
     const fallbackTrack = {
@@ -65,7 +64,6 @@ export default function RPCPreview() {
             if (!getStorage("username") || !getStorage("apiKey")) {
                 // Use fallback if no credentials
                 setPreviewTrack(fallbackTrack);
-                setUsingFallback(true);
                 setIsLoading(false);
                 return;
             }
@@ -95,7 +93,7 @@ export default function RPCPreview() {
                         if (trackInfo.track && trackInfo.track.duration) {
                             duration = Math.floor(trackInfo.track.duration / 1000);
                         }
-                    } catch (error) {
+                    } catch {
                         console.log("Could not fetch track duration, using default");
                     }
 
@@ -115,17 +113,14 @@ export default function RPCPreview() {
                   ? Math.floor(Date.now() / 1000) - 60
                   : null,
                     });
-                    setUsingFallback(false);
                 } else {
                     // No tracks found, use fallback
                     setPreviewTrack(fallbackTrack);
-                    setUsingFallback(true);
                 }
-            } catch (error) {
-                console.error("Failed to fetch preview data, using fallback:", error);
+            } catch {
+                console.error("Failed to fetch preview data, using fallback:");
                 // Use fallback on error
                 setPreviewTrack(fallbackTrack);
-                setUsingFallback(true);
             } finally {
                 setIsLoading(false);
             }

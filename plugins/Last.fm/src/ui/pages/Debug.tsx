@@ -1,6 +1,6 @@
 import { React } from "@vendetta/metro/common";
 import { Codeblock, Forms } from "@vendetta/ui/components";
-import { ScrollView, Text } from "react-native";
+import { ScrollView } from "react-native";
 import { useEffect } from "react";
 import {
     useDebugInfo,

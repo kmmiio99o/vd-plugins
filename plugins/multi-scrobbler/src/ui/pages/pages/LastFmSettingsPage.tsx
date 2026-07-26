@@ -29,7 +29,7 @@ export default function LastFmSettingsPage() {
             } else {
                 showToast("❌ Last.fm connection failed", getAssetIDByName("XIcon"));
             }
-        } catch (error) {
+        } catch {
             showToast("❌ Connection error", getAssetIDByName("XIcon"));
         }
     };

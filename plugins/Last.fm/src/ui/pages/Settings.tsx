@@ -2,7 +2,7 @@ import { plugin } from "@vendetta";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React } from "@vendetta/metro/common";
-import { View, Linking } from "react-native";
+import { Linking } from "react-native";
 import { changelog, currentVersion } from "../../changelog";
 import { findByProps } from "@vendetta/metro";
 
@@ -14,9 +14,8 @@ const { TableRowGroup, TableSwitchRow, Stack, TableRow } = findByProps(
     "TableRow",
 );
 const { TextInput } = findByProps("TextInput");
-const { FormText } = findByProps("FormText");
 
-import { currentSettings, pluginState } from "../..";
+import { pluginState } from "../..";
 import Constants from "../../constants";
 import { initialize } from "../../manager";
 import { lastfmClient } from "../../utils/lastfm";
@@ -26,7 +25,7 @@ const set = (k: string, v: any) => (plugin.storage[k] = v);
 
 // Define the Settings component
 export default function Settings() {
-    const [_, forceUpdate] = React.useReducer((x) => ~x, 0);
+    const [, forceUpdate] = React.useReducer((x) => ~x, 0);
     const update = () => forceUpdate();
 
     const [loading, setLoading] = React.useState(false);

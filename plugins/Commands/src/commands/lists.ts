@@ -48,7 +48,7 @@ const maxMessageLength = (() => {
             ?.premiumType === 2
             ? 4000
             : 2000;
-    } catch (e) {
+    } catch {
         return 2000; // fallback
     }
 })();
