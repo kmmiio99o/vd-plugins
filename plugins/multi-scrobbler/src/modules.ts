@@ -10,6 +10,14 @@ export const AssetManager = findByProps("getAssetIds") as {
     [key: PropertyKey]: any;
 };
 
+// Discord's internal HTTP client — automatically includes auth token
+export const HTTPUtils = findByProps("getAPIBaseURL", "get") as {
+    get: (opts: { url: string; query?: string; rejectWithError?: boolean; oldFormErrors?: boolean }) => Promise<any>;
+    post: (opts: { url: string; body?: any; rejectWithError?: boolean; oldFormErrors?: boolean }) => Promise<any>;
+    getAPIBaseURL: () => string;
+    [key: PropertyKey]: any;
+};
+
 export const SelfPresenceStore = findByStoreName("SelfPresenceStore") as {
     getActivities: () => any[];
     findActivity: (filter: (activity) => boolean) => any;

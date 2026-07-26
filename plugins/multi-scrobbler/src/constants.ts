@@ -4,7 +4,7 @@ const Constants = {
     DEFAULT_APP_NAME: "Music",
     DEFAULT_TIME_INTERVAL: 5,
     // Discord application ID
-    APPLICATION_ID: "1368513179272871956",
+    APPLICATION_ID: "1054951789318909972",
     // Don't check more than once every 3 seconds to avoid getting rate limited
     MIN_UPDATE_INTERVAL: 3,
     // Libre.fm specifically requested a 1-minute minimum to reduce load

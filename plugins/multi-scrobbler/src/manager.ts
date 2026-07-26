@@ -66,9 +66,6 @@ class PluginManager {
         const serviceName = serviceFactory.getCurrentService().getServiceName();
         logVerbose(`Fetching latest track from ${serviceName}...`);
 
-        // keep track of whether we actually need to update Discord
-        let willUpdateRPC = false;
-
         try {
             // Check if any ignored app is active
             if (currentSettings.ignoreList && currentSettings.ignoreList.length > 0) {
@@ -121,8 +118,6 @@ class PluginManager {
                 this.consecutiveFailures = 0;
                 return;
             }
-
-            willUpdateRPC = true;
 
             log(`🎵 Track changed: ${lastTrack.artist} - ${lastTrack.name}`);
 

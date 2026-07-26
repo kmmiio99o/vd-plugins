@@ -4,7 +4,7 @@ import { pluginState } from "..";
 import { Activity } from "../../../defs";
 import Constants from "../constants";
 import { stop } from "../manager";
-import { AssetManager } from "../modules";
+import { AssetManager, HTTPUtils } from "../modules";
 
 /** Clears the user's activity */
 export function clearActivity() {
@@ -28,7 +28,33 @@ export function sendRequest(activity: Activity | null) {
     });
 }
 
-/** Fetches Discord application assets */
+async function resolveExternalAssets(
+    urls: string[],
+    appId: string,
+): Promise<string[]> {
+    const baseUrl = HTTPUtils.getAPIBaseURL();
+    const endpoint = `${baseUrl}/applications/${appId}/external-assets`;
+
+    const resp = await HTTPUtils.post({
+        url: endpoint,
+        body: { urls },
+        oldFormErrors: true,
+        rejectWithError: false,
+    });
+
+    console.log("[Multi-Scrobbler] External assets response:", JSON.stringify(resp));
+    const body = resp?.body;
+    console.log("[Multi-Scrobbler] Response body:", JSON.stringify(body));
+
+    if (!Array.isArray(body)) return [];
+
+    return body.map(
+        (item: { url: string; external_asset_path: string }) =>
+            `mp:${item.external_asset_path}`,
+    );
+}
+
+/** Resolves external image URLs to Discord asset paths */
 export async function fetchAsset(
     asset: string[],
     appId: string = Constants.APPLICATION_ID,
@@ -36,7 +62,20 @@ export async function fetchAsset(
     if (!asset?.length) return [];
 
     try {
-        return await AssetManager.fetchAssetIds(appId, asset);
+        const result = await AssetManager.fetchAssetIds(appId, asset);
+
+        // If it returned an actual array with results, use it
+        if (Array.isArray(result) && result.length > 0 && result[0]) {
+            return result;
+        }
+
+        // fetchAssetIds returned empty/broken — try external-assets API
+        const externalUrls = asset.filter(
+            (url) => url && (url.startsWith("http:") || url.startsWith("https:")),
+        );
+        if (externalUrls.length === 0) return [];
+
+        return await resolveExternalAssets(externalUrls, appId);
     } catch (error) {
         console.error("[Multi-Scrobbler] Failed to fetch assets:", error);
         return [];
