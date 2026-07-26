@@ -7,10 +7,6 @@
         "esModuleInterop": true,
         "jsx": "react-native",
         "allowJs": true,
-        "baseUrl": ".",
-        "paths": {
-            "@nlib/*": ["nexxstuff/*"]
-        }
     },
     "include": [
         "plugins",
