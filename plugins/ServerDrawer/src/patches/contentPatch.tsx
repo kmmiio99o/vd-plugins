@@ -5,22 +5,28 @@ import { registerIntercept } from "./createElementIntercept";
 
 const TAG = "[ServerDrawer]";
 
-const QuestDockGestureContext = find((m) => m?.QuestDockGestureContext)?.QuestDockGestureContext;
+let cachedGestureContext: any = null;
+function getGestureContext(): any {
+    if (!cachedGestureContext) {
+        cachedGestureContext = find((m) => m?.QuestDockGestureContext)?.QuestDockGestureContext ?? null;
+    }
+    return cachedGestureContext;
+}
 
 export function patchExpanded(
     cleanups: (() => void)[]
 ): boolean {
     const mod = find((m) => m?.type?.displayName === "QuestDockContentExpanded" || m?.type?.name === "QuestDockContentExpanded");
     if (!mod?.type) {
-        console.log(TAG, "WARN: QuestDockContentExpanded not found");
+        console.log(TAG, "WARN: QuestDockContentExpanded not found (will retry)");
         return false;
     }
     const orig = mod.type;
 
-    registerIntercept(orig, ServerDrawerSheet, { gestureContext: QuestDockGestureContext });
+    registerIntercept(orig, ServerDrawerSheet, { gestureContext: getGestureContext() });
 
     mod.type = function ServerDrawerPatch() {
-        return <ServerDrawerSheet gestureContext={QuestDockGestureContext} />;
+        return <ServerDrawerSheet gestureContext={getGestureContext()} />;
     };
     cleanups.push(() => { mod.type = orig; });
     console.log(TAG, "PATCH: QuestDockContentExpanded replaced");
