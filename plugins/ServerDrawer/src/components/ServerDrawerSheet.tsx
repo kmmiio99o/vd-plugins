@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Dimensions, StyleSheet, BackHandler } from "react-native";
+import { View, Text, Pressable, Animated, Dimensions, StyleSheet, BackHandler } from "react-native";
 import { find, findByProps, findByStoreName } from "@vendetta/metro";
 import { GuildNode } from "../utils/theme";
 import GuildItem from "./GuildItem";
@@ -11,6 +11,13 @@ const RootNav = findByProps("getRootNavigationRef");
 const Haptic = findByProps("triggerHapticFeedback", "HapticFeedbackTypes");
 const Routing = findByProps("transitionToGuild");
 
+const CreateJoinGuildMod = find((m: any) => typeof m?.handleCreateJoinGuildPress === "function");
+const CirclePlusIcon = find((m: any) => m?.CirclePlusIcon)?.CirclePlusIcon;
+const rawColors = findByProps("colors", "unsafe_rawColors")?.unsafe_rawColors;
+
+const createJoinBg = rawColors?.GREEN_360;
+const createJoinIconColor = rawColors?.WHITE;
+
 const ExternalCoordinationMod = find((m: any) => m?.QuestDockExternalCoordinationContext);
 const ExternalContext = ExternalCoordinationMod?.QuestDockExternalCoordinationContext;
 const QuestDockMode = find((m: any) => m?.QuestDockMode?.COLLAPSED != null)?.QuestDockMode;
@@ -18,6 +25,33 @@ const QuestDockMode = find((m: any) => m?.QuestDockMode?.COLLAPSED != null)?.Que
 const ICON = 48;
 const GAP = 6;
 const PAD = 12;
+
+function CreateJoinButton() {
+    const scale = React.useRef(new Animated.Value(1)).current;
+    const scaleDown = React.useCallback(() => {
+        Animated.spring(scale, { toValue: 0.9, useNativeDriver: true }).start();
+    }, [scale]);
+    const scaleUp = React.useCallback(() => {
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+    }, [scale]);
+
+    const onPress = React.useCallback(() => {
+        Haptic?.triggerHapticFeedback?.(Haptic.HapticFeedbackTypes.SOFT);
+        CreateJoinGuildMod?.handleCreateJoinGuildPress?.();
+    }, []);
+
+    return (
+        <Pressable onPress={onPress} onPressIn={scaleDown} onPressOut={scaleUp}>
+            <Animated.View style={[st.createJoin, { transform: [{ scale }] }]}>
+                {CirclePlusIcon ? (
+                    <CirclePlusIcon size="md" color={createJoinIconColor} />
+                ) : (
+                    <Text style={st.createJoinFallback}>{"+"}</Text>
+                )}
+            </Animated.View>
+        </Pressable>
+    );
+}
 
 export default function ServerDrawerSheet({ gestureContext }: { gestureContext: any }) {
     const pick = React.useCallback((id: string) => {
@@ -81,6 +115,7 @@ export default function ServerDrawerSheet({ gestureContext }: { gestureContext: 
                         ? <FolderItem key={node.id} node={node} onPick={pick} />
                         : <GuildItem key={node.id} node={node} onPick={pick} />
                 )}
+                <CreateJoinButton />
             </View>
         </View>
     );
@@ -97,5 +132,19 @@ const st = StyleSheet.create({
         flexWrap: "wrap",
         paddingTop: 4,
         paddingBottom: 16,
+    },
+    createJoin: {
+        width: ICON,
+        height: ICON,
+        borderRadius: 16,
+        backgroundColor: createJoinBg,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    createJoinFallback: {
+        color: createJoinIconColor,
+        fontSize: 28,
+        fontWeight: "700",
+        lineHeight: 30,
     },
 });
