@@ -1,9 +1,12 @@
 import React from "react";
 import { View, Text, Pressable, Animated, Dimensions, StyleSheet, BackHandler } from "react-native";
 import { find, findByProps, findByStoreName } from "@vendetta/metro";
+import { storage } from "@vendetta/plugin";
+import { useProxy } from "@vendetta/storage";
 import { GuildNode } from "../utils/theme";
 import GuildItem from "./GuildItem";
 import FolderItem from "./FolderItem";
+import DmTile from "./DmTile";
 
 const Flux = findByProps("useStateFromStores");
 const SortedGuildStore = findByStoreName("SortedGuildStore");
@@ -54,6 +57,8 @@ function CreateJoinButton() {
 }
 
 export default function ServerDrawerSheet({ gestureContext }: { gestureContext: any }) {
+    useProxy(storage);
+
     const pick = React.useCallback((id: string) => {
         Haptic?.triggerHapticFeedback(Haptic.HapticFeedbackTypes.SOFT);
         if (Routing?.transitionToGuild) {
@@ -110,10 +115,11 @@ export default function ServerDrawerSheet({ gestureContext }: { gestureContext: 
                 style={[st.grid, { paddingHorizontal: padX, gap: GAP }]}
                 onLayout={onLayout}
             >
+                {!storage.hideDmTile && <DmTile />}
                 {nodes.map((node) =>
                     node.type === "folder"
-                        ? <FolderItem key={node.id} node={node} onPick={pick} />
-                        : <GuildItem key={node.id} node={node} onPick={pick} />
+                        ? <FolderItem key={node.id} node={node} onPick={pick} showNames={!!storage.showGuildNames} />
+                        : <GuildItem key={node.id} node={node} onPick={pick} showNames={!!storage.showGuildNames} />
                 )}
                 <CreateJoinButton />
             </View>
