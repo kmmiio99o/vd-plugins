@@ -1,10 +1,13 @@
 {
   "name": "Server Drawer",
-  "description": "Server Drawer above the YouBar, manage your servers differently!",
+  "description": "Server Drawer above the YouBar, manage your servers differently! Now fully hides the Quest Dock/GuildsBar, adds a DM tile, optional server-name labels, and a settings screen.",
   "authors": [
     {
       "name": "kmmiio99o",
       "id": "879393496627306587"
+    },
+    {
+      "name": "Rosie"
     }
   ],
   "main": "src/index.tsx",

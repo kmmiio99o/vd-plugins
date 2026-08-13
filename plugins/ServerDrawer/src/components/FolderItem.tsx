@@ -82,7 +82,7 @@ function FadeIn({ children }: { children: React.ReactNode }) {
     return <Animated.View style={{ opacity }}>{children}</Animated.View>;
 }
 
-export default function FolderItem({ node, onPick }: { node: GuildNode; onPick: (id: string) => void }) {
+export default function FolderItem({ node, onPick, showNames }: { node: GuildNode; onPick: (id: string) => void; showNames?: boolean }) {
     const open = useFolderExpanded(node.id);
 
     const toggle = () => {
@@ -99,7 +99,7 @@ export default function FolderItem({ node, onPick }: { node: GuildNode; onPick: 
                 </Pressable>
                 {node.children.map((ch) => (
                     <FadeIn key={ch.id}>
-                        <GuildItem node={ch} onPick={onPick} />
+                        <GuildItem node={ch} onPick={onPick} showNames={showNames} />
                     </FadeIn>
                 ))}
             </>

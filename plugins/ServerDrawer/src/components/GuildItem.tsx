@@ -12,6 +12,7 @@ const GuildReadStateStore = findByStoreName("GuildReadStateStore");
 const GuildStore = findByStoreName("GuildStore");
 const SortedGuildStore = findByStoreName("SortedGuildStore");
 const Haptic = findByProps("triggerHapticFeedback", "HapticFeedbackTypes");
+const colors = findByProps("colors", "unsafe_rawColors")?.colors;
 
 function Badge({ guildId }: { guildId: string }) {
     const mentionCount = Flux?.useStateFromStores?.(
@@ -47,7 +48,7 @@ function Badge({ guildId }: { guildId: string }) {
     return null;
 }
 
-export default function GuildItem({ node, onPick }: { node: GuildNode; onPick: (id: string) => void }) {
+export default function GuildItem({ node, onPick, showNames }: { node: GuildNode; onPick: (id: string) => void; showNames?: boolean }) {
     const viewRef = React.useRef<View>(null);
     const scale = React.useRef(new Animated.Value(1)).current;
     const scaleDown = () => Animated.spring(scale, { toValue: 0.85, useNativeDriver: true }).start();
@@ -102,6 +103,12 @@ export default function GuildItem({ node, onPick }: { node: GuildNode; onPick: (
 
     const guildId = node.id as string;
 
+    const name = Flux?.useStateFromStores?.(
+        [GuildStore],
+        () => GuildStore?.getGuild?.(guildId)?.name ?? "",
+        [guildId],
+    ) ?? "";
+
     return (
         <>
             <Pressable
@@ -111,11 +118,18 @@ export default function GuildItem({ node, onPick }: { node: GuildNode; onPick: (
                 onLongPress={handleLongPress}
                 delayLongPress={500}
             >
-                <View ref={viewRef} style={st.outer} collapsable={false}>
-                    <Animated.View style={[st.icon, { transform: [{ scale }] }]}>
-                        <GuildIcon id={guildId} />
-                    </Animated.View>
-                    <Badge guildId={guildId} />
+                <View style={st.outer}>
+                    <View ref={viewRef} style={st.iconWrap} collapsable={false}>
+                        <Animated.View style={[st.icon, { transform: [{ scale }] }]}>
+                            <GuildIcon id={guildId} />
+                        </Animated.View>
+                        <Badge guildId={guildId} />
+                    </View>
+                    {showNames && (
+                        <Text numberOfLines={2} ellipsizeMode="tail" style={st.label}>
+                            {name}
+                        </Text>
+                    )}
                 </View>
             </Pressable>
             <ContextMenuModal
@@ -131,8 +145,21 @@ export default function GuildItem({ node, onPick }: { node: GuildNode; onPick: (
 }
 
 const st = StyleSheet.create({
-    outer: { width: ICON, height: ICON },
+    outer: { width: ICON, alignItems: "center" },
+    iconWrap: { width: ICON, height: ICON },
     icon: { width: ICON, height: ICON, borderRadius: 16, overflow: "hidden" },
+    label: {
+        marginTop: 4,
+        width: ICON,
+        fontSize: 10,
+        lineHeight: 12,
+        fontWeight: "600",
+        textAlign: "center",
+        color: colors?.HEADER_PRIMARY ?? colors?.TEXT_NORMAL ?? "#fff",
+        textShadowColor: "rgba(0,0,0,0.75)",
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+    },
 });
 
 const bd = StyleSheet.create({
