@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { findAll } from "@vendetta/metro";
 import { useProxy } from "@vendetta/storage";
 import { storage } from "@vendetta/plugin";
-import DmTile from "../components/DmTile";
+import { RailDmTile } from "../components/DmTile";
 import { registerIntercept, registerTypeDetector, registerPropsTransform } from "./createElementIntercept";
 
 const TAG = "[ServerDrawer]";
@@ -18,7 +18,7 @@ function isMessagesPanel(props: any): boolean {
 function transformMessagesPanelProps(props: any): any {
     const style = props?.style;
     const list = Array.isArray(style) ? style : [style];
-    
+
     // Find the sideContainer in the style array (has position: absolute, left: number)
     const side = list.find((s: any) => s && typeof s === "object" &&
         s?.position === "absolute" &&
@@ -26,7 +26,7 @@ function transformMessagesPanelProps(props: any): any {
         typeof s?.top === "number" &&
         typeof s?.bottom === "number" &&
         typeof s?.right === "number");
-    
+
     if (side) {
         const newLeft = storage.hideDmTile ? DM_WIDTH : 0;
         if (side.left !== newLeft) {
@@ -34,24 +34,20 @@ function transformMessagesPanelProps(props: any): any {
             console.log(TAG, `messages panel left mutated to ${newLeft}`);
         }
     }
-    
+
     return props;
 }
 
 // Patch for HomePanelContent: conditionally render rail content
 function HomePanelContentPatch() {
     useProxy(storage);
-    
+
     // Always render the rail container (72px wide) to maintain layout structure
-    // When hideDmTile is true, show the DMs tile; when false, rail is empty
+    // When hideDmTile is true, show the full-height DMs tile; when false, rail is empty
     // The messages panel will stretch to cover it via the props transform
     return (
-        <View collapsable={false} style={{ flex: 1, width: DM_WIDTH, alignItems: "center" }}>
-            {storage.hideDmTile && (
-                <View style={{ paddingTop: 12 }}>
-                    <DmTile />
-                </View>
-            )}
+        <View collapsable={false} style={{ flex: 1, width: DM_WIDTH }}>
+            {storage.hideDmTile && <RailDmTile />}
         </View>
     );
 }
@@ -123,7 +119,8 @@ export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
     // 4. Type detectors and interceptors (late-loaded modules via createElementIntercept)
     registerTypeDetector(
         "ServerDrawer.HomePanelContent",
-        (type: any) => type?.name === "HomePanelContent" || type?.displayName === "HomePanelContent",
+        (type: any) => type?.name === "HomePanelContent" || type?.displayName === "HomePanelContent" ||
+            type?.type?.name === "HomePanelContent" || type?.type?.displayName === "HomePanelContent",
         (original: any) => {
             registerIntercept(original, HomePanelContentPatch, {}, { collapseAncestors: 0 });
         },
@@ -132,7 +129,8 @@ export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
 
     registerTypeDetector(
         "ServerDrawer.GuildsBar",
-        (type: any) => type?.name === "GuildsBar" || type?.displayName === "GuildsBar",
+        (type: any) => type?.name === "GuildsBar" || type?.displayName === "GuildsBar" ||
+            type?.type?.name === "GuildsBar" || type?.type?.displayName === "GuildsBar",
         (original: any) => {
             registerIntercept(original, GuildsBarPatch, {}, { collapseAncestors: 0 });
         },

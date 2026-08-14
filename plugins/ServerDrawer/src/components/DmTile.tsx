@@ -21,8 +21,7 @@ function openDms() {
     }
 }
 
-// Moved into the drawer's own grid as the first tile, since this plugin otherwise hides the
-// native rail DMs used to live on.
+// Original drawer tile (48x48)
 export default function DmTile() {
     const selected = Flux?.useStateFromStores?.(
         [NavContext],
@@ -38,7 +37,28 @@ export default function DmTile() {
     );
 }
 
+// Rail DMs tile (icon centered vertically in rail, full-height touch target)
+export function RailDmTile() {
+    const selected = Flux?.useStateFromStores?.(
+        [NavContext],
+        () => NavContext?.getGuildId?.() == null,
+    ) ?? false;
+
+    return (
+        <Pressable onPress={openDms} style={railSt.outer}>
+            <View style={railSt.icon}>
+                <Image source={ChatIcon} style={{ width: 24, height: 24, tintColor: selected ? (colors?.BG_ACCENT ?? "#5865f2") : "#fff" }} />
+            </View>
+        </Pressable>
+    );
+}
+
 const st = StyleSheet.create({
     outer: { width: ICON, height: ICON },
+    icon: { width: ICON, height: ICON, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+});
+
+const railSt = StyleSheet.create({
+    outer: { flex: 1, width: "100%", alignItems: "center", justifyContent: "center" },
     icon: { width: ICON, height: ICON, borderRadius: 16, alignItems: "center", justifyContent: "center" },
 });
