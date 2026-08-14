@@ -10,19 +10,21 @@ export function patchMobileQuestDock(cleanups: (() => void)[]): boolean {
     }
     const orig = mod.useMobileQuestDock;
     mod.useMobileQuestDock = function (...args: any[]) {
-        const real = orig.apply(this, args);
-        if (real) return real;
+        orig.apply(this, args);
         return {
-            id: "server-drawer",
-            config: {
-                quest_content_type: 0,
-                assets: { questBarHeroVideo: null, questBarHero: null },
-                features: [],
+            type: 1, // AdCreativeType.QUEST
+            quest: {
+                id: "server-drawer",
+                config: {
+                    quest_content_type: 0,
+                    assets: { questBarHeroVideo: null, questBarHero: null },
+                    features: [],
+                },
+                userStatus: { enrolledAt: "2099-01-01", claimedAt: null },
+                benefits: { rewards: [] },
+                guildId: "0",
+                tasks: [],
             },
-            userStatus: { enrolledAt: "2099-01-01", claimedAt: null },
-            benefits: { rewards: [] },
-            guildId: "0",
-            tasks: [],
         };
     };
     cleanups.push(() => { mod.useMobileQuestDock = orig; });
