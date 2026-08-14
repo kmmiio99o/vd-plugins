@@ -34,8 +34,8 @@ export default {
         if (patchEmpty("QuestDockUnenrolledHeader", cleanups)) patched++;
         if (patchEmpty("QuestDockEnrolledBody", cleanups)) patched++;
         if (patchEmpty("QuestDockUnenrolledBody", cleanups)) patched++;
-        if (patchHideGuildsBar(cleanups)) patched++;
-        if (patchTransparentBackground(cleanups)) patched++;
+        if (patchHideGuildsBar()) patched++;
+        if (patchTransparentBackground()) patched++;
 
         console.log(TAG, `onLoad done — ${patched} patches applied, ${cleanups.length} cleanups`);
     },

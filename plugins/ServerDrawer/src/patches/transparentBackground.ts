@@ -14,7 +14,8 @@ function flatten(style: any): Record<string, any> {
 
 function isQuestDockCard(props: any): boolean {
     const s = flatten(props?.style);
-    return s.borderRadius === 24 && typeof s.backgroundColor === "string";
+    return s.borderRadius === 24 && typeof s.backgroundColor === "string" &&
+        s.position === "absolute" && s.left === "50%" && s.zIndex === 1;
 }
 
 // Removing the card color reveals a second layer underneath: the quest's promotional hero photo.
@@ -32,7 +33,7 @@ function isQuestHeroImage(props: any): boolean {
     return typeof uri === "string" && uri.includes("/quests/");
 }
 
-export function patchTransparentBackground(cleanups: (() => void)[]): boolean {
+export function patchTransparentBackground(): boolean {
     registerPropsTransform(
         (props: any) => isQuestDockCard(props),
         (props: any) => ({

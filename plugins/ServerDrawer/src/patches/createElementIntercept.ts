@@ -9,12 +9,12 @@ interface Intercept {
 }
 
 interface PropsIntercept {
-    predicate: (props: any) => boolean;
+    predicate: (props: any, type: any, rest: any[]) => boolean;
     replacement: React.ComponentType<any> | null;
 }
 
 interface PropsTransform {
-    predicate: (props: any) => boolean;
+    predicate: (props: any, type: any, rest: any[]) => boolean;
     transform: (props: any) => any;
 }
 
@@ -23,6 +23,7 @@ interface TypeDetector {
     predicate: (type: any) => boolean;
     onDetected: (type: any) => void;
     persistent: boolean;
+    justFired?: boolean;
 }
 
 const intercepts = new Map<React.ComponentType<any>, Intercept>();
@@ -63,12 +64,12 @@ export function registerIntercept(
 
 // Matches on a props predicate instead of an exact type reference, for components with no
 // reliable name. Pass replacement: null to render nothing.
-export function registerPropsIntercept(predicate: (props: any) => boolean, replacement: React.ComponentType<any> | null) {
+export function registerPropsIntercept(predicate: (props: any, type: any, rest: any[]) => boolean, replacement: React.ComponentType<any> | null) {
     propsIntercepts.push({ predicate, replacement });
 }
 
 // Rewrites props in place, keeping the same type.
-export function registerPropsTransform(predicate: (props: any) => boolean, transform: (props: any) => any) {
+export function registerPropsTransform(predicate: (props: any, type: any, rest: any[]) => boolean, transform: (props: any) => any) {
     propsTransforms.push({ predicate, transform });
 }
 
@@ -118,9 +119,6 @@ function runTypeDetectors(type: any) {
         typeDetectors = typeDetectors.filter((d) => d.persistent || !d.justFired);
     }
 }
-
-declare module "./createElementIntercept" {}
-interface TypeDetector { justFired?: boolean }
 
 /** Returns the collapse depth a parent should inherit from its children (max of any real child, 0 if none). */
 function inspectCollapseChild(child: any): number {
@@ -222,13 +220,9 @@ export function patchCreateElement(cleanups: (() => void)[]) {
     if (isPatched) return;
     isPatched = true;
 
-    if (React.createElement) {
-        cleanups.push(
-            after("createElement", React, (args: any[], res: any) => applyResolved(res, args[0], args[1], args.slice(2)))
-        );
-    } else {
-        console.warn("[ServerDrawer] React.createElement is null, skipping patch");
-    }
+    cleanups.push(
+        after("createElement", React, (args: any[], res: any) => applyResolved(res, args[0], args[1], args.slice(2)))
+    );
 
     // Discord compiles JSX through jsx/jsxs/jsxDEV, not React.createElement - scan for those
     // runtimes by shape (names are mangled) and keep scanning since Metro registers lazily.

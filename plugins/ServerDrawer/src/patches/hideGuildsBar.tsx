@@ -41,7 +41,7 @@ function hasChildWithTestID(children: any, rest: any[], testID: string): boolean
     return false;
 }
 
-export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
+export function patchHideGuildsBar(): boolean {
     // Rendering GuildsBar as nothing alone still leaves its space reserved - the immediate parent
     // carries an explicit width in its own style, so display: none on the child doesn't reclaim
     // it. This zeroes the parent wrapper too once it spots the hidden marker as a child.
