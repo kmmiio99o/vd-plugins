@@ -8,7 +8,10 @@ import { Forms } from "@vendetta/ui/components";
 const find = (prop: string): any => findByProps(prop)?.[prop];
 
 const RealTableRow: any = find("TableRow");
+const TableFamily: any = findByProps("TableRowGroup", "Stack");
 
 export const TableRow: any = RealTableRow ?? Forms.FormRow;
-export const TableRowGroup: any = find("TableRowGroup") ?? Forms.FormSection;
+export const TableRowGroup: any = TableFamily?.TableRowGroup ?? Forms.FormSection;
 export const TableSwitchRow: any = find("TableSwitchRow") ?? Forms.FormSwitchRow;
+export const Stack: any = TableFamily?.Stack;
+export const SettingsScrollView: any = find("ScrollView") ?? Forms.FormScrollView;
