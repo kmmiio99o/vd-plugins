@@ -1,78 +1,143 @@
 import React from "react";
 import { View } from "react-native";
-import { registerPropsTransform, registerTypeDetector, registerIntercept } from "./createElementIntercept";
+import { findAll } from "@vendetta/metro";
+import { useProxy } from "@vendetta/storage";
+import { storage } from "@vendetta/plugin";
+import DmTile from "../components/DmTile";
+import { registerIntercept, registerTypeDetector, registerPropsTransform } from "./createElementIntercept";
 
 const TAG = "[ServerDrawer]";
-const SD_NOTHING_TEST_ID = "ServerDrawerNothing";
+const DM_WIDTH = 72;
 
-function Nothing() {
-    return React.createElement(View, {
-        style: {
-            display: "none",
-            width: 0,
-            minWidth: 0,
-            maxWidth: 0,
-            flexGrow: 0,
-            flexShrink: 0,
-            flexBasis: 0,
-            margin: 0,
-            padding: 0,
-            borderWidth: 0,
-            overflow: "hidden",
-        },
-    });
+// Check if props belong to the messages panel
+function isMessagesPanel(props: any): boolean {
+    return props?.nativeID === "messages-parent-view";
 }
 
-// The parent creates GuildsBar via its outer React.memo wrapper object, which has no own
-// .name/.displayName at all - those only exist on the memo's inner function, at
-// type.type.name/type.type.displayName.
-function isGuildsBar(type: any): boolean {
-    return type?.name === "GuildsBar" || type?.displayName === "GuildsBar" ||
-        type?.type?.name === "GuildsBar" || type?.type?.displayName === "GuildsBar";
-}
-
-function hasChildWithTestID(children: any, rest: any[], testID: string): boolean {
-    const inspect = (child: any) => child != null && typeof child === "object" && child.props?.testID === testID;
-    if (children != null) {
-        if (Array.isArray(children)) { if (children.some(inspect)) return true; }
-        else if (inspect(children)) return true;
+// Transform function for messages panel - adjust left based on setting
+function transformMessagesPanelProps(props: any): any {
+    const style = props?.style;
+    const list = Array.isArray(style) ? style : [style];
+    
+    // Find the sideContainer in the style array (has position: absolute, left: number)
+    const side = list.find((s: any) => s && typeof s === "object" &&
+        s?.position === "absolute" &&
+        typeof s?.left === "number" &&
+        typeof s?.top === "number" &&
+        typeof s?.bottom === "number" &&
+        typeof s?.right === "number");
+    
+    if (side) {
+        const newLeft = storage.hideDmTile ? DM_WIDTH : 0;
+        if (side.left !== newLeft) {
+            side.left = newLeft;
+            console.log(TAG, `messages panel left mutated to ${newLeft}`);
+        }
     }
-    for (const child of rest) if (inspect(child)) return true;
-    return false;
+    
+    return props;
 }
 
-export function patchHideGuildsBar(): boolean {
-    // Rendering GuildsBar as nothing alone still leaves its space reserved - the immediate parent
-    // carries an explicit width in its own style, so display: none on the child doesn't reclaim
-    // it. This zeroes the parent wrapper too once it spots the hidden marker as a child.
+// Patch for HomePanelContent: conditionally render rail content
+function HomePanelContentPatch() {
+    useProxy(storage);
+    
+    // Always render the rail container (72px wide) to maintain layout structure
+    // When hideDmTile is true, show the DMs tile; when false, rail is empty
+    // The messages panel will stretch to cover it via the props transform
+    return (
+        <View collapsable={false} style={{ flex: 1, width: DM_WIDTH, alignItems: "center" }}>
+            {storage.hideDmTile && (
+                <View style={{ paddingTop: 12 }}>
+                    <DmTile />
+                </View>
+            )}
+        </View>
+    );
+}
+
+// Safety net: GuildsBar is only rendered inside HomePanelContent's rail
+function GuildsBarPatch() {
+    return null;
+}
+
+export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
+    let applied = false;
+
+    // 1. Register props transform for messages panel (works via createElementIntercept)
+    // This is the PRIMARY mechanism - transforms the messages panel's style at creation time
     registerPropsTransform(
-        (props: any, _type: any, rest: any[]) =>
-            hasChildWithTestID(props?.children, rest, SD_NOTHING_TEST_ID),
-        (props: any) => ({
-            ...props,
-            style: [
-                props?.style,
-                {
-                    display: "none",
-                    width: 0,
-                    minWidth: 0,
-                    maxWidth: 0,
-                    flexGrow: 0,
-                    flexShrink: 0,
-                    flexBasis: 0,
-                    margin: 0,
-                    padding: 0,
-                    borderWidth: 0,
-                    overflow: "hidden",
-                },
-            ],
-        }),
+        isMessagesPanel,
+        transformMessagesPanelProps
+    );
+    console.log(TAG, "PATCH: registerPropsTransform for messages-parent-view registered");
+    applied = true;
+
+    // 2. Module mutation for HomePanelContent (early-loaded modules)
+    const homePanelMods = findAll((m) =>
+        m?.HomePanelContent?.type &&
+        typeof m?.HomePanelContent?.type === "function"
+    );
+    homePanelMods.forEach(mod => {
+        const orig = mod.HomePanelContent;
+        mod.HomePanelContent = HomePanelContentPatch;
+        cleanups.push(() => { mod.HomePanelContent = orig; });
+        console.log(TAG, "PATCH: HomePanelContent replaced (module mutation)");
+        applied = true;
+    });
+
+    // 3. Module mutation for GuildsBar (early-loaded modules)
+    const guildsBarMods = findAll((m) => {
+        const defaultExport = m?.default;
+        if (defaultExport && (defaultExport.type?.name === "GuildsBar" || defaultExport.name === "GuildsBar")) {
+            return true;
+        }
+        const typeExport = m?.type;
+        if (typeExport && (typeExport.type?.name === "GuildsBar" || typeExport.name === "GuildsBar")) {
+            return true;
+        }
+        return false;
+    });
+    guildsBarMods.forEach(mod => {
+        let orig = null;
+        if (mod.default && (mod.default.type?.name === "GuildsBar" || mod.default.name === "GuildsBar")) {
+            orig = mod.default.type;
+            mod.default.type = GuildsBarPatch;
+        } else if (mod.type && (mod.type.type?.name === "GuildsBar" || mod.type.name === "GuildsBar")) {
+            orig = mod.type;
+            mod.type = GuildsBarPatch;
+        }
+        if (orig) {
+            cleanups.push(() => {
+                if (mod.default && (mod.default.type?.name === "GuildsBar" || mod.default.name === "GuildsBar")) {
+                    mod.default.type = orig;
+                } else if (mod.type && (mod.type.type?.name === "GuildsBar" || mod.type.name === "GuildsBar")) {
+                    mod.type = orig;
+                }
+            });
+            console.log(TAG, "PATCH: GuildsBar replaced (module mutation)");
+            applied = true;
+        }
+    });
+
+    // 4. Type detectors and interceptors (late-loaded modules via createElementIntercept)
+    registerTypeDetector(
+        "ServerDrawer.HomePanelContent",
+        (type: any) => type?.name === "HomePanelContent" || type?.displayName === "HomePanelContent",
+        (original: any) => {
+            registerIntercept(original, HomePanelContentPatch, {}, { collapseAncestors: 0 });
+        },
+        { persistent: true }
     );
 
-    registerTypeDetector("ServerDrawer.HideGuildsBar", isGuildsBar, (realGuildsBar) => {
-        registerIntercept(realGuildsBar, Nothing, { testID: SD_NOTHING_TEST_ID }, { collapseAncestors: 6 });
-        console.log(TAG, "PATCH: found a real GuildsBar reference, now rendering nothing");
-    }, { persistent: true });
-    console.log(TAG, "PATCH: watching for the real GuildsBar to appear");
-    return true;
+    registerTypeDetector(
+        "ServerDrawer.GuildsBar",
+        (type: any) => type?.name === "GuildsBar" || type?.displayName === "GuildsBar",
+        (original: any) => {
+            registerIntercept(original, GuildsBarPatch, {}, { collapseAncestors: 0 });
+        },
+        { persistent: true }
+    );
+
+    return applied;
 }
