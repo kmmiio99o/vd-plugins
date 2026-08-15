@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Pressable, Animated, Dimensions, StyleSheet, BackHandler } from "react-native";
+import { View, Text, Pressable, Animated, Dimensions, StyleSheet, BackHandler, ScrollView } from "react-native";
 import { find, findByProps, findByStoreName } from "@vendetta/metro";
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
@@ -110,7 +110,7 @@ export default function ServerDrawerSheet({ gestureContext }: { gestureContext: 
     const padX = Math.max(0, (winW - totalW) / 2);
 
     return (
-        <View style={st.alignTop}>
+        <ScrollView style={st.alignTop} showsVerticalScrollIndicator={false}>
             <View
                 style={[st.grid, { paddingHorizontal: padX, gap: GAP }]}
                 onLayout={onLayout}
@@ -123,7 +123,7 @@ export default function ServerDrawerSheet({ gestureContext }: { gestureContext: 
                 )}
                 <CreateJoinButton />
             </View>
-        </View>
+        </ScrollView>
     );
 }
 
