@@ -1,14 +1,17 @@
 import React from "react";
 import { View, Text, Animated, Pressable, Image, ViewStyle, StyleSheet } from "react-native";
-import { findByProps, findByStoreName } from "@vendetta/metro";
+import { find, findByProps, findByStoreName } from "@vendetta/metro";
 import { getAssetIDByName } from "@vendetta/ui/assets";
 import { useFolderExpanded, GuildNode } from "../utils/theme";
 import GuildIcon from "./GuildIcon";
 import GuildItem from "./GuildItem";
+import { ContextMenuModal, ContextMenuItem } from "./ContextMenuModal";
 
 const GuildActions = findByProps("toggleGuildFolderExpand");
 const Flux = findByProps("useStateFromStores");
 const GuildReadStateStore = findByStoreName("GuildReadStateStore");
+const SortedGuildStore = findByStoreName("SortedGuildStore");
+const Haptic = findByProps("triggerHapticFeedback", "HapticFeedbackTypes");
 
 const ICON = 48;
 const MINI = 16;
@@ -89,27 +92,98 @@ export default function FolderItem({ node, onPick, showNames }: { node: GuildNod
         GuildActions?.toggleGuildFolderExpand?.(node.id);
     };
 
-    if (open) {
-        return (
-            <>
-                <Pressable onPress={toggle}>
-                    <View style={[fo.openIcon, { backgroundColor: folderColor(node.color) }]}>
-                        <Image source={FOLDER_ASSET} style={fo.folderImg} tintColor="#fff" />
-                    </View>
-                </Pressable>
-                {node.children.map((ch) => (
-                    <FadeIn key={ch.id}>
-                        <GuildItem node={ch} onPick={onPick} showNames={showNames} />
-                    </FadeIn>
-                ))}
-            </>
-        );
-    }
+    const viewRef = React.useRef<View>(null);
+    const scale = React.useRef(new Animated.Value(1)).current;
+    const scaleDown = () => Animated.spring(scale, { toValue: 0.85, useNativeDriver: true }).start();
+    const scaleUp = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+
+    const [menuState, setMenuState] = React.useState<{
+        visible: boolean;
+        items: ContextMenuItem[];
+        title: string;
+        x: number;
+        y: number;
+    }>({ visible: false, items: [], title: "", x: 0, y: 0 });
+
+    const showMenu = React.useCallback(() => {
+        const menuItemsFn = find((m) => typeof m?.getGuildFolderMenuItems === "function")?.getGuildFolderMenuItems
+            ?? find((m) => m?.default?.name === "getGuildsBarFolderMenuItems")?.default
+            ?? find((m) => typeof m?.default === "function" && m.default.length <= 2 && /folder/i.test(m.default.name ?? ""))?.default;
+
+        if (!menuItemsFn) {
+            return;
+        }
+
+        const treeVersion = SortedGuildStore?.getGuildsTree?.()?.version;
+        const rawItems = menuItemsFn(node.id, treeVersion);
+        if (!rawItems?.length) return;
+
+        const ref = viewRef.current as any;
+        if (!ref?.measure) return;
+
+        ref.measure((_fx: number, _fy: number, _w: number, _h: number, pageX: number, pageY: number) => {
+            setMenuState({
+                visible: true,
+                items: rawItems.map((item: any) => ({
+                    label: item.label ?? item.title ?? "Unknown",
+                    action: item.action,
+                    danger: item.variant === "destructive",
+                    iconSource: item.iconSource,
+                    IconComponent: item.IconComponent,
+                })),
+                title: typeof node.name === "string" && node.name.length > 0 ? node.name : "Folder",
+                x: pageX,
+                y: pageY,
+            });
+        });
+    }, [node.id, node.name]);
+
+    const handleLongPress = React.useCallback(() => {
+        Haptic?.triggerHapticFeedback?.(Haptic.HapticFeedbackTypes.IMPACT_MEDIUM);
+        showMenu();
+    }, [showMenu]);
+
+    const folderButton = (content: React.ReactNode) => (
+        <Pressable
+            onPress={toggle}
+            onLongPress={handleLongPress}
+            delayLongPress={500}
+            onPressIn={scaleDown}
+            onPressOut={scaleUp}
+        >
+            <View ref={viewRef} collapsable={false}>
+                <Animated.View style={{ transform: [{ scale }] }}>{content}</Animated.View>
+            </View>
+        </Pressable>
+    );
 
     return (
-        <Pressable onPress={toggle}>
-            <FolderCover node={node} />
-        </Pressable>
+        <>
+            {open ? (
+                <>
+                    {folderButton(
+                        <View style={[fo.openIcon, { backgroundColor: folderColor(node.color) }]}>
+                            <Image source={FOLDER_ASSET} style={fo.folderImg} tintColor="#fff" />
+                        </View>,
+                    )}
+                    {node.children.map((ch) => (
+                        <FadeIn key={ch.id}>
+                            <GuildItem node={ch} onPick={onPick} showNames={showNames} />
+                        </FadeIn>
+                    ))}
+                </>
+            ) : (
+                folderButton(<FolderCover node={node} />)
+            )}
+            <ContextMenuModal
+                visible={menuState.visible}
+                items={menuState.items}
+                title={menuState.title}
+                anchorX={menuState.x}
+                anchorY={menuState.y}
+                onClose={() => setMenuState((s) => ({ ...s, visible: false }))}
+            />
+        </>
     );
 }
 
