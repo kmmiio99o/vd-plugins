@@ -12,6 +12,7 @@ const Flux = findByProps("useStateFromStores");
 const GuildReadStateStore = findByStoreName("GuildReadStateStore");
 const SortedGuildStore = findByStoreName("SortedGuildStore");
 const Haptic = findByProps("triggerHapticFeedback", "HapticFeedbackTypes");
+const colors = findByProps("colors", "unsafe_rawColors")?.colors;
 
 const ICON = 48;
 const MINI = 16;
@@ -143,6 +144,17 @@ export default function FolderItem({ node, onPick, showNames }: { node: GuildNod
         showMenu();
     }, [showMenu]);
 
+    const folderContent = (icon: React.ReactNode) => (
+        <View style={fo.wrap}>
+            {icon}
+            {showNames && node.name ? (
+                <Text numberOfLines={2} ellipsizeMode="tail" style={fo.label}>
+                    {node.name}
+                </Text>
+            ) : null}
+        </View>
+    );
+
     const folderButton = (content: React.ReactNode) => (
         <Pressable
             onPress={toggle}
@@ -162,9 +174,11 @@ export default function FolderItem({ node, onPick, showNames }: { node: GuildNod
             {open ? (
                 <>
                     {folderButton(
-                        <View style={[fo.openIcon, { backgroundColor: folderColor(node.color) }]}>
-                            <Image source={FOLDER_ASSET} style={fo.folderImg} tintColor="#fff" />
-                        </View>,
+                        folderContent(
+                            <View style={[fo.openIcon, { backgroundColor: folderColor(node.color) }]}>
+                                <Image source={FOLDER_ASSET} style={fo.folderImg} tintColor="#fff" />
+                            </View>,
+                        ),
                     )}
                     {node.children.map((ch) => (
                         <FadeIn key={ch.id}>
@@ -173,7 +187,7 @@ export default function FolderItem({ node, onPick, showNames }: { node: GuildNod
                     ))}
                 </>
             ) : (
-                folderButton(<FolderCover node={node} />)
+                folderButton(folderContent(<FolderCover node={node} />))
             )}
             <ContextMenuModal
                 visible={menuState.visible}
@@ -188,6 +202,7 @@ export default function FolderItem({ node, onPick, showNames }: { node: GuildNod
 }
 
 const fo = StyleSheet.create({
+    wrap: { width: ICON, alignItems: "center" },
     openIcon: {
         width: ICON,
         height: ICON,
@@ -196,6 +211,18 @@ const fo = StyleSheet.create({
         justifyContent: "center",
     },
     folderImg: { width: 24, height: 24 },
+    label: {
+        marginTop: 4,
+        width: ICON,
+        fontSize: 10,
+        lineHeight: 12,
+        fontWeight: "600",
+        textAlign: "center",
+        color: colors.MOBILE_TEXT_HEADING_PRIMARY ?? "#fff",
+        textShadowColor: "rgba(0,0,0,0.75)",
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+    },
 });
 
 const fbd = StyleSheet.create({

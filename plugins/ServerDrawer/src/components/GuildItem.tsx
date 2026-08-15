@@ -155,7 +155,7 @@ const st = StyleSheet.create({
         lineHeight: 12,
         fontWeight: "600",
         textAlign: "center",
-        color: colors?.HEADER_PRIMARY ?? colors?.TEXT_NORMAL ?? "#fff",
+        color: colors.MOBILE_TEXT_HEADING_PRIMARY ?? "#fff",
         textShadowColor: "rgba(0,0,0,0.75)",
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 2,

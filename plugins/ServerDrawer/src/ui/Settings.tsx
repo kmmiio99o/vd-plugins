@@ -16,7 +16,7 @@ export default function Settings() {
                         onValueChange={(v: boolean) => { storage.hideDmTile = v; }}
                     />
                     <TableSwitchRow
-                        label="Show server names"
+                        label="Show server and folder names"
                         subLabel="Print each server&apos;s name under its icon in the drawer"
                         value={!!storage.showGuildNames}
                         onValueChange={(v: boolean) => { storage.showGuildNames = v; }}
