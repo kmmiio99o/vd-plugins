@@ -1,6 +1,7 @@
 import { patchQuestDockRender } from "./patches/questDockRender";
 import { patchQuestDockBase } from "./patches/questDockBase";
 import { patchMobileQuestDock } from "./patches/mobileQuestDock";
+import { patchQuestEligibility } from "./patches/questEligibility";
 import { patchGetQuestAsset } from "./patches/getQuestAsset";
 import { patchExpanded, patchEmpty } from "./patches/contentPatch";
 import { patchHideGuildsBar } from "./patches/hideGuildsBar";
@@ -27,6 +28,7 @@ export default {
         if (patchQuestDockRender(cleanups)) patched++;
         if (patchQuestDockBase(cleanups)) patched++;
         if (patchMobileQuestDock(cleanups)) patched++;
+        if (patchQuestEligibility(cleanups)) patched++;
         if (patchGetQuestAsset(cleanups)) patched++;
         if (patchExpanded(cleanups)) patched++;
         if (patchEmpty("QuestDockContentCollapsed", cleanups)) patched++;

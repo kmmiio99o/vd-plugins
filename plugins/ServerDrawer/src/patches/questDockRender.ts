@@ -1,18 +1,10 @@
-import { findByProps } from "@vendetta/metro";
-
-const TAG = "[ServerDrawer]";
+import { patchByPropWithRetry } from "./retry";
 
 export function patchQuestDockRender(cleanups: (() => void)[]): boolean {
-    const mod = findByProps("useIsMobileQuestDockRendered");
-    if (!mod?.useIsMobileQuestDockRendered) {
-        console.log(TAG, "WARN: useIsMobileQuestDockRendered not found");
-        return false;
-    }
-    const orig = mod.useIsMobileQuestDockRendered;
-    mod.useIsMobileQuestDockRendered = function (...args: any[]) {
-        orig.apply(this, args);
-        return true;
-    };
-    cleanups.push(() => { mod.useIsMobileQuestDockRendered = orig; });
-    return true;
+    return patchByPropWithRetry(cleanups, "useIsMobileQuestDockRendered", (orig) => {
+        return function (this: any, ...args: any[]) {
+            orig.apply(this, args);
+            return true;
+        };
+    });
 }

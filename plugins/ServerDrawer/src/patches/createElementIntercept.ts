@@ -258,7 +258,7 @@ export function patchCreateElement(cleanups: (() => void)[]) {
     }
 
     function scanAndPatchJsxRuntimes() {
-        const modules = (window as any)?.modules;
+        const modules = (globalThis as any)?.modules;
         if (!modules) return;
         for (const id in modules) {
             const def = modules[id];
