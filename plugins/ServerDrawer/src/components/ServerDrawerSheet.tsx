@@ -4,6 +4,7 @@ import { find, findByProps, findByStoreName } from "@vendetta/metro";
 import { storage } from "@vendetta/plugin";
 import { useProxy } from "@vendetta/storage";
 import { GuildNode } from "../utils/theme";
+import { getGestureContext } from "../utils/gestureContext";
 import GuildItem from "./GuildItem";
 import FolderItem from "./FolderItem";
 import DmTile from "./DmTile";
@@ -28,6 +29,8 @@ const QuestDockMode = find((m: any) => m?.QuestDockMode?.COLLAPSED != null)?.Que
 const ICON = 48;
 const GAP = 6;
 const PAD = 12;
+
+const FallbackGestureContext = React.createContext(null);
 
 function CreateJoinButton() {
     const scale = React.useRef(new Animated.Value(1)).current;
@@ -76,7 +79,8 @@ export default function ServerDrawerSheet({ gestureContext }: { gestureContext: 
         },
     ) ?? [];
 
-    const ctx = (gestureContext ? React.useContext(gestureContext) : null) as any;
+    const gestureCtx = (gestureContext ?? getGestureContext()) as React.Context<any> | null;
+    const ctx = React.useContext(gestureCtx ?? FallbackGestureContext) as any;
     const minH = ctx?.minExpandedContentHeight;
 
     const onLayout = React.useCallback((e: any) => {

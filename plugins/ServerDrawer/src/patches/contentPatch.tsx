@@ -2,16 +2,9 @@ import { find } from "@vendetta/metro";
 import { React } from "@vendetta/metro/common";
 import ServerDrawerSheet from "../components/ServerDrawerSheet";
 import { registerIntercept, registerTypeDetector } from "./createElementIntercept";
+import { getGestureContext } from "../utils/gestureContext";
 
 const TAG = "[ServerDrawer]";
-
-let cachedGestureContext: any = null;
-function getGestureContext(): any {
-    if (!cachedGestureContext) {
-        cachedGestureContext = find((m) => m?.QuestDockGestureContext)?.QuestDockGestureContext ?? null;
-    }
-    return cachedGestureContext;
-}
 
 function isNamed(name: string) {
     return (type: any) => type?.name === name || type?.displayName === name ||
