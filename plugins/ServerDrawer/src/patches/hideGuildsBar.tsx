@@ -9,6 +9,33 @@ import { registerIntercept, registerTypeDetector, registerPropsTransform } from 
 const TAG = "[ServerDrawer]";
 const DM_WIDTH = 72;
 
+// Production bundles wrap components in memo()/forwardRef(), whose outer names are mangled
+// or empty while the real function keeps its name on .type / .render. Match on the
+// unwrapped name at every shell depth so no copy escapes by wrapping.
+function unwrapComponent(type: any): any {
+    const seen = new Set<any>();
+    let cur = type;
+    while (cur && typeof cur === "object" && !seen.has(cur)) {
+        seen.add(cur);
+        if (typeof cur.type === "function" || (cur.type && typeof cur.type === "object")) {
+            cur = cur.type;
+        } else if (typeof cur.render === "function") {
+            cur = cur.render;
+        } else {
+            break;
+        }
+    }
+    return cur;
+}
+
+function hasName(type: any, name: string): boolean {
+    if (!type) return false;
+    const bare = typeof type === "function" || typeof type === "object";
+    if (!bare) return false;
+    if (type.name === name || type.displayName === name) return true;
+    return unwrapComponent(type)?.name === name;
+}
+
 // Check if props belong to the messages panel
 function isMessagesPanel(props: any): boolean {
     return props?.nativeID === "messages-parent-view";
@@ -85,33 +112,48 @@ export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
     // 3. Module mutation for GuildsBar (early-loaded modules)
     const guildsBarMods = findAll((m) => {
         const defaultExport = m?.default;
-        if (defaultExport && (defaultExport.type?.name === "GuildsBar" || defaultExport.name === "GuildsBar")) {
+        if (defaultExport && (hasName(defaultExport, "GuildsBar") || hasName(defaultExport.type, "GuildsBar"))) {
             return true;
         }
         const typeExport = m?.type;
-        if (typeExport && (typeExport.type?.name === "GuildsBar" || typeExport.name === "GuildsBar")) {
+        if (typeExport && (hasName(typeExport, "GuildsBar") || hasName(typeExport.type, "GuildsBar"))) {
             return true;
         }
         return false;
     });
     guildsBarMods.forEach(mod => {
-        let orig = null;
-        if (mod.default && (mod.default.type?.name === "GuildsBar" || mod.default.name === "GuildsBar")) {
-            orig = mod.default.type;
-            mod.default.type = GuildsBarPatch;
-        } else if (mod.type && (mod.type.type?.name === "GuildsBar" || mod.type.name === "GuildsBar")) {
-            orig = mod.type;
-            mod.type = GuildsBarPatch;
+        // function export: mod.GuildsBar
+        if (typeof mod.default === "function" && mod.default.name === "GuildsBar") {
+            const orig = mod.default;
+            mod.default = GuildsBarPatch as any;
+            cleanups.push(() => { mod.default = orig; });
+            console.log(TAG, "PATCH: GuildsBar replaced (module mutation, default fn)");
+            applied = true;
+            return;
         }
-        if (orig) {
-            cleanups.push(() => {
-                if (mod.default && (mod.default.type?.name === "GuildsBar" || mod.default.name === "GuildsBar")) {
-                    mod.default.type = orig;
-                } else if (mod.type && (mod.type.type?.name === "GuildsBar" || mod.type.name === "GuildsBar")) {
-                    mod.type = orig;
-                }
-            });
-            console.log(TAG, "PATCH: GuildsBar replaced (module mutation)");
+        // memo-style object export: mod.default.type
+        if (mod.default && typeof mod.default === "object" && hasName(mod.default.type, "GuildsBar")) {
+            const orig = mod.default.type;
+            mod.default.type = GuildsBarPatch;
+            cleanups.push(() => { mod.default.type = orig; });
+            console.log(TAG, "PATCH: GuildsBar replaced (module mutation, default.type)");
+            applied = true;
+            return;
+        }
+        // named-object export: mod.type (+ optional inner .type)
+        if (mod.type && typeof mod.type === "object" && hasName(mod.type.type, "GuildsBar")) {
+            const orig = mod.type.type;
+            mod.type.type = GuildsBarPatch;
+            cleanups.push(() => { mod.type.type = orig; });
+            console.log(TAG, "PATCH: GuildsBar replaced (module mutation, type.type)");
+            applied = true;
+            return;
+        }
+        if (typeof mod.type === "function" && mod.type.name === "GuildsBar") {
+            const orig = mod.type;
+            (mod as any).type = GuildsBarPatch;
+            cleanups.push(() => { (mod as any).type = orig; });
+            console.log(TAG, "PATCH: GuildsBar replaced (module mutation, type fn)");
             applied = true;
         }
     });
@@ -119,8 +161,7 @@ export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
     // 4. Type detectors and interceptors (late-loaded modules via createElementIntercept)
     registerTypeDetector(
         "ServerDrawer.HomePanelContent",
-        (type: any) => type?.name === "HomePanelContent" || type?.displayName === "HomePanelContent" ||
-            type?.type?.name === "HomePanelContent" || type?.type?.displayName === "HomePanelContent",
+        (type: any) => hasName(type, "HomePanelContent"),
         (original: any) => {
             registerIntercept(original, HomePanelContentPatch, {}, { collapseAncestors: 0 });
         },
@@ -129,8 +170,7 @@ export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
 
     registerTypeDetector(
         "ServerDrawer.GuildsBar",
-        (type: any) => type?.name === "GuildsBar" || type?.displayName === "GuildsBar" ||
-            type?.type?.name === "GuildsBar" || type?.type?.displayName === "GuildsBar",
+        (type: any) => hasName(type, "GuildsBar"),
         (original: any) => {
             registerIntercept(original, GuildsBarPatch, {}, { collapseAncestors: 0 });
         },

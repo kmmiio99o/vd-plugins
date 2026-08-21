@@ -269,19 +269,15 @@ export function patchCreateElement(cleanups: (() => void)[]) {
 
     scanAndPatchJsxRuntimes();
 
-    // Fast while the app boots, then slow, then stop.
+    // Fast while the app boots, then steady forever. Stopping entirely let late-initialized
+    // jsx runtimes (lazy chunks on accounts with big data) escape patching - exactly the
+    // copies whose components then leak through every null-replacement.
     let ticks = 0;
     let timer: ReturnType<typeof setInterval> | undefined = setInterval(() => {
         scanAndPatchJsxRuntimes();
         if (++ticks === 50 && timer) { // ~5s at 100ms
             clearInterval(timer);
-            timer = setInterval(() => {
-                scanAndPatchJsxRuntimes();
-                if (++ticks >= 75 && timer) { // + ~25s at 1s
-                    clearInterval(timer);
-                    timer = undefined;
-                }
-            }, 1000);
+            timer = setInterval(scanAndPatchJsxRuntimes, 2000);
         }
     }, 100);
 

@@ -11,7 +11,17 @@ const ChannelActions = findByProps("selectPrivateChannel");
 const SelectedChannelStore = findByName("SelectedChannelStore");
 const Flux = findByProps("useStateFromStores");
 const NavContext = findByProps("getGuildId");
-const colors = findByProps("colors", "unsafe_rawColors")?.colors;
+
+const tokenRef: any = findByProps("SemanticColor");
+const Themes: any = tokenRef?.default;
+const internalResolver: any = Themes?.meta ?? Themes?.internal;
+const UseThemeMod: any = findByProps("useThemeIndex", "getThemeIndex");
+
+function useTokenColor(token: any): string | undefined {
+    const theme = UseThemeMod?.useTheme?.();
+    if (!internalResolver || !token || theme == null) return undefined;
+    return internalResolver.resolveSemanticColor(theme, token);
+}
 
 function openDms() {
     Haptic?.triggerHapticFeedback?.(Haptic.HapticFeedbackTypes.SOFT);
@@ -21,17 +31,32 @@ function openDms() {
     }
 }
 
-// Original drawer tile (48x48)
-export default function DmTile() {
+function useDmTileColors() {
     const selected = Flux?.useStateFromStores?.(
         [NavContext],
         () => NavContext?.getGuildId?.() == null,
     ) ?? false;
 
+    const bgSelected = useTokenColor(Themes?.colors?.BACKGROUND_BRAND);
+    const bgIdle = useTokenColor(Themes?.colors?.MOBILE_GUILDBAR_ICON_BACKGROUND_DEFAULT);
+    const fgSelected = useTokenColor(Themes?.colors?.WHITE);
+    const fgIdle = useTokenColor(Themes?.colors?.MOBILE_GUILDBAR_ICON_DEFAULT);
+
+    return {
+        selected,
+        bg: selected ? bgSelected : bgIdle,
+        tint: selected ? fgSelected : fgIdle,
+    };
+}
+
+// Original drawer tile (48x48)
+export default function DmTile() {
+    const { bg, tint } = useDmTileColors();
+
     return (
         <Pressable onPress={openDms} style={st.outer}>
-            <View style={[st.icon, { backgroundColor: selected ? (colors?.BG_ACCENT ?? "#5865f2") : "rgba(128,128,128,0.24)" }]}>
-                <Image source={ChatIcon} style={{ width: 24, height: 24, tintColor: "#fff" }} />
+            <View style={[st.icon, { backgroundColor: bg }]}>
+                <Image source={ChatIcon} style={{ width: 24, height: 24, tintColor: tint }} />
             </View>
         </Pressable>
     );
@@ -39,15 +64,12 @@ export default function DmTile() {
 
 // Rail DMs tile (icon centered vertically in rail, full-height touch target)
 export function RailDmTile() {
-    const selected = Flux?.useStateFromStores?.(
-        [NavContext],
-        () => NavContext?.getGuildId?.() == null,
-    ) ?? false;
+    const { tint } = useDmTileColors();
 
     return (
         <Pressable onPress={openDms} style={railSt.outer}>
             <View style={railSt.icon}>
-                <Image source={ChatIcon} style={{ width: 24, height: 24, tintColor: selected ? (colors?.BG_ACCENT ?? "#5865f2") : "#fff" }} />
+                <Image source={ChatIcon} style={{ width: 24, height: 24, tintColor: tint }} />
             </View>
         </Pressable>
     );
