@@ -1,0 +1,14 @@
+{
+  "name": "Discovery",
+  "description": "Add option to discover servers on the bottom of Server List.",
+  "authors": [
+    {
+      "name": "kmmiio99o",
+      "id": "879393496627306587"
+    }
+  ],
+  "main": "src/index.tsx",
+  "vendetta": {
+    "icon": "MagnifyingGlassIcon"
+  }
+}
