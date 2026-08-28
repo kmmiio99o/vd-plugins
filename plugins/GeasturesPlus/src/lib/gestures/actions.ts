@@ -32,6 +32,6 @@ export function deleteMessage(message: any, channel: any) {
     const channelId = channel?.id ?? message?.channel_id;
     const messageId = message?.id;
     try {
-        fn(channelId, messageId, true);
+        fn(channelId, messageId, false);
     } catch (e) { console.error(TAG, "DELETE: error", e); }
 }
