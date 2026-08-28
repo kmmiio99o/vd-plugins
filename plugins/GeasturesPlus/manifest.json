@@ -1,0 +1,14 @@
+{
+  "name": "Geastures+",
+  "description": "Tap tap a message to reply/edit, or tap tap tap a message to delete it.",
+  "authors": [
+    {
+      "name": "kmmiio99o",
+      "id": "879393496627306587"
+    }
+  ],
+  "main": "src/index.tsx",
+  "vendetta": {
+    "icon": "MessagesIcon"
+  }
+}
