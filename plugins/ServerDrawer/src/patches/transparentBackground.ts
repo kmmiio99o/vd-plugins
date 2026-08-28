@@ -6,16 +6,22 @@ const TAG = "[ServerDrawer]";
 // useAnimatedStyle - no component reference to intercept, so match on the computed style instead.
 // The color itself varies in format (rgba vs hex), so borderRadius + "has a background color" is
 // the stable signal, not the color string.
-function flatten(style: any): Record<string, any> {
-    if (!style) return {};
-    if (Array.isArray(style)) return Object.assign({}, ...style.map(flatten));
-    return style;
-}
-
 function isQuestDockCard(props: any): boolean {
-    const s = flatten(props?.style);
-    return s.borderRadius === 24 && typeof s.backgroundColor === "string" &&
-        s.position === "absolute" && s.left === "50%" && s.zIndex === 1;
+    const root = props?.style;
+    if (!root) return false;
+
+    const styles = Array.isArray(root) ? root : [root];
+    for (let i = 0; i < styles.length; i++) {
+        const entry = styles[i];
+        if (!entry || typeof entry !== "object") continue;
+        const s = Array.isArray(entry) ? Object.assign({}, ...entry.map((e: any) =>
+            Array.isArray(e) ? Object.assign({}, ...e.map((f: any) => f ?? {})) : (e ?? {}))) : entry;
+        if (s.borderRadius === 24 && typeof s.backgroundColor === "string" &&
+            s.position === "absolute" && s.left === "50%" && s.zIndex === 1) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // Removing the card color reveals a second layer underneath: the quest's promotional hero photo.

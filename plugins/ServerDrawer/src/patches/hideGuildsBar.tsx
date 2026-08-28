@@ -11,12 +11,12 @@ const DM_WIDTH = 72;
 
 // Production bundles wrap components in memo()/forwardRef(), whose outer names are mangled
 // or empty while the real function keeps its name on .type / .render. Match on the
-// unwrapped name at every shell depth so no copy escapes by wrapping.
+// unwrapped name at every shell depth so no copy escapes by wrapping. Bounded depth instead of
+// a Set: real wrappers are only ever 1-2 layers deep, so a loop cap avoids per-call allocation.
 function unwrapComponent(type: any): any {
-    const seen = new Set<any>();
     let cur = type;
-    while (cur && typeof cur === "object" && !seen.has(cur)) {
-        seen.add(cur);
+    let depth = 0;
+    while (cur && typeof cur === "object" && depth++ < 8) {
         if (typeof cur.type === "function" || (cur.type && typeof cur.type === "object")) {
             cur = cur.type;
         } else if (typeof cur.render === "function") {
@@ -30,9 +30,10 @@ function unwrapComponent(type: any): any {
 
 function hasName(type: any, name: string): boolean {
     if (!type) return false;
-    const bare = typeof type === "function" || typeof type === "object";
-    if (!bare) return false;
+    if (typeof type !== "function" && typeof type !== "object") return false;
     if (type.name === name || type.displayName === name) return true;
+    const t = type.type;
+    if (t && (t.name === name || t.displayName === name)) return true;
     return unwrapComponent(type)?.name === name;
 }
 
@@ -153,16 +154,29 @@ function mutateGuildsBar(mod: any, cleanups: (() => void)[]): boolean {
     return mutated;
 }
 
+let hidingComplete = false;
+export function isHidingComplete(): boolean {
+    return hidingComplete;
+}
+export function resetHidingComplete(): void {
+    hidingComplete = false;
+}
+
 // The rail/guilds modules can register *after* the plugin loads, or Discord's JSX can hold a
 // direct reference to an already-mounted copy, so we keep re-scanning and mutating any
 // HomePanelContent/GuildsBar copy we haven't touched yet (late-loaded modules get caught, not
 // just the ones present at onLoad). Dedup via flags so repeated scans don't re-register cleanups.
 export function rescanHiding(cleanups: (() => void)[]): void {
+    let found = 0;
+    let applied = 0;
+
     try {
-        findAll((m: any) =>
+        const hps = findAll((m: any) =>
             m?.HomePanelContent?.type &&
             typeof m?.HomePanelContent?.type === "function"
-        ).forEach((mod) => mutateHomePanel(mod, cleanups));
+        );
+        found += hps.length;
+        hps.forEach((mod) => { if (mutateHomePanel(mod, cleanups)) applied++; });
     } catch { /* ignore */ }
 
     try {
@@ -171,8 +185,11 @@ export function rescanHiding(cleanups: (() => void)[]): void {
             if (hasName(m?.type, "GuildsBar") || hasName(m?.type?.type, "GuildsBar")) return true;
             return typeof m?.GuildsBar === "function" && m.GuildsBar.name === "GuildsBar";
         });
-        gbMods.forEach((mod) => mutateGuildsBar(mod, cleanups));
+        found += gbMods.length;
+        gbMods.forEach((mod) => { if (mutateGuildsBar(mod, cleanups)) applied++; });
     } catch { /* ignore */ }
+
+    hidingComplete = found > 0 && applied === 0;
 }
 
 export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
@@ -190,8 +207,10 @@ export function patchHideGuildsBar(cleanups: (() => void)[]): boolean {
     rescanHiding(cleanups);
 
     // The rail modules may load lazily; keep rescanning briefly to also hit late copies.
+    // Stop as soon as every visible copy is confirmed patched (hidingComplete).
     let ticks = 0;
     const timer = setInterval(() => {
+        if (isHidingComplete()) { clearInterval(timer); return; }
         rescanHiding(cleanups);
         if (++ticks >= 40) clearInterval(timer); // ~4s
     }, 100);

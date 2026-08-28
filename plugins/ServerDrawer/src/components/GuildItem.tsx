@@ -50,9 +50,16 @@ function Badge({ guildId }: { guildId: string }) {
 
 export default function GuildItem({ node, onPick, showNames }: { node: GuildNode; onPick: (id: string) => void; showNames?: boolean }) {
     const viewRef = React.useRef<View>(null);
+
     const scale = React.useRef(new Animated.Value(1)).current;
-    const scaleDown = () => Animated.spring(scale, { toValue: 0.85, useNativeDriver: true }).start();
-    const scaleUp = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+    const [pressed, setPressed] = React.useState(false);
+    const springTo = React.useCallback((v: number) => {
+        Animated.spring(scale, { toValue: v, useNativeDriver: true, damping: 14, stiffness: 220 }).start();
+    }, [scale]);
+
+    React.useEffect(() => {
+        springTo(pressed ? 0.85 : 1);
+    }, [pressed, springTo]);
 
     const [menuState, setMenuState] = React.useState<{
         visible: boolean;
@@ -112,11 +119,11 @@ export default function GuildItem({ node, onPick, showNames }: { node: GuildNode
     return (
         <>
             <Pressable
-                onPressIn={scaleDown}
-                onPressOut={scaleUp}
                 onPress={() => onPick(guildId)}
                 onLongPress={handleLongPress}
                 delayLongPress={500}
+                onPressIn={() => setPressed(true)}
+                onPressOut={() => setPressed(false)}
             >
                 <View style={st.outer}>
                     <View ref={viewRef} style={st.iconWrap} collapsable={false}>

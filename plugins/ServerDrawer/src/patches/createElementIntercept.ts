@@ -24,6 +24,7 @@ interface TypeDetector {
     onDetected: (type: any) => void;
     persistent: boolean;
     justFired?: boolean;
+    negative?: WeakSet<any>;
 }
 
 const intercepts = new Map<React.ComponentType<any>, Intercept>();
@@ -36,6 +37,7 @@ let isPatched = false;
 // Elements are created child-first, so a collapse mark on a child is already present by the time
 // the parent's own call is intercepted - that's what makes walking the collapse upward possible.
 const collapseMarks = new WeakMap<object, number>();
+let collapseMarkCount = 0;
 
 // display: none alone doesn't reclaim space on every layout, so this also zeroes width/flex/margin
 // and hides overflow.
@@ -93,16 +95,22 @@ export function hasTypeDetector(key: string): boolean {
 
 function runTypeDetectors(type: any) {
     if (typeDetectors.length === 0) return;
+    if (intercepts.size > 0 && intercepts.has(type)) return;
+    if (!type || (typeof type !== "function" && typeof type !== "object")) return;
 
     let consumed = false;
     for (const detector of typeDetectors) {
+        if (detector.negative?.has(type)) continue;
         let matched = false;
         try {
             matched = detector.predicate(type);
         } catch {
             // Ignore
         }
-        if (!matched) continue;
+        if (!matched) {
+            (detector.negative ??= new WeakSet()).add(type);
+            continue;
+        }
 
         try {
             detector.onDetected(type);
@@ -144,7 +152,30 @@ function inheritedCollapseDepth(props: any, rest: any[] = []): number {
 
 /** Returns a replacement type if this element should be intercepted, `null` to render nothing, or `undefined` to pass through unchanged. */
 function resolveReplacement(type: any, props: any, rest: any[]): { type: any; props: any; collapse?: number } | null | undefined {
+    // Fast path first: an exact reference already intercepted (GuildsBar, HomePanelContent,
+    // quest dock empties...). This is the O(1) map hit - avoids re-running the expensive
+    // name-matching detectors and transforms on every render of an already-handled component.
+    const direct = intercepts.get(type);
+    if (direct) {
+        return {
+            type: direct.replacement,
+            props: direct.extraProps ? { ...props, ...direct.extraProps } : props,
+            collapse: direct.collapseAncestors,
+        };
+    }
+
     runTypeDetectors(type);
+
+    // A detector may have just registered an intercept for this exact type - honor it in the
+    // same pass (so the first render is caught, not just the next one).
+    const afterDetect = intercepts.get(type);
+    if (afterDetect) {
+        return {
+            type: afterDetect.replacement,
+            props: afterDetect.extraProps ? { ...props, ...afterDetect.extraProps } : props,
+            collapse: afterDetect.collapseAncestors,
+        };
+    }
 
     let effectiveProps = props;
     if (effectiveProps) {
@@ -171,23 +202,17 @@ function resolveReplacement(type: any, props: any, rest: any[]): { type: any; pr
         }
     }
 
-    const entry = intercepts.get(type);
-    if (entry) {
-        return {
-            type: entry.replacement,
-            props: entry.extraProps ? { ...effectiveProps, ...entry.extraProps } : effectiveProps,
-            collapse: entry.collapseAncestors,
-        };
-    }
-
     // A wrapper whose only child was already collapsed - zero it out too and pass the remaining budget up.
-    const inherited = inheritedCollapseDepth(effectiveProps, rest);
-    if (inherited > 0) {
-        return {
-            type,
-            props: { ...effectiveProps, style: [effectiveProps?.style, COLLAPSE_STYLE] },
-            collapse: inherited - 1,
-        };
+    // Only walk children when something has actually collapsed (rare), otherwise skip this cost entirely.
+    if (collapseMarkCount > 0) {
+        const inherited = inheritedCollapseDepth(effectiveProps, rest);
+        if (inherited > 0) {
+            return {
+                type,
+                props: { ...effectiveProps, style: [effectiveProps?.style, COLLAPSE_STYLE] },
+                collapse: inherited - 1,
+            };
+        }
     }
 
     if (effectiveProps !== props) {
@@ -211,6 +236,7 @@ function applyResolved(res: any, type: any, props: any, rest: any[]) {
         res.props = resolved.props ?? null;
         if (resolved.collapse && resolved.collapse > 0) {
             collapseMarks.set(res, resolved.collapse);
+            collapseMarkCount++;
         }
     }
     return res;
@@ -232,52 +258,66 @@ export function patchCreateElement(cleanups: (() => void)[]) {
         return typeof m?.jsx === "function" || typeof m?.jsxs === "function" || typeof m?.jsxDEV === "function";
     }
 
-    function patchJsxObject(runtime: any) {
-        if (patchedJsxRuntimes.has(runtime)) return;
+    function patchJsxObject(runtime: any): number {
+        if (patchedJsxRuntimes.has(runtime)) return 0;
         patchedJsxRuntimes.add(runtime);
+        let added = 0;
         for (const key of ["jsx", "jsxs", "jsxDEV"] as const) {
             if (typeof runtime[key] !== "function") continue;
             cleanups.push(
                 after(key, runtime, (args: any[], res: any) => applyResolved(res, args[0], args[1], args.slice(2)))
             );
+            added++;
         }
+        return added;
     }
 
-    function patchJsxModule(def: any) {
-        if (!def?.publicModule?.exports) return;
+    function patchJsxModule(def: any): number {
+        if (!def?.publicModule?.exports) return 0;
         const exports = def.publicModule.exports;
-
+        let added = 0;
         try {
-            if (isJsxRuntime(exports)) patchJsxObject(exports);
+            if (isJsxRuntime(exports)) added += patchJsxObject(exports);
 
             const dflt = exports.default;
-            if (dflt != null && isJsxRuntime(dflt)) patchJsxObject(dflt);
+            if (dflt != null && isJsxRuntime(dflt)) added += patchJsxObject(dflt);
         } catch {
             // Ignore
         }
+        return added;
     }
 
-    function scanAndPatchJsxRuntimes() {
+    function scanAndPatchJsxRuntimes(): number {
         const modules = (globalThis as any)?.modules;
-        if (!modules) return;
+        if (!modules) return -1;
+        let added = 0;
         for (const id in modules) {
             const def = modules[id];
             if (!def?.isInitialized) continue;
-            patchJsxModule(def);
+            added += patchJsxModule(def);
         }
+        return added;
     }
 
     scanAndPatchJsxRuntimes();
 
-    // Fast while the app boots, then steady forever. Stopping entirely let late-initialized
-    // jsx runtimes (lazy chunks on accounts with big data) escape patching - exactly the
-    // copies whose components then leak through every null-replacement.
     let ticks = 0;
+    let idleStreak = 0;
     let timer: ReturnType<typeof setInterval> | undefined = setInterval(() => {
-        scanAndPatchJsxRuntimes();
-        if (++ticks === 50 && timer) { // ~5s at 100ms
+        const added = scanAndPatchJsxRuntimes();
+        if (added === 0) idleStreak++;
+        else idleStreak = 0;
+        ticks++;
+        if (timer && ((ticks >= 50) || (ticks > 10 && idleStreak >= 3))) {
             clearInterval(timer);
-            timer = setInterval(scanAndPatchJsxRuntimes, 2000);
+            if (ticks < 50) { timer = undefined; return; }
+            const slowTimer: ReturnType<typeof setInterval> = setInterval(() => {
+                const a = scanAndPatchJsxRuntimes();
+                if (a === 0) idleStreak++;
+                else idleStreak = 0;
+                if (idleStreak >= 3) { clearInterval(slowTimer); timer = undefined; }
+            }, 2000);
+            timer = slowTimer;
         }
     }, 100);
 

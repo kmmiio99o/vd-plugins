@@ -94,9 +94,20 @@ export default function FolderItem({ node, onPick, showNames }: { node: GuildNod
     };
 
     const viewRef = React.useRef<View>(null);
+
     const scale = React.useRef(new Animated.Value(1)).current;
-    const scaleDown = () => Animated.spring(scale, { toValue: 0.85, useNativeDriver: true }).start();
-    const scaleUp = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+    const [pressed, setPressed] = React.useState(false);
+    const springTo = React.useCallback((v: number) => {
+        Animated.spring(scale, { toValue: v, useNativeDriver: true, damping: 14, stiffness: 220 }).start();
+    }, [scale]);
+
+    React.useEffect(() => {
+        springTo(pressed ? 0.85 : 1);
+    }, [pressed, springTo]);
+
+    React.useEffect(() => {
+        springTo(1);
+    }, [open, springTo]);
 
     const [menuState, setMenuState] = React.useState<{
         visible: boolean;
@@ -160,8 +171,8 @@ export default function FolderItem({ node, onPick, showNames }: { node: GuildNod
             onPress={toggle}
             onLongPress={handleLongPress}
             delayLongPress={500}
-            onPressIn={scaleDown}
-            onPressOut={scaleUp}
+            onPressIn={() => setPressed(true)}
+            onPressOut={() => setPressed(false)}
         >
             <View ref={viewRef} collapsable={false}>
                 <Animated.View style={{ transform: [{ scale }] }}>{content}</Animated.View>
