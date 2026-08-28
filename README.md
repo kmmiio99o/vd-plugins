@@ -11,7 +11,9 @@ A collection of plugins for [**Kettu**](https://codeberg.org/cocobo1/Kettu), [**
 | **Multi Scrobbler** | Advanced scrobbling support for multiple music services |
 | **ChatboxAvatar** | Quickly view your profile from the chatbox. |
 | **Moyai** | 🗿 - Plays a sound on message send/react |
-| **Server Drawer** | Server Drawer above the YouBar, manage your servers differently! |
+| **Server Drawer** | Server Drawer above the YouBar, manage your servers differently! Fully hides the Quest Dock/GuildsBar, adds a DM tile, optional server-name labels, and a settings screen. |
+| **Discovery** | Adds an option to discover servers on the bottom of the Server List. |
+| **Geastures+** | Tap tap a message to reply/edit, or tap tap tap a message to delete it. |
 
 ## 🚀 Installation
 
@@ -44,6 +46,14 @@ https://rksv.kmmiio99o.dev/Moyai
 - **Server Drawer**: 
 ```
 https://rksv.kmmiio99o.dev/ServerDrawer
+```
+- **Discovery**: 
+```
+https://rksv.kmmiio99o.dev/Discovery
+```
+- **Geastures+**: 
+```
+https://rksv.kmmiio99o.dev/GeasturesPlus
 ```
 
 ## ℹ️ Notes
