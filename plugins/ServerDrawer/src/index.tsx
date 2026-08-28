@@ -4,9 +4,10 @@ import { patchMobileQuestDock } from "./patches/mobileQuestDock";
 import { patchQuestEligibility } from "./patches/questEligibility";
 import { patchGetQuestAsset } from "./patches/getQuestAsset";
 import { patchExpanded, patchEmpty } from "./patches/contentPatch";
-import { patchHideGuildsBar } from "./patches/hideGuildsBar";
+import { patchHideGuildsBar, rescanHiding } from "./patches/hideGuildsBar";
 import { patchTransparentBackground } from "./patches/transparentBackground";
 import { patchCreateElement } from "./patches/createElementIntercept";
+import { FluxDispatcher } from "@vendetta/metro/common";
 import { storage } from "@vendetta/plugin";
 import Settings from "./ui/Settings";
 
@@ -38,6 +39,19 @@ export default {
         if (patchEmpty("QuestDockUnenrolledBody", cleanups)) patched++;
         if (patchHideGuildsBar(cleanups)) patched++;
         if (patchTransparentBackground()) patched++;
+
+        let lastChannel: string | null = null;
+        const onChannelSelect = (d: { channelId?: string | null }) => {
+            if (d?.channelId === lastChannel) return;
+            lastChannel = d?.channelId ?? null;
+            rescanHiding(cleanups);
+        };
+        FluxDispatcher?.subscribe("CHANNEL_SELECT", onChannelSelect);
+        FluxDispatcher?.subscribe("GUILD_SELECT", onChannelSelect);
+        cleanups.push(() => {
+            FluxDispatcher?.unsubscribe("CHANNEL_SELECT", onChannelSelect);
+            FluxDispatcher?.unsubscribe("GUILD_SELECT", onChannelSelect);
+        });
 
         console.log(TAG, `onLoad done — ${patched} patches applied, ${cleanups.length} cleanups`);
     },
