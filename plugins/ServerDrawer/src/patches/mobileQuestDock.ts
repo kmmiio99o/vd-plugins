@@ -8,6 +8,7 @@ export function patchMobileQuestDock(cleanups: (() => void)[]): boolean {
                 type: 1, // AdCreativeType.QUEST
                 quest: {
                     id: "server-drawer",
+                    assets: { questBarHeroVideo: null, questBarHero: null },
                     config: {
                         quest_content_type: 0,
                         assets: { questBarHeroVideo: null, questBarHero: null },
